@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title id="pageTitle">PODFY — Upload POD</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link id="favicon" rel="icon" href="/logos/default.svg" type="image/svg+xml">
+</head>
+<body>
+  <div id="banner" class="banner" hidden></div>
+  <header class="site-header">
+    <div class="brand">
+      <img id="brandLogo" src="/logos/default.svg" alt="Company logo" height="28" />
+    </div>
+    <div class="tools">
+      <button id="translateBtn" aria-haspopup="listbox">Translate</button>
+      <div id="langMenu" class="lang-menu" hidden></div>
+    </div>
+  </header>
+
+  <main class="container" aria-live="polite">
+    <h1 id="heading" data-i18n="heading">Upload CMR / POD</h1>
+
+    <div id="dropzone" class="dropzone" tabindex="0">
+      <p id="dzText" data-i18n="dzText">Drag & drop your document/photo here</p>
+      <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" />
+    </div>
+
+    <div class="row">
+      <label class="btn" for="fileInput" data-i18n="chooseFile">Choose file</label>
+      <div class="help" data-i18n="acceptText">Accepted: PDF, JPG, PNG, HEIC · Max 25 MB</div>
+    </div>
+
+    <div class="email-optin">
+      <label><input id="copyCheck" type="checkbox" /> <span data-i18n="emailMeCopy">Email me a copy</span></label>
+      <input id="emailField" type="email" placeholder="name@example.com" disabled />
+    </div>
+
+    <label class="loc">
+      <input id="locCheck" type="checkbox" />
+      <span data-i18n="shareLocation">Share my location (optional)</span>
+    </label>
+    <div id="locStatus" class="small"></div>
+
+    <button id="submitBtn" class="primary" disabled data-i18n="submit">Submit</button>
+
+    <p class="small" data-i18n="privacy">
+      Security & privacy: Files are sent securely and deleted after delivery.
+    </p>
+
+    <div id="status" class="status" role="status"></div>
+  </main>
+
+  <footer class="site-footer">
+    <a href="#" data-i18n="help">Need help?</a>
+    <a href="#" data-i18n="privacyNotice">Privacy Notice</a>
+    <a href="#" data-i18n="terms">Terms</a>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>
