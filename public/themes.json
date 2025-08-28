@@ -1,0 +1,21 @@
+{
+  "default": {
+    "brandName": "PODFY",
+    "logo": "/logos/default.svg",
+    "mailTo": "ops@podfy.app",
+    "colors": {
+      "primary": "#000000","accent": "#1F2937","text": "#0B1220",
+      "muted": "#6B7280","border": "#E5E7EB","buttonText": "#FFFFFF"
+    },
+    "header": {"bg":"#FFFFFF"},
+    "favicon": "/logos/default.svg"
+  },
+  "dsv": {
+    "brandName": "DSV",
+    "logo": "/logos/dsv.svg",
+    "mailTo": "pod+dsv@podfy.app",
+    "colors": {"primary":"#0A1E3A","accent":"#102B52","text":"#0B1220","muted":"#4B5563","border":"#E6EAF0","buttonText":"#FFFFFF"},
+    "header": {"bg":"#FFFFFF"},
+    "favicon": "/logos/dsv.svg"
+  }
+}
