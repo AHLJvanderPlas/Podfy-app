@@ -1,0 +1,3 @@
+Contact: mailto:security@podfy.app
+Policy: https://podfy.app
+Preferred-Languages: en
