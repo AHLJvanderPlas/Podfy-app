@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>404 – Podfy</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: "#4B5563", accent: "#2563EB" }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-white text-slate-800 antialiased">
+  <main class="mx-auto max-w-3xl px-6 py-16 md:py-24">
+    <div class="flex items-center gap-4 text-brand mb-6">
+      <!-- Podfy cube/arrow/check icon -->
+      <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 22l24-12 24 12v20L32 54 8 42V22Z"/>
+          <path d="M32 54V34"/>
+          <path d="M14 36h10"/><path d="M24 36l6 4-6 4"/>
+          <path d="M38 36l4 5 8-10"/>
+        </g>
+      </svg>
+      <span class="text-xl font-semibold tracking-tight">Podfy</span>
+    </div>
+
+    <h1 class="text-4xl md:text-5xl font-bold tracking-tight">404 — Page not found</h1>
+    <p class="mt-4 text-lg text-slate-600">
+      Are you looking for <span class="font-medium">hacks</span>, <span class="font-medium">Easter eggs</span>, or just the <span class="font-medium">app</span>?
+    </p>
+
+    <div class="mt-8 grid gap-4 sm:grid-cols-2">
+      <!-- Open the app (new tab) -->
+      <a href="https://podfy.app" target="_blank" rel="noopener"
+         class="block rounded-xl bg-brand-accent text-white px-5 py-4 text-center font-medium shadow hover:opacity-95">
+        Open Podfy app (podfy.app)
+      </a>
+
+      <!-- Back home -->
+      <a href="/"
+         class="block rounded-xl border border-slate-300 px-5 py-4 text-center font-medium hover:bg-slate-50">
+        Go to homepage
+      </a>
+    </div>
+
+    <div class="mt-10 grid gap-4 sm:grid-cols-3">
+      <!-- “Hacks” -->
+      <div class="rounded-xl border p-5">
+        <div class="text-sm font-semibold text-slate-700">Hacks</div>
+        <p class="mt-2 text-sm text-slate-600">Security research? Please see our policy and contact us responsibly.</p>
+        <a href="/security.html#vulnerability-reporting" class="mt-3 inline-block text-sm text-brand-accent underline">
+          Read security policy
+        </a>
+      </div>
+
+      <!-- “Easter eggs” -->
+      <div class="rounded-xl border p-5">
+        <div class="text-sm font-semibold text-slate-700">Easter eggs</div>
+        <p class="mt-2 text-sm text-slate-600">We keep it lean and professional—no hidden tricks (for now).</p>
+        <a href="/" class="mt-3 inline-block text-sm text-brand-accent underline">
+          Back to homepage
+        </a>
+      </div>
+
+      <!-- Contact -->
+      <div class="rounded-xl border p-5">
+        <div class="text-sm font-semibold text-slate-700">Need help?</div>
+        <p class="mt-2 text-sm text-slate-600">Questions about Podfy or this page? Get in touch.</p>
+        <a href="mailto:info@podfy.net" class="mt-3 inline-block text-sm text-brand-accent underline">
+          info@podfy.net
+        </a>
+      </div>
+    </div>
+
+    <p class="mt-12 text-xs text-slate-500">
+      Tip: you can also jump straight to the app via <a class="text-brand-accent underline" href="https://podfy.app" target="_blank" rel="noopener">podfy.app</a>.
+    </p>
+  </main>
+</body>
+</html>
