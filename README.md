@@ -12,19 +12,22 @@ Minimal, production-ready upload tool for CMR/POD files with slug-based branding
 
 ## Contents
 
+```
 podfy-app/
-├─ public/
-│ ├─ index.html # UI
-│ ├─ styles.css # All-white base; themed by CSS variables
-│ ├─ main.js # Slug theming, i18n, GPS, upload
-│ ├─ themes.json # Per-slug branding + routing
-│ ├─ i18n.json # UI strings (EN + EU languages)
-│ └─ logos/ # Brand assets (SVG/PNG)
-├─ functions/
-│ ├─ package.json # pdf-lib dependency for image→PDF
-│ └─ api/
-│ └─ upload.js # Pages Function (R2 + MailChannels)
-└─ wrangler.toml # Optional for local dev
+ ├─ public/
+ │   ├─ index.html          # UI
+ │   ├─ styles.css          # All-white base; themed by CSS variables
+ │   ├─ main.js             # Slug theming, i18n, GPS, upload
+ │   ├─ themes.json         # Per-slug branding + routing
+ │   ├─ i18n.json           # UI strings (EN + EU languages)
+ │   └─ logos/              # Brand assets (SVG/PNG)
+ ├─ functions/
+ │   ├─ package.json        # pdf-lib dependency for image→PDF
+ │   └─ api/
+ │       └─ upload.js       # Pages Function (R2 + MailChannels)
+ └─ wrangler.toml           # Optional for local dev
+```
+
 ---
 
 ## Quick start (Cloudflare Pages)
@@ -105,3 +108,84 @@ podfy-app/
   "header": { "bg": "#FFFFFF" },
   "favicon": "/logos/acme.svg"
 }
+```
+
+3. Deploy. Visiting `https://podfy.app/acme` uses that theme and routes mail to `pod+acme@podfy.app`.
+
+> Tip: keep `default.mailTo` as your central ops mailbox for safety.
+
+---
+
+## Security & privacy
+
+- **Max file size**: 25 MB enforced client-side. You may add server-side checks in the Function (inspect `file.size`).
+- **R2 metadata** includes slug, original filename, optional GPS, and uploader email. Update your privacy notice accordingly.
+- Use an **R2 lifecycle rule** if you want automatic deletions (e.g., after 180 days).
+- Consider adding **rate limiting** (IP-based) in the Function to reduce abuse.
+
+---
+
+## Local development (optional)
+
+1. `npm i -g wrangler` and `wrangler login`  
+2. From repo root:
+```bash
+wrangler pages dev
+```
+- Serves `public/` and Functions together.
+- For real R2, deploy to a preview; local R2 emulation is not required for basic UI work.
+
+---
+
+## Extending
+
+- **Office → PDF**: integrate an external API (CloudConvert/Adobe) from the Function for DOCX/XLSX/PPTX.
+- **Multi-page PDF**: accept multiple images and build a multi-page PDF via `pdf-lib`.
+- **Signed downloads**: add an endpoint to generate short-lived signed URLs to R2 objects.
+- **Admin console**: add a protected page to list/search recent uploads (by slug/date/email).
+
+---
+
+## Troubleshooting
+
+- **Function not running / 404 on `/api/upload`**  
+  Ensure the folder is `functions/api/upload.js` and not nested incorrectly. Functions must live under `functions/`.
+
+- **Emails not received**  
+  Check Pages **Function logs**. Verify `MAIL_DOMAIN` is your domain. If you set a custom `MAIL_FROM`, ensure SPF/DMARC for `podfy.app` are valid. Some providers may rate-limit; test with different recipients.
+
+- **R2 errors**  
+  Confirm the **R2 binding** exists in Pages → Settings → Functions → R2 bindings and the bucket name matches.
+
+- **Theme not applied**  
+  Make sure the path segment matches the slug key in `themes.json` and that the logo path exists.
+
+---
+
+## API reference
+
+### `POST /api/upload`
+**Form fields**:
+- `file` (required): file blob  
+- `brand` / `slug_original` (required): path slug  
+- `slug_known` (“1” or “0”)  
+- `email` (optional): to receive a copy  
+- `lat`, `lon`, `acc`, `loc_ts` (optional): GPS
+
+**Response**:
+```json
+{ "ok": true, "key": "2025/08/slug_20250830_154112_ab12cd34.pdf", "name": "slug_20250830_154112_ab12cd34.pdf" }
+```
+
+---
+
+## License
+
+Internal use for podfy.app. If you plan to open-source, add a license here.
+
+---
+
+## Maintainers
+
+- App owner: podfy.app  
+- For questions about deployment or configuration, open an issue or contact the maintainer.
