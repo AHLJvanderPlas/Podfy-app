@@ -1,0 +1,4 @@
+{
+ "en":{"__name":"English","heading":"Upload CMR / POD","dzText":"Drag & drop your document/photo here","chooseFile":"Choose file","acceptText":"Accepted: PDF, JPG, PNG, HEIC · Max 25 MB","emailMeCopy":"Email me a copy","shareLocation":"Share my location (optional)","submit":"Submit","privacy":"Files are sent securely and deleted after delivery.","help":"Need help?","privacyNotice":"Privacy Notice","terms":"Terms","success":"Thanks. File received."},
+ "nl":{"__name":"Nederlands","heading":"Upload CMR / POD","dzText":"Sleep je document/foto hierheen","chooseFile":"Bestand kiezen","acceptText":"Toegestaan: PDF, JPG, PNG, HEIC · Max 25 MB","emailMeCopy":"Stuur mij een kopie","shareLocation":"Deel mijn locatie (optioneel)","submit":"Versturen","privacy":"Bestanden worden veilig verzonden en na levering verwijderd.","help":"Hulp nodig?","privacyNotice":"Privacyverklaring","terms":"Voorwaarden","success":"Bedankt. Bestand ontvangen."}
+}
