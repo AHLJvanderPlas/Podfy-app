@@ -1,5 +1,4 @@
-import { PDFDocument } from "pdf-lib";
-
+// functions/api/upload.js
 export const onRequestPost = async ({ request, env }) => {
   try {
     const ct = request.headers.get("content-type") || "";
@@ -51,20 +50,30 @@ export const onRequestPost = async ({ request, env }) => {
     const isPng = origType === "image/png" || /\.png$/i.test(safeName);
     const isJpg = origType === "image/jpeg" || /\.jpe?g$/i.test(safeName);
 
-    let bodyToStore;            // ArrayBuffer / Uint8Array
+    // Try to import pdf-lib, but fall back gracefully if unavailable
+    let PDFDocument = null;
+    try {
+      ({ PDFDocument } = await import("pdf-lib"));
+    } catch {
+      // no-op: conversion will be skipped
+    }
+
+    let bodyToStore;            // ArrayBuffer | Uint8Array
     let storedMime;             // string
     let storedExt;              // string
     let conversionNote = "";    // for email text
 
+    const originalBytes = await file.arrayBuffer();
+
     if (isPdf) {
       // Pass-through
-      bodyToStore = await file.arrayBuffer();
+      bodyToStore = originalBytes;
       storedMime = "application/pdf";
       storedExt = "pdf";
       conversionNote = "No conversion (already PDF).";
-    } else if (isPng || isJpg) {
+    } else if ((isPng || isJpg) && PDFDocument) {
       // Convert single image → single-page PDF using pdf-lib
-      const imgBytes = new Uint8Array(await file.arrayBuffer());
+      const imgBytes = new Uint8Array(originalBytes);
       const pdfDoc = await PDFDocument.create();
       const image = isPng ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
       const width = image.width;
@@ -77,11 +86,13 @@ export const onRequestPost = async ({ request, env }) => {
       storedExt = "pdf";
       conversionNote = `Converted ${isPng ? "PNG" : "JPEG"} → PDF.`;
     } else {
-      // Pass-through for other types (DOCX, HEIC, etc.). Extend later if you wish.
-      bodyToStore = await file.arrayBuffer();
+      // Pass-through for other types OR when pdf-lib is not available
+      bodyToStore = originalBytes;
       storedMime = origType;
       storedExt = origExt;
-      conversionNote = "No conversion (unsupported type).";
+      conversionNote = isPng || isJpg
+        ? "No conversion (pdf-lib unavailable)."
+        : "No conversion (unsupported type).";
     }
 
     const base = `${slug || "pod"}_${ymd}_${hms}_${id}`;
@@ -155,7 +166,7 @@ Location: ${lat && lon ? `${lat},${lon} (±${acc || "?"} m) at ${loc_ts || "?"}`
       headers: { "content-type": "application/json" }
     });
   } catch (err) {
-    // Optionally log: console.error(err)
+    // console.error(err); // (optional) log in Workers dashboard
     return new Response("Upload failed", { status: 500 });
   }
 };
