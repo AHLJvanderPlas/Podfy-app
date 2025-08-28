@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Block API endpoints from being crawled
+Disallow: /api/
+
+# (Optional) When you have one:
+Sitemap: https://podfy.app/sitemap.xml
