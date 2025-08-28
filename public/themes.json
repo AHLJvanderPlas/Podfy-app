@@ -1,7 +1,7 @@
 {
   "default": {
     "brandName": "PODFY",
-    "logo": "/logos/default.svg",
+    "logo": "/logos/podfy.svg",
     "mailTo": "ops@podfy.app",
     "colors": {
       "primary": "#000000",
@@ -12,7 +12,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/default.svg"
+    "favicon": "/logos/podfy.svg"
   },
 
   "dsv": {
