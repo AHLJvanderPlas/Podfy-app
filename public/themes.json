@@ -1,58 +1,129 @@
 {
   "default": {
     "brandName": "PODFY",
-    "logo": "/logos/podfy.svg",
+    "logo": "/logos/default.svg",
     "mailTo": "ops@podfy.app",
-    "colors": {"primary": "#000000","accent": "#1F2937","text": "#0B1220", "muted": "#6B7280","border": "#E5E7EB","buttonText": "#FFFFFF"},
-    "header": {"bg":"#FFFFFF"},
-    "favicon": "/logos/podfy.svg"
+    "colors": {
+      "primary": "#000000",
+      "accent": "#1F2937",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/default.svg"
   },
+
   "dsv": {
     "brandName": "DSV",
     "logo": "/logos/dsv.svg",
     "mailTo": "pod+dsv@podfy.app",
-    "colors": {"primary":"#0A1E3A","accent":"#102B52","text":"#0B1220","muted":"#4B5563","border":"#E6EAF0","buttonText":"#FFFFFF"},
-    "header": {"bg":"#FFFFFF"},
+    "colors": {
+      "primary": "#0A1E3A",
+      "accent": "#102B52",
+      "text": "#0B1220",
+      "muted": "#4B5563",
+      "border": "#E6EAF0",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
     "favicon": "/logos/dsv.svg"
-  }
-  "new-balance": {
-    "brandName": "New Balance",
-    "logo": "/logos/new-balance.svg",
-    "mailTo": "pod+new-balance@podfy.app",
-    "colors": {"primary": "#E21834", "accent": "#A91227", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
-    "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/new-balance.svg"
-  }
-  "maersk": {
-    "brandName": "Maersk",
-    "logo": "/logos/maersk.svg",
-    "mailTo": "pod+maersk@podfy.app",
-    "colors": {"primary": "#0099CC", "accent": "#006D91", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
-    "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/maersk.svg"
-  }
+  },
+
   "dhl": {
     "brandName": "DHL",
     "logo": "/logos/dhl.svg",
     "mailTo": "pod+dhl@podfy.app",
-    "colors": {"primary": "#FFCC00", "accent": "#D40511", "text": "#111111", "muted": "#555555", "border": "#E5E7EB", "buttonText": "#111111"},
+    "colors": {
+      "primary": "#FFCC00",
+      "accent": "#D40511",
+      "text": "#111111",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#111111"
+    },
     "header": { "bg": "#FFFFFF" },
     "favicon": "/logos/dhl.svg"
-  }
-  "netgear": {
-    "brandName": "NETGEAR",
-    "logo": "/logos/netgear.svg",
-    "mailTo": "pod+netgear@podfy.app",
-    "colors": {"primary": "#4B179F", "accent": "#2E0D6E", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
+  },
+
+  "maersk": {
+    "brandName": "Maersk",
+    "logo": "/logos/maersk.svg",
+    "mailTo": "pod+maersk@podfy.app",
+    "colors": {
+      "primary": "#0099CC",
+      "accent": "#006D91",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/netgear.svg"
-  }
+    "favicon": "/logos/maersk.svg"
+  },
+
+  "new-balance": {
+    "brandName": "New Balance",
+    "logo": "/logos/new-balance.svg",
+    "mailTo": "pod+new-balance@podfy.app",
+    "colors": {
+      "primary": "#E21836",
+      "accent": "#990F22",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/new-balance.svg"
+  },
+
+  "bugaboo": {
+    "brandName": "Bugaboo",
+    "logo": "/logos/bugaboo.svg",
+    "mailTo": "pod+bugaboo@podfy.app",
+    "colors": {
+      "primary": "#000000",
+      "accent": "#4B5563",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/bugaboo.svg"
+  },
+
   "fender": {
     "brandName": "Fender",
     "logo": "/logos/fender.svg",
     "mailTo": "pod+fender@podfy.app",
-    "colors": {"primary": "#B80000", "accent": "#7A0000", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
+    "colors": {
+      "primary": "#B80000",
+      "accent": "#7A0000",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
     "header": { "bg": "#FFFFFF" },
     "favicon": "/logos/fender.svg"
+  },
+
+  "netgear": {
+    "brandName": "NETGEAR",
+    "logo": "/logos/netgear.svg",
+    "mailTo": "pod+netgear@podfy.app",
+    "colors": {
+      "primary": "#4B179F",
+      "accent": "#2E0D6E",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/netgear.svg"
   }
 }
