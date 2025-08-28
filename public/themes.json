@@ -3,10 +3,7 @@
     "brandName": "PODFY",
     "logo": "/logos/default.svg",
     "mailTo": "ops@podfy.app",
-    "colors": {
-      "primary": "#000000","accent": "#1F2937","text": "#0B1220",
-      "muted": "#6B7280","border": "#E5E7EB","buttonText": "#FFFFFF"
-    },
+    "colors": {"primary": "#000000","accent": "#1F2937","text": "#0B1220", "muted": "#6B7280","border": "#E5E7EB","buttonText": "#FFFFFF"},
     "header": {"bg":"#FFFFFF"},
     "favicon": "/logos/default.svg"
   },
@@ -18,4 +15,13 @@
     "header": {"bg":"#FFFFFF"},
     "favicon": "/logos/dsv.svg"
   }
+  "new-balance": {
+    "brandName": "New Balance",
+    "logo": "/logos/new-balance.svg",
+    "mailTo": "pod+new-balance@podfy.app",
+    "colors": {"primary": "#E21834", "accent": "#A91227", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/new-balance.svg"
+  }
+  
 }
