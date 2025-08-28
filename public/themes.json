@@ -23,5 +23,36 @@
     "header": { "bg": "#FFFFFF" },
     "favicon": "/logos/new-balance.svg"
   }
-  
+  "maersk": {
+    "brandName": "Maersk",
+    "logo": "/logos/maersk.svg",
+    "mailTo": "pod+maersk@podfy.app",
+    "colors": {"primary": "#0099CC", "accent": "#006D91", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/maersk.svg"
+  }
+  "dhl": {
+    "brandName": "DHL",
+    "logo": "/logos/dhl.svg",
+    "mailTo": "pod+dhl@podfy.app",
+    "colors": {"primary": "#FFCC00", "accent": "#D40511", "text": "#111111", "muted": "#555555", "border": "#E5E7EB", "buttonText": "#111111"},
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/dhl.svg"
+  }
+  "netgear": {
+    "brandName": "NETGEAR",
+    "logo": "/logos/netgear.svg",
+    "mailTo": "pod+netgear@podfy.app",
+    "colors": {"primary": "#4B179F", "accent": "#2E0D6E", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/netgear.svg"
+  }
+  "fender": {
+    "brandName": "Fender",
+    "logo": "/logos/fender.svg",
+    "mailTo": "pod+fender@podfy.app",
+    "colors": {"primary": "#B80000", "accent": "#7A0000", "text": "#0B1220", "muted": "#6B7280", "border": "#E5E7EB", "buttonText": "#FFFFFF"},
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/fender.svg"
+  }
 }
