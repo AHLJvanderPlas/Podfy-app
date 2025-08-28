@@ -1,4 +1,30 @@
+# PODFY Upload — Cloudflare Pages + Functions
 
+Minimal, production-ready upload tool for CMR/POD files with slug-based branding, EU translations, optional GPS, per-slug mail routing, and image→PDF conversion at the edge.
+
+- Frontend: static site (HTML/CSS/JS) served by **Cloudflare Pages**
+- API: **Pages Function** at `/api/upload`
+- Storage: **Cloudflare R2**
+- Mail: **MailChannels** (built into Workers)
+- Themable per customer via `themes.json` (logo, colors, mailbox)
+
+---
+
+## Contents
+
+podfy-app/
+├─ public/
+│ ├─ index.html # UI
+│ ├─ styles.css # All-white base; themed by CSS variables
+│ ├─ main.js # Slug theming, i18n, GPS, upload
+│ ├─ themes.json # Per-slug branding + routing
+│ ├─ i18n.json # UI strings (EN + EU languages)
+│ └─ logos/ # Brand assets (SVG/PNG)
+├─ functions/
+│ ├─ package.json # pdf-lib dependency for image→PDF
+│ └─ api/
+│ └─ upload.js # Pages Function (R2 + MailChannels)
+└─ wrangler.toml # Optional for local dev
 ---
 
 ## Quick start (Cloudflare Pages)
