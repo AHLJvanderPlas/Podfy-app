@@ -1,11 +1,11 @@
 {
   "default": {
     "brandName": "PODFY",
-    "logo": "/logos/default.svg",
+    "logo": "/logos/podfy_full_logo_gray.svg",
     "mailTo": "ops@podfy.app",
     "colors": {"primary": "#000000","accent": "#1F2937","text": "#0B1220", "muted": "#6B7280","border": "#E5E7EB","buttonText": "#FFFFFF"},
     "header": {"bg":"#FFFFFF"},
-    "favicon": "/logos/default.svg"
+    "favicon": "/logos/podfy_full_logo_gray.svg"
   },
   "dsv": {
     "brandName": "DSV",
