@@ -50,47 +50,45 @@ export const onRequestPost = async ({ request, env }) => {
     const isPng = origType === "image/png" || /\.png$/i.test(safeName);
     const isJpg = origType === "image/jpeg" || /\.jpe?g$/i.test(safeName);
 
-    // Try to import pdf-lib, but fall back gracefully if unavailable
+    // Try to import pdf-lib dynamically; fall back if unavailable
     let PDFDocument = null;
     try {
       ({ PDFDocument } = await import("pdf-lib"));
     } catch {
-      // no-op: conversion will be skipped
+      // pdf-lib not installed; we will skip conversion gracefully
     }
 
-    let bodyToStore;            // ArrayBuffer | Uint8Array
-    let storedMime;             // string
-    let storedExt;              // string
-    let conversionNote = "";    // for email text
+    let bodyToStore;         // ArrayBuffer | Uint8Array
+    let storedMime;          // string
+    let storedExt;           // string
+    let conversionNote = ""; // for email text
 
     const originalBytes = await file.arrayBuffer();
 
     if (isPdf) {
-      // Pass-through
       bodyToStore = originalBytes;
       storedMime = "application/pdf";
       storedExt = "pdf";
       conversionNote = "No conversion (already PDF).";
     } else if ((isPng || isJpg) && PDFDocument) {
-      // Convert single image → single-page PDF using pdf-lib
+      // JPEG/PNG → single-page PDF
       const imgBytes = new Uint8Array(originalBytes);
       const pdfDoc = await PDFDocument.create();
       const image = isPng ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
-      const width = image.width;
-      const height = image.height;
+      const width = image.width, height = image.height;
       const page = pdfDoc.addPage([width, height]);
       page.drawImage(image, { x: 0, y: 0, width, height });
       const pdfBytes = await pdfDoc.save();
-      bodyToStore = pdfBytes;               // Uint8Array
+      bodyToStore = pdfBytes; // Uint8Array
       storedMime = "application/pdf";
       storedExt = "pdf";
       conversionNote = `Converted ${isPng ? "PNG" : "JPEG"} → PDF.`;
     } else {
-      // Pass-through for other types OR when pdf-lib is not available
+      // Pass-through for other types OR when pdf-lib isn't available
       bodyToStore = originalBytes;
       storedMime = origType;
       storedExt = origExt;
-      conversionNote = isPng || isJpg
+      conversionNote = (isPng || isJpg)
         ? "No conversion (pdf-lib unavailable)."
         : "No conversion (unsupported type).";
     }
@@ -165,8 +163,7 @@ Location: ${lat && lon ? `${lat},${lon} (±${acc || "?"} m) at ${loc_ts || "?"}`
       status: 200,
       headers: { "content-type": "application/json" }
     });
-  } catch (err) {
-    // console.error(err); // (optional) log in Workers dashboard
+  } catch {
     return new Response("Upload failed", { status: 500 });
   }
 };
