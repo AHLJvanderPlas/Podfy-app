@@ -1,0 +1,10 @@
+name = "podfy-app"
+main = "functions/worker.js"
+compatibility_date = "2024-12-01"
+
+[[r2_buckets]]
+binding = "PODFY_BUCKET"
+bucket_name = "podfy-uploads"
+
+[vars]
+MAIL_DOMAIN = "podfy.app"
