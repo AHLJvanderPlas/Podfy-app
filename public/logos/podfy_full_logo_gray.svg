@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="200" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .st0{fill:none;stroke:#555555;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+    .word{font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'Noto Sans', 'Liberation Sans', sans-serif; font-weight:700; fill:#555555}
+  </style>
+  <g transform="translate(20,20) scale(2.4)">
+    <path class="st0" d="M8 22 L32 10 L56 22 L56 42 L32 54 L8 42 Z" />
+    <path class="st0" d="M32 54 L32 34" />
+    <path class="st0" d="M14 36 L24 36" />
+    <path class="st0" d="M24 36 L30 40 L24 44 Z" />
+    <path class="st0" d="M38 36 L42 41 L50 31" />
+  </g>
+  <text class="word" x="260" y="120" font-size="88">Podfy</text>
+</svg>
