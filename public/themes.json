@@ -17,15 +17,15 @@
 
   "dsv": {
     "brandName": "DSV",
-    "logo": "/logos/dsv.svg",
+    "logo": "/logos/dsvw.svg",
     "mailTo": "pod+dsv@podfy.app",
     "colors": {
-      "primary": "#0A1E3A",
-      "accent": "#102B52",
+      "primary": "#002664",
+      "accent": "#002664",
       "text": "#0B1220",
       "muted": "#4B5563",
       "border": "#E6EAF0",
-      "buttonText": "#FFFFFF"
+      "buttonText": "#002664"
     },
     "header": { "bg": "#FFFFFF" },
     "favicon": "/logos/podfy-favicon.svg"
