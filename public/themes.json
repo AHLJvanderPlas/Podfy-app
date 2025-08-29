@@ -225,8 +225,8 @@
     "logo": "/logos/furore.svg",
     "mailTo": "pod+furore@podfy.app",
     "colors": {
-      "primary": "#111111",
-      "accent": "#9CA3AF",
+      "primary": "#1B3A1E",
+      "accent": "#1B3A1E",
       "text": "#0B1220",
       "muted": "#6B7280",
       "border": "#E5E7EB",
