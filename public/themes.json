@@ -25,9 +25,9 @@
       "text": "#0B1220",
       "muted": "#4B5563",
       "border": "#E6EAF0",
-      "buttonText": "#002664"
+      "buttonText": "#FFFFFF"
     },
-    "header": { "bg": "#FFFFFF" },
+    "header": { "bg": "#002664" },
     "favicon": "/logos/podfy-favicon.svg"
   },
 
