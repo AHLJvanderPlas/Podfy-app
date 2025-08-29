@@ -232,7 +232,7 @@
       "border": "#E5E7EB",
       "buttonText": "#FFFFFF"
     },
-    "header": { "bg": "#FFFFFF" },
+    "header": { "bg": "#1B3A1E" },
     "favicon": "/logos/furore.svg",
     "status": "Pilot"
   }
