@@ -43,7 +43,7 @@
       "border": "#E5E7EB",
       "buttonText": "#111111"
     },
-    "header": { "bg": "#FFFFFF" },
+    "header": { "bg": "#FFCC00" },
     "favicon": "/logos/podfy-favicon.svg"
   },
 
