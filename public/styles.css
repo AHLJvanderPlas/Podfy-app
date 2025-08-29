@@ -145,3 +145,63 @@ h1{ margin:16px 0 24px; font-size:32px; line-height:1.2 }
   overflow: auto;            /* scroll if needed */
   overscroll-behavior: contain;
 }
+/* --- Drop area hero --- */
+.dz-wrap { margin: 16px 0 8px; }
+
+.dropzone.dz-hero{
+  border:2px dashed var(--brand-border);
+  border-radius:10px;
+  background:#fff;
+  min-height:240px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:36px 24px;
+}
+
+.dz-icon{
+  width:72px; height:72px;
+  opacity:.75;
+  filter: grayscale(100%);
+  margin-bottom:12px;
+}
+
+.dz-title{
+  font-size:20px;
+  line-height:1.2;
+  margin:4px 0;
+}
+
+.dz-sub{
+  color:var(--brand-muted);
+  margin:6px 0 14px;
+}
+
+.dz-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin:2px 0 8px;
+}
+
+.dz-constraints{
+  margin-top:8px;
+  color:var(--brand-muted);
+  font-size:14px;
+}
+
+/* Buttons used inside the drop area */
+.btn{
+  border:1px solid var(--brand-border);
+  border-radius:10px;
+  background:#fff;
+  padding:10px 14px;
+  cursor:pointer;
+}
+.btn:hover{ background:#f8f8f8 }
+
+/* Keep hover background when dragging over */
+.dropzone.dz-hero.dragover{ background:#fafafa; }
