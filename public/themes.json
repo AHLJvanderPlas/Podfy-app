@@ -125,82 +125,85 @@
     },
     "header": { "bg": "#FFFFFF" },
     "favicon": "/logos/podfy-favicon.svg"
-  }
+  },
 
   "shell": {
-  "brandName": "Shell",
-  "logo": "/logos/shell.svg",
-  "mailTo": "pod+shell@podfy.app",
-  "colors": {
-    "primary": "#FFCD00",
-    "accent": "#DA291C",
-    "text": "#0B1220",
-    "muted": "#6B7280",
-    "border": "#E5E7EB",
-    "buttonText": "#111111"
+    "brandName": "Shell",
+    "logo": "/logos/shell.svg",
+    "mailTo": "pod+shell@podfy.app",
+    "colors": {
+      "primary": "#FFCD00",
+      "accent": "#DA291C",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#111111"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/shell.svg"
   },
-  "header": { "bg": "#FFFFFF" },
-  "favicon": "/logos/shell.svg"
-}
-  "db-schenker": {
-  "brandName": "DB Schenker",
-  "logo": "/logos/db-schenker.svg",
-  "mailTo": "pod+db-schenker@podfy.app",
-  "colors": {
-    "primary": "#EC0016",
-    "accent": "#A91227",
-    "text": "#0B1220",
-    "muted": "#6B7280",
-    "border": "#E5E7EB",
-    "buttonText": "#FFFFFF"
-  },
-  "header": { "bg": "#FFFFFF" },
-  "favicon": "/logos/db-schenker.svg"
-},
-"kuehne-nagel": {
-  "brandName": "Kuehne+Nagel",
-  "logo": "/logos/kuehne-nagel.svg",
-  "mailTo": "pod+kuehne-nagel@podfy.app",
-  "colors": {
-    "primary": "#003369",
-    "accent": "#00C5F5",
-    "text": "#0B1220",
-    "muted": "#6B7280",
-    "border": "#E5E7EB",
-    "buttonText": "#FFFFFF"
-  },
-  "header": { "bg": "#FFFFFF" },
-  "favicon": "/logos/kuehne-nagel.svg"
-},
-"geodis": {
-  "brandName": "GEODIS",
-  "logo": "/logos/geodis.svg",
-  "mailTo": "pod+geodis@podfy.app",
-  "colors": {
-    "primary": "#3200E6",
-    "accent": "#26667F",
-    "text": "#0B1220",
-    "muted": "#6B7280",
-    "border": "#E5E7EB",
-    "buttonText": "#FFFFFF"
-  },
-  "header": { "bg": "#FFFFFF" },
-  "favicon": "/logos/geodis.svg"
-},
-"rhenus": {
-  "brandName": "Rhenus",
-  "logo": "/logos/rhenus.svg",
-  "mailTo": "pod+rhenus@podfy.app",
-  "colors": {
-    "primary": "#134C95",
-    "accent": "#FBBB01",
-    "text": "#0B1220",
-    "muted": "#6B7280",
-    "border": "#E5E7EB",
-    "buttonText": "#FFFFFF"
-  },
-  "header": { "bg": "#FFFFFF" },
-  "favicon": "/logos/rhenus.svg"
-}
 
+  "db-schenker": {
+    "brandName": "DB Schenker",
+    "logo": "/logos/db-schenker.svg",
+    "mailTo": "pod+db-schenker@podfy.app",
+    "colors": {
+      "primary": "#EC0016",
+      "accent": "#A91227",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/db-schenker.svg"
+  },
+
+  "kuehne-nagel": {
+    "brandName": "Kuehne+Nagel",
+    "logo": "/logos/kuehne-nagel.svg",
+    "mailTo": "pod+kuehne-nagel@podfy.app",
+    "colors": {
+      "primary": "#003369",
+      "accent": "#00C5F5",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/kuehne-nagel.svg"
+  },
+
+  "geodis": {
+    "brandName": "GEODIS",
+    "logo": "/logos/geodis.svg",
+    "mailTo": "pod+geodis@podfy.app",
+    "colors": {
+      "primary": "#3200E6",
+      "accent": "#26667F",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/geodis.svg"
+  },
+
+  "rhenus": {
+    "brandName": "Rhenus",
+    "logo": "/logos/rhenus.svg",
+    "mailTo": "pod+rhenus@podfy.app",
+    "colors": {
+      "primary": "#134C95",
+      "accent": "#FBBB01",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/rhenus.svg"
+  }
 }
