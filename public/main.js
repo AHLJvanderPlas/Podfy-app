@@ -304,6 +304,7 @@ const enableSubmitIfFile = () => {
         // Reset inputs
         if (fileInput) fileInput.value = '';
         if (cameraInput) cameraInput.value = '';
+        document.getElementById('dropzone')?.classList.remove('ready');
         submitBtn.disabled = true;
       } catch (err) {
         statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
