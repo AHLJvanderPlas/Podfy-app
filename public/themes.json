@@ -177,7 +177,7 @@
 
   "geodis": {
     "brandName": "GEODIS",
-    "logo": "/logos/geodis.svg",
+    "logo": "/logos/geodisw.svg",
     "mailTo": "pod+geodis@podfy.app",
     "colors": {
       "primary": "#3200E6",
@@ -187,7 +187,7 @@
       "border": "#E5E7EB",
       "buttonText": "#FFFFFF"
     },
-    "header": { "bg": "#FFFFFF" },
+    "header": { "bg": "#3200E6" },
     "favicon": "/logos/geodis.svg"
   },
 
