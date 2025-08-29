@@ -161,8 +161,8 @@
 
   "kuehne-nagel": {
     "brandName": "Kuehne+Nagel",
-    "logo": "/logos/kuehne-nagel.svg",
-    "mailTo": "pod+kuehne-nagel@podfy.app",
+    "logo": "/logos/kuehne+nagel.svg",
+    "mailTo": "pod+kuehne+nagel@podfy.app",
     "colors": {
       "primary": "#003369",
       "accent": "#00C5F5",
@@ -172,7 +172,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/kuehne-nagel.svg"
+    "favicon": "/logos/kuehne+nagel.svg"
   },
 
   "geodis": {
