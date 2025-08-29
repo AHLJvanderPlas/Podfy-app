@@ -17,11 +17,24 @@ export const onRequestPost = async ({ request, env }) => {
     const slugKnown = String(form.get("slug_known") || "").trim() === "1";
     const slug = slugKnown ? slugOriginal : "default";
 
+    // Optional uploader email (copy)
     const emailCopy = form.get("email") ? String(form.get("email")) : "";
+
+    // Optional client-provided GPS
     const lat = form.get("lat") || "";
     const lon = form.get("lon") || "";
     const acc = form.get("acc") || "";
     const loc_ts = form.get("loc_ts") || "";
+
+    // Server-side approximate IP geo (no prompt)
+    const cf = request.cf || {};
+    const ip_lat = cf.latitude ? String(cf.latitude) : "";
+    const ip_lon = cf.longitude ? String(cf.longitude) : "";
+    const ip_city = cf.city || "";
+    const ip_country = cf.country || "";
+    const ip_region = cf.region || "";
+    const ip_continent = cf.continent || "";
+    const ip_co = cf.colo || "";
 
     // Load per-slug config
     const themesRes = await fetch(new URL("/themes.json", request.url));
@@ -42,98 +55,58 @@ export const onRequestPost = async ({ request, env }) => {
     const id = crypto.randomUUID().slice(0, 8);
 
     const safeName = (file.name || "upload.bin").replace(/[^A-Za-z0-9_.-]/g, "_");
-    const origExt = safeName.includes(".") ? safeName.split(".").pop() : "bin";
-    const origType = file.type || "application/octet-stream";
-
-    // Decide whether to convert to PDF
-    const isPdf = origType === "application/pdf" || /\.pdf$/i.test(safeName);
-    const isPng = origType === "image/png" || /\.png$/i.test(safeName);
-    const isJpg = origType === "image/jpeg" || /\.jpe?g$/i.test(safeName);
-
-    // Try to import pdf-lib dynamically; fall back if unavailable
-    let PDFDocument = null;
-    try {
-      ({ PDFDocument } = await import("pdf-lib"));
-    } catch {
-      // pdf-lib not installed; we will skip conversion gracefully
-    }
-
-    let bodyToStore;         // ArrayBuffer | Uint8Array
-    let storedMime;          // string
-    let storedExt;           // string
-    let conversionNote = ""; // for email text
-
-    const originalBytes = await file.arrayBuffer();
-
-    if (isPdf) {
-      bodyToStore = originalBytes;
-      storedMime = "application/pdf";
-      storedExt = "pdf";
-      conversionNote = "No conversion (already PDF).";
-    } else if ((isPng || isJpg) && PDFDocument) {
-      // JPEG/PNG → single-page PDF
-      const imgBytes = new Uint8Array(originalBytes);
-      const pdfDoc = await PDFDocument.create();
-      const image = isPng ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
-      const width = image.width, height = image.height;
-      const page = pdfDoc.addPage([width, height]);
-      page.drawImage(image, { x: 0, y: 0, width, height });
-      const pdfBytes = await pdfDoc.save();
-      bodyToStore = pdfBytes; // Uint8Array
-      storedMime = "application/pdf";
-      storedExt = "pdf";
-      conversionNote = `Converted ${isPng ? "PNG" : "JPEG"} → PDF.`;
-    } else {
-      // Pass-through for other types OR when pdf-lib isn't available
-      bodyToStore = originalBytes;
-      storedMime = origType;
-      storedExt = origExt;
-      conversionNote = (isPng || isJpg)
-        ? "No conversion (pdf-lib unavailable)."
-        : "No conversion (unsupported type).";
-    }
-
+    const ext = safeName.includes(".") ? safeName.split(".").pop() : "bin";
+    const mime = file.type || "application/octet-stream";
     const base = `${slug || "pod"}_${ymd}_${hms}_${id}`;
-    const key = `${y}/${m}/${base}.${storedExt}`;
+    const key = `${y}/${m}/${base}.${ext}`;
 
-    // Store in R2 with metadata
-    await env.PODFY_BUCKET.put(key, bodyToStore, {
+    // Store original file as-is in R2
+    await env.PODFY_BUCKET.put(key, file.stream(), {
       httpMetadata: {
-        contentType: storedMime,
-        contentDisposition: `attachment; filename="${base}.${storedExt}"`
+        contentType: mime,
+        contentDisposition: `attachment; filename="${base}.${ext}"`
       },
       customMetadata: {
         slug,
         slug_original: slugOriginal,
         slug_known: String(slugKnown),
         orig_name: safeName,
-        orig_type: origType,
-        converted_to: storedMime,
-        conversion_note: conversionNote,
+        orig_type: mime,
         uploader_email: emailCopy || "",
+        // client GPS (if provided)
         lat: String(lat || ""),
         lon: String(lon || ""),
         acc: String(acc || ""),
-        loc_ts: String(loc_ts || "")
+        loc_ts: String(loc_ts || ""),
+        // IP-based geo
+        ip_lat, ip_lon, ip_city, ip_region, ip_country, ip_continent, ip_co
       }
     });
 
-    // Email via MailChannels
+    // Emails (ops + optional copy)
     const fromEmail = env.MAIL_FROM || `noreply@${env.MAIL_DOMAIN || "podfy.app"}`;
     const subject =
       `[PODFY] ${slug.toUpperCase()} ${ymd} ${hms} (${safeName})` +
       (slugKnown ? "" : ` [UNKNOWN:${slugOriginal}]`);
+
+    const locLineClient = (lat && lon)
+      ? `${lat},${lon} (±${acc || "?"} m) at ${loc_ts || "?"}`
+      : "Not provided";
+    const locLineIP = (ip_lat && ip_lon)
+      ? `${ip_lat},${ip_lon} (${ip_city || "?"}, ${ip_region || "?"}, ${ip_country || "?"})`
+      : "Not available";
+
     const text =
 `A new POD/CMR was uploaded.
 
 Slug used: ${slug}
 Original slug: ${slugOriginal} (${slugKnown ? "known" : "UNKNOWN"})
-Original file: ${safeName} (${origType})
+Original file: ${safeName} (${mime})
 Stored: r2://${key}
-Conversion: ${conversionNote}
 
-Email copy requested: ${emailCopy ? "Yes" : "No"}
-Location: ${lat && lon ? `${lat},${lon} (±${acc || "?"} m) at ${loc_ts || "?"}` : "Not provided"}
+Uploader email copy requested: ${emailCopy ? "Yes" : "No"}
+Client GPS (permission-based): ${locLineClient}
+Server IP-based location: ${locLineIP}
 `;
 
     const send = (msg) =>
@@ -143,6 +116,7 @@ Location: ${lat && lon ? `${lat},${lon} (±${acc || "?"} m) at ${loc_ts || "?"}`
         body: JSON.stringify(msg)
       });
 
+    // Ops email
     await send({
       personalizations: [{ to: [{ email: mailTo }] }],
       from: { email: fromEmail, name: "PODFY" },
@@ -150,16 +124,18 @@ Location: ${lat && lon ? `${lat},${lon} (±${acc || "?"} m) at ${loc_ts || "?"}`
       content: [{ type: "text/plain", value: text }]
     });
 
+    // Copy to uploader if provided
     if (emailCopy) {
       await send({
         personalizations: [{ to: [{ email: emailCopy }] }],
         from: { email: fromEmail, name: theme.brandName || "PODFY" },
+        reply_to: [{ email: mailTo }],
         subject: "Copy of your uploaded POD/CMR",
         content: [{ type: "text/plain", value: `Thanks. Your file has been received.\nReference: ${base}` }]
       });
     }
 
-    return new Response(JSON.stringify({ ok: true, key, name: `${base}.${storedExt}` }), {
+    return new Response(JSON.stringify({ ok: true, key, name: `${base}.${ext}` }), {
       status: 200,
       headers: { "content-type": "application/json" }
     });
