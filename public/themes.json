@@ -12,7 +12,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/podfy-favicon.svg"
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Implemented"
   },
 
   "dsv": {
@@ -28,7 +29,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#002664" },
-    "favicon": "/logos/podfy-favicon.svg"
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Pilot"
   },
 
   "dhl": {
@@ -44,7 +46,8 @@
       "buttonText": "#111111"
     },
     "header": { "bg": "#FFCC00" },
-    "favicon": "/logos/podfy-favicon.svg"
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Demo"
   },
 
   "maersk": {
@@ -60,7 +63,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/podfy-favicon.svg"
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Demo"
   },
 
   "new-balance": {
@@ -76,7 +80,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/podfy-favicon.svg"
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Demo"
   },
 
   "bugaboo": {
@@ -92,7 +97,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/bugaboo-favicon.svg"
+    "favicon": "/logos/bugaboo-favicon.svg",
+    "status": "Demo"
   },
 
   "fender": {
@@ -108,7 +114,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/podfy-favicon.svg"
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Demo"
   },
 
   "netgear": {
@@ -124,7 +131,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/podfy-favicon.svg"
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Demo"
   },
 
   "shell": {
@@ -140,7 +148,8 @@
       "buttonText": "#111111"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/shell.svg"
+    "favicon": "/logos/shell.svg",
+    "status": "Demo"
   },
 
   "db-schenker": {
@@ -156,7 +165,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/db-schenker.svg"
+    "favicon": "/logos/db-schenker.svg",
+    "status": "Demo"
   },
 
   "kuehne+nagel": {
@@ -172,7 +182,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/kuehne+nagel.svg"
+    "favicon": "/logos/kuehne+nagel.svg",
+    "status": "Demo"
   },
 
   "geodis": {
@@ -188,7 +199,8 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#3200E6" },
-    "favicon": "/logos/geodis.svg"
+    "favicon": "/logos/geodis.svg",
+    "status": "Demo"
   },
 
   "rhenus": {
@@ -204,6 +216,24 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/rhenus.svg"
+    "favicon": "/logos/rhenus.svg",
+    "status": "Demo"
+  },
+
+  "furore": {
+    "brandName": "Furore",
+    "logo": "/logos/furore.svg",
+    "mailTo": "pod+furore@podfy.app",
+    "colors": {
+      "primary": "#111111",
+      "accent": "#9CA3AF",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/furore.svg",
+    "status": "Pilot"
   }
 }
