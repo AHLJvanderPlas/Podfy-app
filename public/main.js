@@ -71,42 +71,86 @@
     return 'en';
   }
 
-  function applyLang(code) {
-    const dict = strings[code] || strings['en'] || {};
-    qsa('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      if (dict[key]) el.textContent = dict[key];
-    });
-    currentLang = code;
-    localStorage.setItem('podfy_lang', code);
-    // Reflect current language on button
-    const label = dict.__name ? dict.__name : code.toUpperCase();
-    if (translateBtn) translateBtn.textContent = label;
-  }
+function applyLang(code) {
+  const dict = strings[code] || strings['en'] || {};
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
 
-  function buildLangMenu() {
-    if (!langMenu) return;
-    langMenu.innerHTML = '';
+  currentLang = code;
+  localStorage.setItem('podfy_lang', code);
 
-    // Show all languages in i18n.json, sorted by localized name
-    const entries = Object.keys(strings).map(k => ({
-      key: k,
-      name: strings[k].__name || k
-    })).sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  const label = dict.__name ? dict.__name : code.toUpperCase();
+  (document.getElementById('currentLangLabel') || document.getElementById('translateBtn')).textContent = label;
 
-    entries.forEach(({ key, name }) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = name;
-      b.setAttribute('data-lang', key);
-      if (key === currentLang) b.style.fontWeight = '600';
-      b.addEventListener('click', () => {
-        applyLang(key);
-        langMenu.hidden = true;
-      });
-      langMenu.appendChild(b);
+  // reflect selection in menu
+  const menu = document.getElementById('langMenu');
+  if (menu) {
+    menu.querySelectorAll('.lang-item').forEach(btn => {
+      btn.setAttribute('aria-checked', String(btn.getAttribute('data-lang') === code));
     });
   }
+}
+
+function buildLangMenu() {
+  const menu = document.getElementById('langMenu');
+  if (!menu) return;
+
+  const entries = Object.keys(strings).map(k => ({
+    key: k,
+    name: strings[k].__name || k
+  })).sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
+
+  menu.innerHTML = '';
+  entries.forEach(({ key, name }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'lang-item';
+    btn.setAttribute('role', 'menuitemradio');
+    btn.setAttribute('data-lang', key);
+    btn.setAttribute('aria-checked', String(key === currentLang));
+
+    const bullet = document.createElement('span');
+    bullet.className = 'lang-bullet';
+
+    const label = document.createElement('span');
+    label.textContent = name;
+
+    btn.appendChild(bullet);
+    btn.appendChild(label);
+
+    btn.addEventListener('click', () => {
+      applyLang(key);
+      menu.hidden = true;
+      const trigger = document.getElementById('translateBtn');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    });
+
+    menu.appendChild(btn);
+  });
+}
+
+// Toggle open/close
+const translateBtnEl = document.getElementById('translateBtn');
+translateBtnEl?.addEventListener('click', () => {
+  const menu = document.getElementById('langMenu');
+  if (!menu) return;
+  const open = menu.hidden === false;
+  menu.hidden = open;
+  translateBtnEl.setAttribute('aria-expanded', String(!open));
+});
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('langMenu');
+  const btn  = document.getElementById('translateBtn');
+  if (!menu || !btn) return;
+  if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    if (menu.hidden === false) {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  }
+});
 
   // --------- Theme load ----------
   async function loadTheme() {
