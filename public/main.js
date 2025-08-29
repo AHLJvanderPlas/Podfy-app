@@ -192,9 +192,12 @@
     });
 
     // Dropzone visuals & wiring
-    const enableSubmitIfFile = () => {
-      submitBtn && (submitBtn.disabled = !(fileInput?.files && fileInput.files.length));
-    };
+const enableSubmitIfFile = () => {
+  const hasFile = !!(fileInput?.files && fileInput.files.length);
+  if (submitBtn) submitBtn.disabled = !hasFile;
+  // color the icon when a file is ready
+  document.getElementById('dropzone')?.classList.toggle('ready', hasFile);
+};
 
     chooseBtn?.addEventListener('click', () => fileInput?.click());
     cameraBtn?.addEventListener('click', () => cameraInput?.click());
