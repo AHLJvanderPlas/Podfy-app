@@ -126,4 +126,21 @@
     "header": { "bg": "#FFFFFF" },
     "favicon": "/logos/podfy-favicon.svg"
   }
+
+  "shell": {
+  "brandName": "Shell",
+  "logo": "/logos/shell.svg",
+  "mailTo": "pod+shell@podfy.app",
+  "colors": {
+    "primary": "#FFCD00",
+    "accent": "#DA291C",
+    "text": "#0B1220",
+    "muted": "#6B7280",
+    "border": "#E5E7EB",
+    "buttonText": "#111111"
+  },
+  "header": { "bg": "#FFFFFF" },
+  "favicon": "/logos/shell.svg"
+}
+
 }
