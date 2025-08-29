@@ -9,6 +9,9 @@
 
 /public/themes.json
   Cache-Control: no-store
+  Access-Control-Allow-Origin: https://podfy.net
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
 
 /public/i18n.json
   Cache-Control: no-store
