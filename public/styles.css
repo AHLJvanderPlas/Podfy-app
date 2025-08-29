@@ -1,53 +1,131 @@
-/* Options row layout */
+:root {
+  --brand-primary:#000;           /* button bg */
+  --brand-accent:#1F2937;         /* accents, icons */
+  --brand-text:#0B1220;           /* body text */
+  --brand-muted:#6B7280;          /* helper text */
+  --brand-border:#E5E7EB;         /* borders */
+  --brand-button-text:#FFF;       /* button text */
+  --header-bg:#FFF;               /* header background */
+}
+
+* { box-sizing: border-box; }
+html,body { height:100%; }
+body {
+  margin:0;
+  font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  color:var(--brand-text);
+  background:#fff;
+}
+
+/* Banner (unknown slug notice) */
+.banner{
+  background:#FFF7ED;
+  border:1px solid #FED7AA;
+  color:#7C2D12;
+  margin:0 auto;
+  max-width:720px;
+  padding:12px 14px;
+  border-radius:8px;
+  margin-top:16px
+}
+.banner a{ color:#7C2D12; text-decoration:underline }
+
+/* Header */
+.site-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 20px; background:var(--header-bg);
+  border-bottom:1px solid var(--brand-border);
+}
+.brand img{ display:block; height:28px }
+
+/* Container */
+.container{ max-width:720px; margin:32px auto; padding:0 20px }
+h1{ margin:16px 0 24px; font-size:32px; line-height:1.2 }
+
+/* Dropzone */
+.dropzone{
+  border:2px dashed var(--brand-border);
+  border-radius:8px; padding:32px; text-align:center;
+  transition:background .15s ease
+}
+#fileInput{ display:none }
+
+/* Row below dropzone */
+.row{ display:flex; gap:16px; align-items:center; margin:16px 0 }
+.btn{
+  border:1px solid var(--brand-border);
+  border-radius:8px; padding:10px 14px; cursor:pointer;
+  background:#fff;
+}
+.help{ color:var(--brand-muted) }
+
+/* Options row (copy + location) */
 .options-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin: 16px 0;
+  display:flex; flex-wrap:wrap;
+  gap:12px 16px; align-items:center;
+  margin:12px 0 4px;
 }
-@media (min-width: 560px) {
-  .options-row { grid-template-columns: 1fr 1fr; }
+@media (min-width:640px){ .options-row{ gap:12px 24px } }
+
+.option{
+  position:relative;
+  display:inline-flex; align-items:center; gap:8px;
+  padding:4px 0; border:0; background:transparent;
 }
-.option {
-  display: grid;
-  grid-template-columns: auto 24px;
-  align-items: start;
-  gap: 8px;
-  position: relative;
-  padding: 8px 10px;
-  border: 1px solid var(--brand-border);
-  border-radius: 8px;
-  background: #fff;
+.checkbox{ display:inline-flex; align-items:center; gap:8px }
+
+/* Info “i” button + popover */
+.info-btn{
+  width:20px; height:20px; min-width:20px;
+  border-radius:50%; border:1px solid var(--brand-border);
+  font:12px/18px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:#fff; color:var(--brand-accent);
+  text-align:center; cursor:pointer;
 }
-.checkbox { display: inline-flex; align-items: center; gap: 8px; }
-.info-btn {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  border: 1px solid var(--brand-border);
-  font: 12px/20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  background: #fff;
-  cursor: pointer;
-  text-align: center;
-  color: var(--brand-accent);
+.info-btn:hover{ background:#f7f7f7 }
+.popover{
+  position:absolute; top:28px; left:0;
+  max-width:360px; padding:10px 12px;
+  border:1px solid var(--brand-border); background:#fff;
+  border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,.06);
+  z-index:20; color:var(--brand-text); font-size:14px
 }
-.info-btn:hover { background: #f6f6f6; }
-.popover {
-  position: absolute;
-  top: 42px; left: 10px;
-  max-width: 420px;
-  padding: 10px 12px;
-  border: 1px solid var(--brand-border);
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.06);
-  z-index: 10;
-  color: var(--brand-text);
-  font-size: 14px;
+
+/* Email field (appears only when “share copy” is checked) */
+.email-wrap{ margin-top:8px }
+.email-wrap input[type="email"]{
+  width:100%; max-width:480px;
+  padding:10px 12px; border:1px solid var(--brand-border); border-radius:8px
 }
-.email-wrap { margin-top: 8px; }
-.email-wrap input[type="email"] {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--brand-border);
-  border-radius: 8px;
+
+/* Submit */
+.primary{
+  margin-top:12px; border:none; border-radius:10px;
+  padding:12px 18px; background:var(--brand-primary);
+  color:var(--brand-button-text); cursor:pointer
 }
+.primary[disabled]{ opacity:.5; cursor:not-allowed }
+
+/* Small/help text + status */
+.small{ color:var(--brand-muted); margin-top:12px }
+.status{ margin-top:16px; min-height:24px }
+
+/* Footer */
+.site-footer{
+  display:flex; gap:28px; justify-content:center;
+  padding:24px; color:var(--brand-accent)
+}
+.site-footer a{ color:var(--brand-accent); text-decoration:none }
+.site-footer a:hover{ text-decoration:underline }
+
+/* Translate dropdown */
+.tools{ position:relative }
+.lang-menu{
+  position:absolute; right:0; top:40px; background:#fff;
+  border:1px solid var(--brand-border); border-radius:8px; padding:8px; min-width:160px
+}
+.lang-menu button{
+  display:block; width:100%; text-align:left;
+  padding:8px 10px; border:none; background:transparent; cursor:pointer
+}
+.lang-menu button:hover{ background:#f7f7f7 }
