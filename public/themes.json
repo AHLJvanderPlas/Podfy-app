@@ -165,7 +165,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/db-schenker.svg",
+    "favicon": "/logos/podfy-favicon.svg",
     "status": "Demo"
   },
 
@@ -182,7 +182,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/kuehne+nagel.svg",
+    "favicon": "/logos/podfy-favicon.svg",
     "status": "Demo"
   },
 
@@ -199,7 +199,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#3200E6" },
-    "favicon": "/logos/geodis.svg",
+    "favicon": "/logos/podfy-favicon.svg",
     "status": "Demo"
   },
 
@@ -216,13 +216,13 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/rhenus.svg",
+    "favicon": "/logos/podfy-favicon.svg",
     "status": "Demo"
   },
 
   "furore": {
     "brandName": "Furore",
-    "logo": "/logos/furore.svg",
+    "logo": "/logos/furorew.svg",
     "mailTo": "pod+furore@podfy.app",
     "colors": {
       "primary": "#1B3A1E",
@@ -233,7 +233,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#1B3A1E" },
-    "favicon": "/logos/furore.svg",
+    "favicon": "/logos/podfy-favicon.svg",
     "status": "Pilot"
   }
 }
