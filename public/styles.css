@@ -140,3 +140,8 @@ h1{ margin:16px 0 24px; font-size:32px; line-height:1.2 }
   padding:8px 10px; border:none; background:transparent; cursor:pointer
 }
 .lang-menu button:hover{ background:#f7f7f7 }
+.lang-menu {
+  max-height: 320px;         /* allow many languages */
+  overflow: auto;            /* scroll if needed */
+  overscroll-behavior: contain;
+}
