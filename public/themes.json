@@ -12,7 +12,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/podfy.svg"
+    "favicon": "/logos/podfy-favicon.svg"
   },
 
   "dsv": {
@@ -28,7 +28,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/dsv.svg"
+    "favicon": "/logos/podfy-favicon.svg"
   },
 
   "dhl": {
@@ -44,7 +44,7 @@
       "buttonText": "#111111"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/dhl.svg"
+    "favicon": "/logos/podfy-favicon.svg"
   },
 
   "maersk": {
@@ -60,7 +60,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/maersk.svg"
+    "favicon": "/logos/podfy-favicon.svg"
   },
 
   "new-balance": {
@@ -76,7 +76,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/new-balance.svg"
+    "favicon": "/logos/podfy-favicon.svg"
   },
 
   "bugaboo": {
@@ -108,7 +108,7 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/fender.svg"
+    "favicon": "/logos/podfy-favicon.svg"
   },
 
   "netgear": {
@@ -124,6 +124,6 @@
       "buttonText": "#FFFFFF"
     },
     "header": { "bg": "#FFFFFF" },
-    "favicon": "/logos/netgear.svg"
+    "favicon": "/logos/podfy-favicon.svg"
   }
 }
