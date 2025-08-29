@@ -16,10 +16,22 @@
       <div class="brand">
         <img id="brandLogo" alt="Company logo" src="/logos/default.svg" height="28" />
       </div>
-      <div class="tools">
-        <button id="translateBtn" aria-haspopup="listbox">Translate</button>
-        <div id="langMenu" class="lang-menu" hidden></div>
-      </div>
+<!-- Language selector -->
+<div class="lang">
+  <button id="translateBtn" class="lang-trigger" aria-haspopup="menu" aria-expanded="false">
+    <!-- Globe icon -->
+    <svg class="lang-ic" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor"
+        d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm7.93 9h-3.12a15.7 15.7 0 0 0-1.01-4.23 8.02 8.02 0 0 1 4.13 4.23ZM12 4c.88 0 2.3 1.86 3.02 5H8.98C9.7 5.86 11.12 4 12 4ZM7.2 6.77A15.7 15.7 0 0 0 6.19 11H3.07a8.02 8.02 0 0 1 4.13-4.23ZM3.07 13h3.12c.2 1.5.61 2.96 1.12 4.23A8.02 8.02 0 0 1 3.07 13ZM12 20c-.88 0-2.3-1.86-3.02-5h6.04C14.3 18.14 12.88 20 12 20Zm4.8-2.77c.51-1.27.92-2.73 1.12-4.23h3.12a8.02 8.02 0 0 1-4.24 4.23ZM8.98 13h6.04c-.72 3.14-2.14 5-3.02 5-.88 0-2.3-1.86-3.02-5Z"/>
+    </svg>
+    <span id="currentLangLabel">English</span>
+    <svg class="lang-caret" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+    </svg>
+  </button>
+
+  <div id="langMenu" class="lang-panel" role="menu" aria-label="Select language" hidden></div>
+</div>
     </div>
   </header>
 
