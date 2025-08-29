@@ -11,12 +11,15 @@
   <div id="banner" class="banner" hidden></div>
 
   <header class="site-header" role="banner">
-    <div class="brand">
-      <img id="brandLogo" alt="Company logo" src="/logos/default.svg" height="28" />
-    </div>
-    <div class="tools">
-      <button id="translateBtn" aria-haspopup="listbox">Translate</button>
-      <div id="langMenu" class="lang-menu" hidden></div>
+    <!-- New inner wrapper to align with main container -->
+    <div class="header-inner">
+      <div class="brand">
+        <img id="brandLogo" alt="Company logo" src="/logos/default.svg" height="28" />
+      </div>
+      <div class="tools">
+        <button id="translateBtn" aria-haspopup="listbox">Translate</button>
+        <div id="langMenu" class="lang-menu" hidden></div>
+      </div>
     </div>
   </header>
 
@@ -33,8 +36,21 @@
       <div class="help" id="acceptText" data-i18n="acceptText">Accepted: PDF, JPG, PNG, HEIC · Max 25 MB</div>
     </div>
 
-    <!-- Options row: share copy + share location -->
+    <!-- Options row: LOCATION FIRST, then SHARE COPY -->
     <div class="options-row">
+      <!-- Location (preferred) FIRST, not bold -->
+      <div class="option">
+        <label class="checkbox">
+          <input id="locCheck" type="checkbox" />
+          <span data-i18n="shareLocation">Share my location (optional)</span>
+        </label>
+        <button class="info-btn" type="button" aria-expanded="false" aria-controls="locInfo" title="What is this?">i</button>
+        <div id="locInfo" class="popover" hidden>
+          This allows Podfy to share the location where you uploaded the POD in case of investigation on issues.
+        </div>
+      </div>
+
+      <!-- Email copy SECOND; email field appears only if checked -->
       <div class="option">
         <label class="checkbox">
           <input id="copyCheck" type="checkbox" />
@@ -45,27 +61,17 @@
           Can be used to see if the file has been sent and to make sure you have a back-up for yourself.
         </div>
       </div>
-
-      <div class="option">
-        <label class="checkbox">
-          <input id="locCheck" type="checkbox" />
-          <span><strong>Share location (preferred)</strong></span>
-        </label>
-        <button class="info-btn" type="button" aria-expanded="false" aria-controls="locInfo" title="What is this?">i</button>
-        <div id="locInfo" class="popover" hidden>
-          This allows Podfy to share the location where you uploaded the POD in case of investigation on issues.
-        </div>
-      </div>
     </div>
 
-    <!-- Email field appears only when "Share a copy" is checked -->
+    <!-- Email field (hidden until “Email me a copy” checked) -->
     <div id="emailWrap" class="email-wrap" hidden>
       <input id="emailField" type="email" placeholder="name@example.com" autocomplete="email" />
     </div>
 
     <div id="locStatus" class="small"></div>
 
-    <button id="submitBtn" class="primary" disabled data-i18n="submit">Submit</button>
+    <!-- Full-width submit button -->
+    <button id="submitBtn" class="primary primary-full" disabled data-i18n="submit">Submit</button>
 
     <p class="small" id="privacyNote" data-i18n="privacy">
       Security & privacy: Files are sent securely and deleted after delivery.
