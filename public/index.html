@@ -26,15 +26,36 @@
   <main class="container" role="main" aria-live="polite">
     <h1 id="heading" data-i18n="heading">Upload CMR / POD</h1>
 
-    <div id="dropzone" class="dropzone" tabindex="0">
-      <p id="dzText" data-i18n="dzText">Drag & drop your document/photo here</p>
-      <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" />
+<!-- Dropzone (new) -->
+<section class="dz-wrap">
+  <div id="dropzone" class="dropzone dz-hero" tabindex="0" aria-label="Upload area">
+    <!-- Light-gray Podfy icon -->
+    <img class="dz-icon" src="/logos/podfy-mark-gray.svg" alt="" aria-hidden="true" />
+
+    <h2 class="dz-title" data-i18n="heading">Upload CMR / POD</h2>
+
+    <p class="dz-sub" data-i18n="dzText">Drag & drop your document/photo here</p>
+
+    <div class="dz-actions">
+      <!-- Hidden inputs -->
+      <input id="fileInput" type="file"
+             accept=".pdf,.jpg,.jpeg,.png,.heic,.heif"
+             hidden />
+      <input id="cameraInput" type="file"
+             accept="image/*"
+             capture="environment"
+             hidden />
+
+      <!-- Visible buttons -->
+      <button type="button" class="btn" id="chooseBtn" data-i18n="chooseFile">Choose file</button>
+      <button type="button" class="btn" id="cameraBtn" data-i18n="takePhoto">Take photo</button>
     </div>
 
-    <div class="row">
-      <label class="btn" for="fileInput" data-i18n="chooseFile">Choose file</label>
-      <div class="help" id="acceptText" data-i18n="acceptText">Accepted: PDF, JPG, PNG, HEIC · Max 25 MB</div>
-    </div>
+    <p class="dz-constraints" id="acceptText" data-i18n="acceptText">
+      Accepted: PDF, JPG, PNG, HEIC · Max 25 MB
+    </p>
+  </div>
+</section>
 
     <!-- Options row: LOCATION FIRST, then SHARE COPY -->
     <div class="options-row">
