@@ -71,9 +71,13 @@
 
   // ---------- Apply language ----------
   /**
-   * Applies the given language key: updates text content for [data-i18n] nodes and RTL/LTR dir.
+   * Applies the given language key:
+   * - updates text for [data-i18n]
+   * - translates common attributes (title / aria-label / placeholder)
+   * - updates meta descriptions (SEO/social)
+   * - updates <html lang> and dir (RTL-aware)
+   * - re-renders the unknown-slug banner if visible
    */
-  
   function applyLang(code) {
     const dict = strings[code] || strings['en'] || {};
     qsa('[data-i18n]').forEach(el => {
@@ -81,7 +85,7 @@
       if (dict[key]) el.textContent = dict[key];
     });
     currentLang = code;
-    
+
     // translate common attributes for i18n
     qsa('[data-i18n-title]').forEach(el => {
       const key = el.getAttribute('data-i18n-title');
@@ -95,8 +99,22 @@
       const key = el.getAttribute('data-i18n-placeholder');
       if (dict[key]) el.setAttribute('placeholder', dict[key]);
     });
-localStorage.setItem('podfy_lang', code);
 
+    // meta descriptions for SEO / social previews
+    const desc   = document.querySelector('meta[name="description"]');
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    const twDesc = document.querySelector('meta[name="twitter:description"]');
+    const meta   = dict.metaDescription || (strings.en && strings.en.metaDescription) || '';
+    [desc, ogDesc, twDesc].forEach(m => m && m.setAttribute('content', meta));
+
+    // update <html> lang + dir
+    const rtl = new Set(['ar','fa','he','ur']);
+    document.documentElement.setAttribute('lang', code);
+    document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
+
+    localStorage.setItem('podfy_lang', code);
+
+    // visible UI label
     const label = dict.__name ? dict.__name : code.toUpperCase();
     if (langLabel) langLabel.textContent = label;
     else if (langTrigger) langTrigger.textContent = label;
@@ -107,13 +125,13 @@ localStorage.setItem('podfy_lang', code);
         btn.setAttribute('aria-checked', String(btn.getAttribute('data-lang') === code));
       });
     }
-  
+
     // Re-render banner if an unknown slug is currently shown so language changes apply immediately
     if (banner && !banner.hidden && ((banner.dataset && banner.dataset.type === 'unknownSlug') || (rawSlug && !themes[rawSlug]))) {
       const slugValue = (banner.dataset && banner.dataset.slug) ? banner.dataset.slug : rawSlug;
       if (typeof renderUnknownSlugBanner === 'function' && slugValue) renderUnknownSlugBanner(slugValue);
     }
-}
+  }
 
   // ---------- Build language menu ----------
   function buildLangMenu() {
@@ -153,10 +171,7 @@ localStorage.setItem('podfy_lang', code);
   }
 
   // ---------- Toggle wiring (open/close dropdown) ----------
-  /**
-   * Wires the language dropdown toggle, handles outside-click and Escape to close.
-   */
-  
+  /** Wires the language dropdown toggle, handles outside-click and Escape to close. */
   function wireLanguageToggle() {
     const btn  = langTrigger;
     const menu = langMenu;
@@ -193,8 +208,7 @@ localStorage.setItem('podfy_lang', code);
     });
   }
 
-  // ---------- Theme load ----------
-  // Renders the 'unknown slug' banner using current language strings.
+  // ---------- Unknown-slug banner renderer ----------
   function renderUnknownSlugBanner(slugValue) {
     if (!banner) return;
     const dict = strings[currentLang] || strings['en'] || {};
@@ -207,6 +221,7 @@ localStorage.setItem('podfy_lang', code);
     banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
   }
 
+  // ---------- Theme load ----------
   async function loadTheme() {
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
     themes = await res.json();
@@ -232,7 +247,7 @@ localStorage.setItem('podfy_lang', code);
       brandLogo.src = theme.logo || theme.favicon;
     }
 
-    // Optional favicons
+    // Optional favicons (adaptive fallback)
     const linkLight = document.getElementById('faviconLight');
     const linkDark  = document.getElementById('faviconDark');
     const favLight  = theme.favicon || theme.logo || '/logos/podfy-favicon-adaptive.svg';
@@ -258,11 +273,6 @@ localStorage.setItem('podfy_lang', code);
   }
 
   // ---------- Upload UI wiring ----------
-  /**
-   * Sets up the upload UI: file pickers, copy-to-email toggle, submit handling, and status updates.
-   */
-  
-  
   /**
    * Wires lightweight info popovers for buttons with .info-btn.
    * Uses the button's aria-controls attribute to find the associated popover element.
@@ -326,7 +336,9 @@ localStorage.setItem('podfy_lang', code);
       if (e.key === 'Escape') closeAll(null);
     });
   }
-function wireUI() {
+
+  /** Sets up the upload UI: file pickers, copy-to-email toggle, submit handling, and status updates. */
+  function wireUI() {
     // Toggle email field
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
@@ -340,7 +352,6 @@ function wireUI() {
     const enableSubmitIfFile = () => {
       const hasFile = !!(fileInput?.files && fileInput.files.length);
       if (submitBtn) submitBtn.disabled = !hasFile;
-      // Turn the dropzone icon to primary when ready
       document.getElementById('dropzone')?.classList.toggle('ready', hasFile);
     };
 
@@ -403,7 +414,8 @@ function wireUI() {
       if (!fileInput?.files || !fileInput.files.length) return;
 
       submitBtn.disabled = true;
-      if (statusEl) statusEl.textContent = 'Uploading…';
+      const dict = strings[currentLang] || strings['en'] || {};
+      if (statusEl) statusEl.textContent = dict.uploading || 'Uploading…';
 
       const f = fileInput.files[0];
       const form = new FormData();
@@ -428,7 +440,6 @@ function wireUI() {
         if (!resp.ok) throw new Error('Upload failed');
         const _data = await resp.json(); // eslint-disable-line no-unused-vars
 
-        const dict = strings[currentLang] || strings['en'] || {};
         if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
 
         // Reset inputs & states
@@ -437,7 +448,7 @@ function wireUI() {
         submitBtn.disabled = true;
         document.getElementById('dropzone')?.classList.remove('ready');
       } catch (err) {
-        if (statusEl) statusEl.textContent = 'Upload failed. Please try again.';
+        if (statusEl) statusEl.textContent = dict.uploadFailed || 'Upload failed. Please try again.';
       } finally {
         setTimeout(() => { submitBtn && (submitBtn.disabled = false); }, 400);
       }
@@ -446,8 +457,8 @@ function wireUI() {
 
   // ---------- Init ----------
   (async function init() {
-    await loadI18n();
-    await loadTheme();
+    await loadI18n();  // load strings first so early UI can be localized
+    await loadTheme(); // then theme (may render unknown-slug banner)
     wirePopovers();
     wireUI();
   })();
