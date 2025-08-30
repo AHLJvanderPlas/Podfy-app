@@ -81,7 +81,21 @@
       if (dict[key]) el.textContent = dict[key];
     });
     currentLang = code;
-    localStorage.setItem('podfy_lang', code);
+    
+    // translate common attributes for i18n
+    qsa('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      if (dict[key]) el.setAttribute('title', dict[key]);
+    });
+    qsa('[data-i18n-aria-label]').forEach(el => {
+      const key = el.getAttribute('data-i18n-aria-label');
+      if (dict[key]) el.setAttribute('aria-label', dict[key]);
+    });
+    qsa('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (dict[key]) el.setAttribute('placeholder', dict[key]);
+    });
+localStorage.setItem('podfy_lang', code);
 
     const label = dict.__name ? dict.__name : code.toUpperCase();
     if (langLabel) langLabel.textContent = label;
