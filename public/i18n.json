@@ -18,7 +18,7 @@
     "locInfoText": "This allows Podfy to share the location where you uploaded the POD in case of investigation on issues.",
     "whatIsThis": "What is this?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Unknown reference “{slug}”. Please verify the URL or request the correct link from your contact. Files you upload below are not sent directly to your client. If you use the general uploader, enable “Email me a copy” so you can forward the digital file to your client yourself.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "nl": {
@@ -40,7 +40,7 @@
     "locInfoText": "Dit stelt Podfy in staat de locatie van de upload te delen bij onderzoek naar problemen.",
     "whatIsThis": "Wat is dit?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Onbekende referentie “{slug}”. Je kunt hieronder de standaardtool gebruiken.",
+    "unknownSlug": "Onbekende referentie ‘{slug}’. Controleer de opgegeven URL of vraag de juiste link op bij uw contactpersoon. Bestanden die u hieronder uploadt, worden niet rechtstreeks naar uw opdrachtgever gestuurd. Gebruikt u de algemene uploader? Schakel dan “E‑mail mij een kopie” in, zodat u zelf de digitale versie kunt doorsturen naar uw opdrachtgever.",
     "learnAboutPodfy": "Meer over Podfy"
   },
   "de": {
@@ -62,7 +62,7 @@
     "locInfoText": "Ermöglicht Podfy, den Upload-Ort bei Untersuchungen anzugeben.",
     "whatIsThis": "Was ist das?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unbekannte Referenz „{slug}“. Du kannst unten das Standardtool verwenden.",
+    "unknownSlug": "Unbekannte Referenz „{slug}“. Bitte überprüfen Sie die URL oder fordern Sie den korrekten Link bei Ihrem Ansprechpartner an. Dateien, die Sie unten hochladen, werden nicht direkt an Ihren Auftraggeber gesendet. Wenn Sie den allgemeinen Uploader verwenden, aktivieren Sie „E‑Mail‑Kopie an mich“, damit Sie die Datei selbst an Ihren Auftraggeber weiterleiten können.",
     "learnAboutPodfy": "Mehr über Podfy"
   },
   "fr": {
@@ -84,7 +84,7 @@
     "locInfoText": "Permet à Podfy d’indiquer le lieu de dépôt en cas d’enquête.",
     "whatIsThis": "Qu’est-ce que c’est ?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Référence inconnue « {slug} ». Vous pouvez utiliser l’outil par défaut ci‑dessous.",
+    "unknownSlug": "Référence inconnue « {slug} ». Veuillez vérifier l’URL ou demander le lien correct à votre contact. Les fichiers que vous téléversez ci‑dessous ne sont pas envoyés directement à votre client. Si vous utilisez l’uploader général, activez « M’envoyer une copie par e‑mail » afin de pouvoir transmettre le fichier vous‑même à votre client.",
     "learnAboutPodfy": "En savoir plus sur Podfy"
   },
   "es": {
@@ -106,7 +106,7 @@
     "locInfoText": "Permite a Podfy compartir el lugar donde subiste el POD en caso de investigación.",
     "whatIsThis": "¿Qué es esto?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Referencia desconocida “{slug}”. Puedes usar la herramienta predeterminada a continuación.",
+    "unknownSlug": "Referencia desconocida “{slug}”. Verifique la URL o solicite el enlace correcto a su contacto. Los archivos que cargue abajo no se envían directamente a su cliente. Si utiliza el cargador general, active «Enviarme una copia por correo» para poder reenviar usted mismo el archivo digital a su cliente.",
     "learnAboutPodfy": "Más sobre Podfy"
   },
   "it": {
@@ -128,7 +128,7 @@
     "locInfoText": "Consente a Podfy di indicare il luogo del caricamento in caso di indagine.",
     "whatIsThis": "Che cos'è?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Riferimento sconosciuto “{slug}”. Verifichi l’URL o richieda il link corretto al suo referente. I file caricati qui sotto non vengono inviati direttamente al cliente. Se usa il caricatore generale, attivi «Inviami una copia via e‑mail» per poter inoltrare personalmente il file al cliente.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "pt": {
@@ -150,7 +150,7 @@
     "locInfoText": "Permite à Podfy indicar o local do carregamento em caso de investigação.",
     "whatIsThis": "O que é isto?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Referência desconhecida “{slug}”. Verifique o URL ou peça o link correto ao seu contacto. Os ficheiros carregados abaixo não são enviados diretamente para o seu cliente. Se utilizar o carregador geral, ative «Enviar‑me uma cópia por e‑mail» para poder reencaminhar o ficheiro ao cliente.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "pl": {
@@ -172,7 +172,7 @@
     "locInfoText": "Umożliwia Podfy podanie miejsca przesłania POD w razie dochodzenia.",
     "whatIsThis": "Co to jest?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Nieznane odwołanie „{slug}”. Proszę zweryfikować adres URL lub poprosić kontakt o właściwy link. Pliki przesłane poniżej nie są wysyłane bezpośrednio do klienta. Korzystając z ogólnego narzędzia, włącz „Wyślij mi kopię e‑mailem”, aby samodzielnie przekazać plik klientowi.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ro": {
@@ -194,7 +194,7 @@
     "locInfoText": "Permite Podfy să indice locul în care ai încărcat POD-ul în caz de investigație.",
     "whatIsThis": "Ce este aceasta?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Referință necunoscută „{slug}”. Verificați URL‑ul sau solicitați linkul corect contactului dvs. Fișierele încărcate mai jos nu sunt trimise direct clientului. Dacă folosiți încărcătorul general, activați „Trimiteți‑mi o copie pe e‑mail” pentru a putea transmite dvs. fișierul clientului.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "bg": {
@@ -216,7 +216,7 @@
     "locInfoText": "Позволява на Podfy да посочи мястото на качване при разследване.",
     "whatIsThis": "Какво е това?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Непозната референция „{slug}“. Моля, проверете URL адреса или поискайте правилния линк от вашия контакт. Файловете, които качвате по‑долу, не се изпращат директно до клиента ви. Ако използвате общия качвач, активирайте „Изпратете ми копие по имейл“, за да можете сами да препратите файла на клиента.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "hu": {
@@ -238,7 +238,7 @@
     "locInfoText": "Lehetővé teszi a Podfy számára, hogy vizsgálat esetén jelezze a feltöltés helyét.",
     "whatIsThis": "Mi ez?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Ismeretlen hivatkozás „{slug}”. Kérjük, ellenőrizze az URL‑t, vagy kérje a helyes linket kapcsolattartójától. Az alább feltöltött fájlok nem kerülnek közvetlenül az ügyfélhez. Ha az általános feltöltőt használja, kapcsolja be a „Küldjön másolatot e‑mailben” opciót, hogy saját maga továbbíthassa a fájlt az ügyfélnek.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "cs": {
@@ -260,7 +260,7 @@
     "locInfoText": "Umožňuje Podfy uvést místo nahrání v případě šetření.",
     "whatIsThis": "Co to je?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Neznámý odkaz „{slug}“. Ověřte prosím URL nebo požádejte kontakt o správný odkaz. Soubory nahrané níže nejsou odesílány přímo zákazníkovi. Pokud použijete obecný uploader, zapněte „Poslat mi kopii e‑mailem“, abyste mohli soubor sami předat zákazníkovi.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "sk": {
@@ -282,7 +282,7 @@
     "locInfoText": "Umožňuje Podfy uviesť miesto nahratia v prípade vyšetrovania.",
     "whatIsThis": "Čo je to?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Neznámy odkaz „{slug}“. Overte prosím URL alebo si vyžiadajte správny odkaz od kontaktnej osoby. Súbory nahrané nižšie sa neposielajú priamo klientovi. Ak použijete všeobecný uploader, zapnite „Poslať mi kópiu e‑mailom“, aby ste mohli súbor klientovi poslať sami.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "sl": {
@@ -304,7 +304,7 @@
     "locInfoText": "Podfy lahko navede mesto nalaganja v primeru preiskave.",
     "whatIsThis": "Kaj je to?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Neznana referenca »{slug}«. Preverite URL ali zaprosite svoj kontakt za pravilno povezavo. Datoteke, ki jih naložite spodaj, se ne pošiljajo neposredno naročniku. Če uporabite splošni nalagalnik, omogočite »Pošljite mi kopijo po e‑pošti«, da boste lahko datoteko naročniku posredovali sami.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "hr": {
@@ -326,7 +326,7 @@
     "locInfoText": "Omogućuje Podfyju navođenje mjesta učitavanja u slučaju istrage.",
     "whatIsThis": "Što je ovo?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Nepoznata referenca „{slug}”. Provjerite URL ili zatražite ispravan link od svoje kontakt osobe. Datoteke koje ovdje učitate ne šalju se izravno naručitelju. Ako koristite opći uploader, uključite „Pošalji mi kopiju e‑poštom“ kako biste sami mogli proslijediti datoteku naručitelju.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "lt": {
@@ -348,7 +348,7 @@
     "locInfoText": "Leidžia „Podfy“ nurodyti įkėlimo vietą tyrimo atveju.",
     "whatIsThis": "Kas tai?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Nežinoma nuoroda „{slug}“. Patikrinkite URL arba paprašykite teisingos nuorodos iš savo kontaktinio asmens. Apačioje įkelti failai nėra siunčiami tiesiogiai klientui. Jei naudojate bendrąjį įkėlimo įrankį, įjunkite „Atsiųsti man kopiją el. paštu“, kad galėtumėte patys persiųsti failą klientui.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "lv": {
@@ -370,7 +370,7 @@
     "locInfoText": "Ļauj Podfy norādīt augšupielādes vietu izmeklēšanas gadījumā.",
     "whatIsThis": "Kas tas ir?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Nezināma atsauce “{slug}”. Lūdzu, pārbaudiet URL vai pieprasiet pareizo saiti no savas kontaktpersonas. Zemāk augšupielādētie faili netiek nosūtīti tieši klientam. Ja izmantojat vispārīgo augšupielādes rīku, ieslēdziet “Sūtīt man kopiju e‑pastā”, lai varētu pats pārsūtīt failu klientam.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "et": {
@@ -392,7 +392,7 @@
     "locInfoText": "Võimaldab Podfyl näidata üleslaadimise asukohta uurimise korral.",
     "whatIsThis": "Mis see on?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Tundmatu viide „{slug}“. Kontrollige URL‑i või küsige oma kontaktilt õiget linki. Allpool üles laaditud faile ei saadeta otse kliendile. Kui kasutate üldist üleslaadijat, lülitage sisse „Saada mulle koopia e‑posti teel“, et saaksite faili ise kliendile edastada.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "fi": {
@@ -414,7 +414,7 @@
     "locInfoText": "Mahdollistaa Podfyn ilmoittaa lähetyspaikan tutkimustilanteissa.",
     "whatIsThis": "Mikä tämä on?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Tuntematon viite ”{slug}”. Tarkista URL tai pyydä oikea linkki yhteyshenkilöltäsi. Alla ladatut tiedostot eivät lähde suoraan asiakkaalle. Jos käytät yleistä lähetyslomaketta, ota käyttöön ”Lähetä minulle kopio”, jotta voit välittää tiedoston itse asiakkaalle.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "sv": {
@@ -436,7 +436,7 @@
     "locInfoText": "Låter Podfy ange platsen för uppladdningen vid utredningar.",
     "whatIsThis": "Vad är det här?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Okänd referens ”{slug}”. Kontrollera webbadressen eller be din kontakt om rätt länk. Filer du laddar upp nedan skickas inte direkt till kunden. Om du använder den allmänna uppladdaren, aktivera ”Skicka en kopia till mig” så kan du själv vidarebefordra filen till kunden.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "da": {
@@ -458,7 +458,7 @@
     "locInfoText": "Gør det muligt for Podfy at angive uploadstedet ved undersøgelser.",
     "whatIsThis": "Hvad er det her?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Ukendt reference ”{slug}”. Kontrollér URL’en eller bed din kontakt om det korrekte link. Filer, du uploader herunder, sendes ikke direkte til kunden. Hvis du bruger den generelle uploader, skal du slå ”Send en kopi til mig” til, så du selv kan videresende filen til kunden.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "el": {
@@ -480,7 +480,7 @@
     "locInfoText": "Επιτρέπει στο Podfy να δηλώσει τον χώρο μεταφόρτωσης σε περίπτωση διερεύνησης.",
     "whatIsThis": "Τι είναι αυτό;",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Άγνωστη αναφορά «{slug}». Επαληθεύστε το URL ή ζητήστε τον σωστό σύνδεσμο από τον υπεύθυνο επαφής σας. Τα αρχεία που ανεβάζετε παρακάτω δεν αποστέλλονται απευθείας στον πελάτη σας. Αν χρησιμοποιήσετε τον γενικό uploader, ενεργοποιήστε «Στείλτε μου ένα αντίγραφο με e‑mail» ώστε να μπορείτε να προωθήσετε το αρχείο εσείς στον πελάτη.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ga": {
@@ -502,7 +502,7 @@
     "locInfoText": "Ligeann sé do Podfy an láthair uaslódála a roinnt i gcás imscrúdaithe.",
     "whatIsThis": "Cad é seo?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Tagairt anaithnid “{slug}”. Deimhnigh an URL nó iarr an nasc ceart ó do theagmhálaí. Ní sheoltar comhaid a uaslódálann tú thíos go díreach chuig do chliant. Má úsáideann tú an t‑uaslódálaí ginearálta, cumasaigh “Seol cóip chugam” chun an comhad digiteach a chur ar aghaidh tú féin.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "mt": {
@@ -524,7 +524,7 @@
     "locInfoText": "Jippermetti lil Podfy jindika l-post tat-tella’ f’każ ta’ investigazzjoni.",
     "whatIsThis": "X'inhu dan?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Referenza mhux magħrufa “{slug}”. Iċċekkja l‑URL jew itlob il‑link korrett mingħand il‑kuntatt tiegħek. Il‑fajls li ttella’ hawn taħt ma jintbagħtux direttament lill‑klijent tiegħek. Jekk tuża l‑uploader ġenerali, ixgħel “Ibgħatli kopja bl‑imejl” sabiex tkun tista’ tibgħat il‑fajl inti stess lill‑klijent.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "uk": {
@@ -546,7 +546,7 @@
     "locInfoText": "Дозволяє Podfy вказати місце завантаження у разі розслідування.",
     "whatIsThis": "Що це?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Невідома посилання «{slug}». Перевірте URL або попросіть у свого контакту правильне посилання. Файли, які ви завантажуєте нижче, не надсилаються безпосередньо вашому клієнту. Якщо використовуєте загальний завантажувач, увімкніть «Надіслати мені копію електронною поштою», щоб самостійно переслати файл клієнту.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "tr": {
@@ -568,7 +568,7 @@
     "locInfoText": "Soruşturma durumunda POD’un yüklendiği konumu paylaşmaya izin verir.",
     "whatIsThis": "Bu nedir?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Bilinmeyen referans “{slug}”. Lütfen URL’yi doğrulayın veya doğru bağlantıyı yetkili kişiden isteyin. Aşağıya yüklediğiniz dosyalar doğrudan müşterinize gönderilmez. Genel yükleyiciyi kullanıyorsanız, “Bana bir kopya e‑posta ile gönder” seçeneğini etkinleştirerek dosyayı kendiniz müşterinize iletebilirsiniz.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "sr": {
@@ -590,7 +590,7 @@
     "locInfoText": "Omogućava Podfy-u da navede mesto otpremanja u slučaju istrage.",
     "whatIsThis": "Šta je ovo?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Nepoznata referenca „{slug}“. Proverite URL ili zatražite ispravan link od vaše kontakt osobe. Datoteke koje otpremite ispod ne šalju se direktno klijentu. Ako koristite opšti otpremač, uključite „Pošalji mi kopiju e‑poštom“ da biste sami prosledili datoteku klijentu.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "bs": {
@@ -612,7 +612,7 @@
     "locInfoText": "Omogućava Podfyju navođenje mjesta učitavanja u slučaju istrage.",
     "whatIsThis": "Šta je ovo?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Nepoznata referenca „{slug}“. Provjerite URL ili zatražite ispravan link od svoje kontakt osobe. Datoteke koje ovdje učitate ne šalju se direktno klijentu. Ako koristite opći uploader, uključite „Pošalji mi kopiju e‑poštom“ kako biste sami mogli proslijediti datoteku klijentu.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "sq": {
@@ -634,7 +634,7 @@
     "locInfoText": "Lejon Podfy të tregojë vendin e ngarkimit në rast hetimi.",
     "whatIsThis": "Çfarë është kjo?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Referencë e panjohur “{slug}”. Verifikoni URL‑n ose kërkoni lidhjen e saktë nga kontakti juaj. Skedarët që ngarkoni më poshtë nuk dërgohen drejtpërdrejt te klienti. Nëse përdorni ngarkuesin e përgjithshëm, aktivizoni “Dërgomë një kopje me email” që ta dërgoni vetë skedarin te klienti.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "mk": {
@@ -656,7 +656,7 @@
     "locInfoText": "Овозможува Podfy да го наведе местото на подигање во случај на истрага.",
     "whatIsThis": "Што е ова?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Непозната референца „{slug}“. Ве молиме проверете го URL‑то или побарајте точна врска од вашата контакт‑личност. Датотеките што ги прикачувате подолу не се праќаат директно до клиентот. Ако го користите општиот uploader, вклучете „Испрати ми копија преку е‑пошта“ за сами да го препратите фајлот до клиентот.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ru": {
@@ -678,7 +678,7 @@
     "locInfoText": "Позволяет Podfy указать место загрузки в случае расследования.",
     "whatIsThis": "Что это?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Неизвестная ссылка «{slug}». Проверьте URL или запросите правильную ссылку у вашего контакта. Файлы, загружаемые ниже, не отправляются напрямую вашему клиенту. Если вы используете общий загрузчик, включите «Отправить мне копию по электронной почте», чтобы самостоятельно переслать файл клиенту.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "be": {
@@ -700,7 +700,7 @@
     "locInfoText": "Дазваляе Podfy паказаць месца запампоўкі пры расследаванні.",
     "whatIsThis": "Што гэта?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Невядомая спасылка «{slug}». Праверце URL або папрасіце правільную спасылку ў вашай кантактнай асобы. Файлы, якія вы загружаеце ніжэй, не адпраўляюцца непасрэдна кліенту. Калі выкарыстоўваеце агульны загрузчык, уключыце «Даслаць мне копію па электроннай пошце», каб самастойна пераслаць файл кліенту.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ka": {
@@ -722,7 +722,7 @@
     "locInfoText": "აძლევს Podfy-ს საშუალებას მიუთითოს ატვირთვის ადგილი გამოძიების შემთხვევაში.",
     "whatIsThis": "ეს რა არის?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "უცნობი მითითება „{slug}“. გთხოვთ, გადაამოწმოთ URL ან სთხოვოთ სწორ ბმულს თქვენს კონტაქტს. ქვემოთ ატვირთული ფაილები პირდაპირ თქვენს კლიენტთან არ იგზავნება. თუ იყენებთ ზოგად ამტვირთველს, ჩართეთ „გამომიგზავნე ასლი ელფოსტით“, რათა თავად გაუგზავნოთ ფაილი კლიენტს.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "hy": {
@@ -744,7 +744,7 @@
     "locInfoText": "Թույլ է տալիս Podfy-ին նշել վերբեռնումի վայրը ուսումնասիրության դեպքում։",
     "whatIsThis": "Սա ի՞նչ է։",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Անհայտ հղում «{slug}»։ Խնդրում ենք ստուգել URL‑ը կամ խնդրել ճիշտ հղումը ձեր կապակցից։ Ստորև վերբեռնվող ֆայլերը անմիջապես չեն ուղարկվում ձեր հաճախորդին։ Եթե օգտագործում եք ընդհանուր վերբեռնիչը, միացրեք «Ուղարկել պատճենը ինձ էլ‑փոստով», որպեսզի կարողանաք ինքներդ փոխանցել ֆայլը հաճախորդին։",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ro_MD": {
@@ -766,7 +766,7 @@
     "locInfoText": "Permite Podfy să indice locul încărcării în cazul unei investigații.",
     "whatIsThis": "Ce este aceasta?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Referință necunoscută „{slug}”. Verificați URL‑ul sau solicitați linkul corect contactului dvs. Fișierele încărcate mai jos nu sunt trimise direct clientului. Dacă folosiți încărcătorul general, activați „Trimiteți‑mi o copie pe e‑mail” pentru a putea transmite dvs. fișierul clientului.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ar": {
@@ -788,7 +788,7 @@
     "locInfoText": "يتيح لـ Podfy مشاركة موقع رفع POD عند الحاجة للتحقيق.",
     "whatIsThis": "ما هذا؟",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "مرجع غير معروف «{slug}». يُرجى التحقق من الرابط أو طلب الرابط الصحيح من جهة الاتصال. الملفات التي ترفعها أدناه لا تُرسل مباشرةً إلى عميلك. إذا استخدمت أداة الرفع العامة، فعِّل «أرسل لي نسخة عبر البريد الإلكتروني» لتتمكن من إرسال الملف بنفسك إلى العميل.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "fa": {
@@ -810,7 +810,7 @@
     "locInfoText": "به Podfy اجازه می‌دهد در صورت بررسی، محل بارگذاری POD را اعلام کند.",
     "whatIsThis": "این چیست؟",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "ارجاع ناشناخته «{slug}». لطفاً نشانی اینترنتی را بررسی کنید یا لینک صحیح را از مسئول ارتباط خود درخواست کنید. فایل‌هایی که در زیر بارگذاری می‌کنید مستقیماً برای مشتری شما ارسال نمی‌شوند. اگر از آپلودر عمومی استفاده می‌کنید، «ارسال یک نسخه برای من از طریق ایمیل» را فعال کنید تا بتوانید فایل را خودتان برای مشتری ارسال کنید.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "hi": {
@@ -832,7 +832,7 @@
     "locInfoText": "जांच के मामले में Podfy को अपलोड स्थान साझा करने की अनुमति देता है।",
     "whatIsThis": "यह क्या है?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "अज्ञात संदर्भ “{slug}”। कृपया URL की जाँच करें या अपने संपर्क से सही लिंक माँगें। नीचे अपलोड की गई फ़ाइलें सीधे आपके ग्राहक को नहीं भेजी जातीं। यदि आप सामान्य अपलोडर का उपयोग करते हैं, तो “मुझे एक प्रति ईमेल करें” सक्षम करें ताकि आप फ़ाइल स्वयं अपने ग्राहक को भेज सकें।",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ku": {
@@ -854,7 +854,7 @@
     "locInfoText": "Destûr dide Podfy ku di rewşên lêkolînê de cihê barkirinê parve bike.",
     "whatIsThis": "Ev çi ye?",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "Referansa nenas “{slug}”. Ji kerema xwe URL‑ê kontrol bikin an ji têkildarê xwe girêdana rast bixwazin. Pelên ku li jêr bar dikin rasterast ji bo mişteriyê we nayên şandin. Heke uploaderya giştî bi kar bînin, “Ji min re kopîyek bi e‑peyama şandî” çalakkirin, da ku hûn xwe pelê ji bo mişterî bişînin.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ckb": {
@@ -876,7 +876,7 @@
     "locInfoText": "ڕەوش پێدادات بە Podfy بۆ هاوبەشکردنی شوێنی بارکردن لە کاتێکدا کەرەستەی لێکۆڵین هەیە.",
     "whatIsThis": "ئەمە چییە؟",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "ئاماژەی نەناسراو «{slug}». تکایە بەستەریەکە پشتڕاست بکە یان لە پەیوەندییەکتان داوای بەستەری دروست بکەن. ئەو پەڕگەیانەی کە لە خوارەوە بار دەکەن ڕاستەوخۆ نەنێردرێن بۆ کڕیارەکەتان. ئەگەر uploaderya گشتی بەکاردهێنن، «نوسخەیەك بۆ من بە ئیمەیڵ بنێرە» چالاک بکەن بۆ ئەوەی خودتان پەڕگەکە بنێرن.",
     "learnAboutPodfy": "Learn about Podfy"
   },
   "ps": {
@@ -898,7 +898,7 @@
     "locInfoText": "Podfy ته اجازه ورکوي چې د اړتیا په وخت کې د POD پورته کولو ځای شریک کړي.",
     "whatIsThis": "دا څه شی دی؟",
     "emailPlaceholder": "name@example.com",
-    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "unknownSlug": "نامعلومه حواله “{slug}”. مهرباني وکړئ URL وګورئ يا له خپل تماس څخه سم لینک وغواړئ. هغه فایلونه چې لاندې پورته کوئ، مستقیم ستاسو پېرېدونکي ته نه استول کېږي. که عمومي اپلوډر کاروئ، «یوه کاپي راته په ایمیل ولېږه» فعال کړئ ترڅو وکولای شئ فایل پخپله پېرېدونکي ته واستوئ.",
     "learnAboutPodfy": "Learn about Podfy"
   }
 }
