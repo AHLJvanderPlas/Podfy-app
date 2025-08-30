@@ -207,7 +207,7 @@
     // Optional favicons
     const linkLight = document.getElementById('faviconLight');
     const linkDark  = document.getElementById('faviconDark');
-    const favLight  = theme.favicon || theme.logo || '/logos/default.svg';
+    const favLight  = theme.favicon || theme.logo || '/logos/podfy-favicon-adaptive.svg';
     const favDark   = theme.faviconDark || theme.logoDark || favLight;
     if (linkLight) linkLight.href = favLight;
     if (linkDark)  linkDark.href  = favDark;
