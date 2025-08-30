@@ -107,7 +107,13 @@ localStorage.setItem('podfy_lang', code);
         btn.setAttribute('aria-checked', String(btn.getAttribute('data-lang') === code));
       });
     }
-  }
+  
+    // Re-render banner if an unknown slug is currently shown so language changes apply immediately
+    if (banner && !banner.hidden && ((banner.dataset && banner.dataset.type === 'unknownSlug') || (rawSlug && !themes[rawSlug]))) {
+      const slugValue = (banner.dataset && banner.dataset.slug) ? banner.dataset.slug : rawSlug;
+      if (typeof renderUnknownSlugBanner === 'function' && slugValue) renderUnknownSlugBanner(slugValue);
+    }
+}
 
   // ---------- Build language menu ----------
   function buildLangMenu() {
@@ -188,6 +194,19 @@ localStorage.setItem('podfy_lang', code);
   }
 
   // ---------- Theme load ----------
+  // Renders the 'unknown slug' banner using current language strings.
+  function renderUnknownSlugBanner(slugValue) {
+    if (!banner) return;
+    const dict = strings[currentLang] || strings['en'] || {};
+    const msgTmpl   = dict.unknownSlug || 'Unknown reference “{slug}”. Please verify the URL or use the general uploader.';
+    const linkLabel = dict.learnAboutPodfy || 'Learn about Podfy';
+    const msg = msgTmpl.replace('{slug}', slugValue);
+    banner.hidden = false;
+    banner.dataset.type = 'unknownSlug';
+    banner.dataset.slug = slugValue;
+    banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
+  }
+
   async function loadTheme() {
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
     themes = await res.json();
@@ -195,14 +214,7 @@ localStorage.setItem('podfy_lang', code);
     const isKnown = !!themes[slug];
     theme = isKnown ? themes[slug] : (themes['default'] || {});
     if (!isKnown && rawSlug) {
-      if (banner) {
-        banner.hidden = false;
-        const dict = strings[currentLang] || strings['en'] || {};
-        const msgTmpl = dict.unknownSlug || 'Unknown reference “{slug}”. You can use the default tool below.';
-        const linkLabel = dict.learnAboutPodfy || 'Learn about Podfy';
-        const msg = msgTmpl.replace('{slug}', rawSlug);
-        banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
-      }
+      renderUnknownSlugBanner(rawSlug);
       slug = 'default';
     }
 
