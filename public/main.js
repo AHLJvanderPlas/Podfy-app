@@ -197,9 +197,11 @@ localStorage.setItem('podfy_lang', code);
     if (!isKnown && rawSlug) {
       if (banner) {
         banner.hidden = false;
-        banner.innerHTML =
-          `Unknown reference “${rawSlug}”. You can use the default tool below. ` +
-          `<a href="https://podfy.net/introduction" target="_blank" rel="noopener">Learn about Podfy</a>`;
+        const dict = strings[currentLang] || strings['en'] || {};
+        const msgTmpl = dict.unknownSlug || 'Unknown reference “{slug}”. You can use the default tool below.';
+        const linkLabel = dict.learnAboutPodfy || 'Learn about Podfy';
+        const msg = msgTmpl.replace('{slug}', rawSlug);
+        banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
       }
       slug = 'default';
     }
@@ -432,7 +434,8 @@ function wireUI() {
 
   // ---------- Init ----------
   (async function init() {
-    await Promise.all([loadTheme(), loadI18n()]);
+    await loadI18n();
+    await loadTheme();
     wirePopovers();
     wireUI();
   })();
