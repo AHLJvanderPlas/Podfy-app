@@ -147,7 +147,7 @@
       "border": "#E5E7EB",
       "buttonText": "#111111"
     },
-    "header": { "bg": "#FFFFFF" },
+    "header": { "bg": "#000000" },
     "favicon": "/logos/shell.svg",
     "status": "Demo"
   },
