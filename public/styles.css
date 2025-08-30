@@ -1,3 +1,9 @@
+/*
+ * Podfy styles.css — cleaned & documented
+ *  - Add new components under the COMPONENTS section; utilities under UTILITIES.
+ */
+
+/* ===== THEME TOKENS (CSS Variables) ===== */
 :root {
   --brand-primary:#000;           /* primary button bg */
   --brand-accent:#1F2937;         /* accents, icons */
@@ -12,11 +18,10 @@
   --dz-accent:#16A34A;            /* icon on dragover (green-600) */
   --dz-hover-bg:#F3F4F6;          /* dropzone bg on dragover */
   --dz-hover-bord:#CBD5E1;        /* dropzone border on dragover */
-}
+}* { box-sizing: border-box; }html,
 
-* { box-sizing: border-box; }
-html,body { height:100%; }
-body {
+/* ===== BASE ELEMENTS & RESET ===== */
+ body { height:100%; }body {
   margin:0;
   font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   color:var(--brand-text);
@@ -24,7 +29,7 @@ body {
 }
 
 /* --- Unknown-slug banner --- */
-.banner{
+.banner {
   background:#FFF7ED;
   border:1px solid #FED7AA;
   color:#7C2D12;
@@ -33,74 +38,71 @@ body {
   padding:12px 14px;
   border-radius:8px;
   margin-top:16px
-}
-.banner a{ color:#7C2D12; text-decoration:underline }
+  }.banner a { color:#7C2D12; text-decoration:underline }
 
 /* --- Header aligned to container edges --- */
-.site-header{
+.site-header {
   background:var(--header-bg);
   border-bottom:1px solid var(--brand-border);
-  padding:0; /* inner handles padding */
-}
-.header-inner{
+  padding:0; 
+  
+  /* inner handles padding */
+}.header-inner {
   max-width:720px;
   margin:0 auto;
   padding:16px 20px;
   display:flex;
-  justify-content:space-between; /* logo left, translate right */
+  justify-content:space-between; 
+  
+  /* logo left, translate right */
   align-items:center;
-}
-.brand img{ display:block; height:28px }
-
-/* Translate dropdown trigger area */
-.tools{ position:relative }
+}.brand img { display:block; height:28px }
 
 /* --- Main container --- */
-.container{ max-width:720px; margin:32px auto; padding:0 20px }
-h1{ margin:16px 0 24px; font-size:32px; line-height:1.2 }
+/* ===== LAYOUT & UTILITY HELPERS ===== */
+
+/* Centers content and limits width */
+.container { max-width:720px; margin:32px auto; padding:0 20px }
+
+/* ===== TYPOGRAPHY ===== */
+h1 { margin:16px 0 24px; font-size:32px; line-height:1.2 }
 
 /* --- Dropzone (generic) --- */
-.dropzone{
+.dropzone {
   border:2px dashed var(--brand-border);
   border-radius:8px; padding:32px; text-align:center;
   transition:background-color .15s ease, border-color .15s ease;
-}
-#fileInput{ display:none }
+}#fileInput { display:none }
 
 /* --- Row below dropzone (Choose file + helper) --- */
-.row{ display:flex; gap:16px; align-items:center; margin:16px 0 }
-.btn{
+.row { display:flex; gap:16px; align-items:center; margin:16px 0 }
+
+/* Primary button styles */
+.btn {
   border:1px solid var(--brand-border);
   border-radius:8px; padding:10px 14px; cursor:pointer;
   background:#fff;
-}
-.help{ color:var(--brand-muted) }
+}.help { color:var(--brand-muted) }
 
 /* --- Options row: LOCATION FIRST, then COPY --- */
 .options-row {
   display:flex; flex-wrap:wrap;
   gap:12px 16px; align-items:center;
   margin:12px 0 4px;
-}
-@media (min-width:640px){ .options-row{ gap:12px 24px } }
-
-.option{
+}@media (min-width:640px) { .options-row{ gap:12px 24px } }.option {
   position:relative;
   display:inline-flex; align-items:center; gap:8px;
   padding:4px 0; border:0; background:transparent;
-}
-.checkbox{ display:inline-flex; align-items:center; gap:8px }
+}.checkbox { display:inline-flex; align-items:center; gap:8px }
 
 /* Info “i” button + popover */
-.info-btn{
+.info-btn {
   width:20px; height:20px; min-width:20px;
   border-radius:50%; border:1px solid var(--brand-border);
   font:12px/18px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   background:#fff; color:var(--brand-accent);
   text-align:center; cursor:pointer;
-}
-.info-btn:hover{ background:#f7f7f7 }
-.popover{
+}.info-btn:hover { background:#f7f7f7 }.popover {
   position:absolute; top:28px; left:0;
   max-width:360px; padding:10px 12px;
   border:1px solid var(--brand-border); background:#fff;
@@ -109,53 +111,29 @@ h1{ margin:16px 0 24px; font-size:32px; line-height:1.2 }
 }
 
 /* --- Email field (shown only when “Email me a copy” is checked) --- */
-.email-wrap{ margin-top:8px }
-.email-wrap input[type="email"]{
+.email-wrap { margin-top:8px }.email-wrap input[type="email"] {
   width:100%; max-width:480px;
   padding:10px 12px; border:1px solid var(--brand-border); border-radius:8px
 }
 
 /* --- Submit button (full width to match container/dropzone) --- */
-.primary{
+.primary {
   margin-top:12px; border:none; border-radius:10px;
   padding:12px 18px; background:var(--brand-primary);
   color:var(--brand-button-text); cursor:pointer
-}
-.primary[disabled]{ opacity:.5; cursor:not-allowed }
-.primary-full{ width:100%; display:block }
+}.primary[disabled] { opacity:.5; cursor:not-allowed }.primary-full { width:100%; display:block }
 
 /* --- Small/help text + status --- */
-.small{ color:var(--brand-muted); margin-top:12px }
-.status{ margin-top:16px; min-height:24px }
+.small { color:var(--brand-muted); margin-top:12px }.status { margin-top:16px; min-height:24px }
 
 /* --- Footer --- */
-.site-footer{
+.site-footer {
   display:flex; gap:28px; justify-content:center;
   padding:24px; color:var(--brand-accent)
-}
-.site-footer a{ color:var(--brand-accent); text-decoration:none }
-.site-footer a:hover{ text-decoration:underline }
-
-/* --- Translate dropdown panel --- */
-.lang-menu{
-  position:absolute; right:0; top:40px; background:#fff;
-  border:1px solid var(--brand-border); border-radius:8px; padding:8px; min-width:160px
-}
-.lang-menu button{
-  display:block; width:100%; text-align:left;
-  padding:8px 10px; border:none; background:transparent; cursor:pointer
-}
-.lang-menu button:hover{ background:#f7f7f7 }
-.lang-menu {
-  max-height: 320px;         /* allow many languages */
-  overflow: auto;            /* scroll if needed */
-  overscroll-behavior: contain;
-}
+}.site-footer a { color:var(--brand-accent); text-decoration:none }.site-footer a:hover { text-decoration:underline }
 
 /* --- Drop area hero --- */
-.dz-wrap { margin:16px 0 8px; }
-
-.dropzone.dz-hero{
+.dz-wrap { margin:16px 0 8px; }.dropzone.dz-hero {
   border:2px dashed var(--brand-border);
   border-radius:10px;
   background:#fff;
@@ -167,10 +145,8 @@ h1{ margin:16px 0 24px; font-size:32px; line-height:1.2 }
   text-align:center;
   padding:36px 24px;
   transition: background-color .15s ease, border-color .15s ease;
-}
-
-/* Podfy icon via mask so we can recolor it by state */
-.dz-icon-mask{
+}/* Podfy icon via mask so we can recolor it by state */
+.dz-icon-mask {
   width:72px;
   height:72px;
   background-color:var(--dz-icon-base); /* default: light gray */
@@ -179,94 +155,74 @@ h1{ margin:16px 0 24px; font-size:32px; line-height:1.2 }
   opacity:.95;
   margin-bottom:12px;
   transition: background-color .15s ease, opacity .15s ease;
-}
-
-/* Titles & body inside dropzone */
-.dz-title{
+}/* Titles & body inside dropzone */
+.dz-title {
   font-size:20px;
   line-height:1.2;
   margin:4px 0;
-}
-.dz-sub{
+}.dz-sub {
   color:var(--brand-muted);
   margin:6px 0 14px;
-}
-.dz-actions{
+}.dz-actions {
   display:flex;
   gap:10px;
   flex-wrap:wrap;
   justify-content:center;
   margin:2px 0 8px;
-}
-.dz-constraints{
+}.dz-constraints {
   margin-top:8px;
   color:var(--brand-muted);
   font-size:14px;
 }
+
 /* Buttons used inside the drop area */
-.btn{
+/* Primary button styles */
+.btn {
   border:1px solid var(--brand-border);
   border-radius:10px;
   background:#fff;
   padding:10px 14px;
   cursor:pointer;
-}
-.btn:hover{ background:#f8f8f8 }
+}.btn:hover { background:#f8f8f8 }
 
 /* State: dragging a file over the box */
-.dropzone.dz-hero.dragover{
+.dropzone.dz-hero.dragover {
   background:var(--dz-hover-bg);
   border-color:var(--dz-hover-bord);
-}
-.dropzone.dz-hero.dragover .dz-icon-mask{
-  background-color:var(--dz-accent); /* green */
-  opacity:1;
-}
+}.dropzone.dz-hero.dragover .dz-icon-mask {
+  background-color:var(--dz-accent); 
+  /* green */
+  opacity:1;}
 
 /* State: file selected (submit enabled) */
 /* We toggle .ready on the dropzone from JS when a file is present */
-.dropzone.dz-hero.ready .dz-icon-mask{
-  background-color:var(--brand-primary); /* match primary button color */
-  opacity:1;
-}
-/* Language selector (globe + dropdown) */
-.lang { position: relative; }
+.dropzone.dz-hero.ready .dz-icon-mask {
+  background-color:var(--brand-primary); 
+  /* match primary button color */
+  opacity:1;}
 
-.lang-trigger{
+/* Language selector (globe + dropdown) */
+.lang { position: relative; }.lang-trigger {
   display:flex; align-items:center; gap:10px;
   background:#fff; color:#111827;
   border:1px solid var(--brand-border); border-radius:10px;
   padding:8px 12px; cursor:pointer;
   box-shadow:0 1px 2px rgba(0,0,0,.04);
-}
-.lang-trigger:hover{ background:#f8f8f8; }
-.lang-ic{ width:18px; height:18px; color:#6B7280; }
-.lang-caret{ width:14px; height:14px; color:#6B7280; transition:transform .15s ease; }
-.lang-trigger[aria-expanded="true"] .lang-caret{ transform:rotate(180deg); }
-
-.lang-panel{
+}.lang-trigger:hover { background:#f8f8f8; }.lang-ic { width:18px; height:18px; color:#6B7280; }.lang-caret { width:14px; height:14px; color:#6B7280; transition:transform .15s ease; }.lang-trigger[aria-expanded="true"] .lang-caret { transform:rotate(180deg); }.lang-panel {
   position:absolute; right:0; top:44px; z-index:50;
   width: 220px; max-height: 320px; overflow:auto;
   background:#fff; border:1px solid var(--brand-border);
   border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.10);
   padding:6px;
-}
-
-.lang-item{
+}.lang-item {
   display:flex; align-items:center; gap:10px;
   width:100%; border:0; background:transparent;
   padding:10px 10px; cursor:pointer; border-radius:8px;
   color:#111827; text-align:left;
-}
-.lang-item:hover{ background:#F3F4F6; }
-
-.lang-bullet{
+}.lang-item:hover { background:#F3F4F6; }.lang-bullet {
   width:16px; height:16px; border-radius:50%;
   border:2px solid #9CA3AF; display:inline-block; position:relative; flex:0 0 16px;
-}
-.lang-item[aria-checked="true"] .lang-bullet{ border-color:#2563EB; }
-.lang-item[aria-checked="true"] .lang-bullet::after{
+}.lang-item[aria-checked="true"] .lang-bullet { border-color:#2563EB; }.lang-item[aria-checked="true"] .lang-bullet::after {
   content:""; position:absolute; top:2px; left:2px; width:8px; height:8px;
   border-radius:50%; background:#2563EB;
-}
-#currentLangLabel{ font-weight:600; }
+}#currentLangLabel { font-weight:600; }
