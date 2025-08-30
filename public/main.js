@@ -70,6 +70,10 @@
   }
 
   // ---------- Apply language ----------
+  /**
+   * Applies the given language key: updates text content for [data-i18n] nodes and RTL/LTR dir.
+   */
+  
   function applyLang(code) {
     const dict = strings[code] || strings['en'] || {};
     qsa('[data-i18n]').forEach(el => {
@@ -129,6 +133,10 @@
   }
 
   // ---------- Toggle wiring (open/close dropdown) ----------
+  /**
+   * Wires the language dropdown toggle, handles outside-click and Escape to close.
+   */
+  
   function wireLanguageToggle() {
     const btn  = langTrigger;
     const menu = langMenu;
@@ -222,7 +230,75 @@
   }
 
   // ---------- Upload UI wiring ----------
-  function wireUI() {
+  /**
+   * Sets up the upload UI: file pickers, copy-to-email toggle, submit handling, and status updates.
+   */
+  
+  
+  /**
+   * Wires lightweight info popovers for buttons with .info-btn.
+   * Uses the button's aria-controls attribute to find the associated popover element.
+   * - Toggles visibility on click.
+   * - Closes on outside click or Escape.
+   * - Updates aria-expanded for a11y.
+   */
+  function wirePopovers() {
+    const buttons = Array.from(document.querySelectorAll('.info-btn'));
+    const popovers = new Map(); // btn -> popover
+
+    buttons.forEach(btn => {
+      const id = btn.getAttribute('aria-controls');
+      const pop = id ? document.getElementById(id) : null;
+      if (!pop) return;
+      popovers.set(btn, pop);
+
+      // Ensure base a11y attributes
+      btn.setAttribute('aria-expanded', btn.getAttribute('aria-expanded') || 'false');
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-hidden', pop.hasAttribute('hidden') ? 'true' : 'false');
+    });
+
+    function closeAll(exceptBtn = null) {
+      popovers.forEach((pop, btn) => {
+        if (btn !== exceptBtn) {
+          pop.hidden = true;
+          pop.setAttribute('aria-hidden', 'true');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    // Click to toggle
+    buttons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const pop = popovers.get(btn);
+        if (!pop) return;
+        const willOpen = !!pop.hidden;
+        closeAll(btn);
+        pop.hidden = !willOpen ? true : false;
+        pop.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+        btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+          setTimeout(() => { if (pop.focus) pop.setAttribute('tabindex','-1'), pop.focus(); }, 0);
+        }
+        e.stopPropagation();
+      });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      const isBtn = buttons.some(b => b === target);
+      const inPop = Array.from(popovers.values()).some(pop => pop.contains(target));
+      if (!isBtn && !inPop) closeAll(null);
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAll(null);
+    });
+  }
+function wireUI() {
     // Toggle email field
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
@@ -343,6 +419,7 @@
   // ---------- Init ----------
   (async function init() {
     await Promise.all([loadTheme(), loadI18n()]);
+    wirePopovers();
     wireUI();
   })();
 
