@@ -15,9 +15,10 @@
     "terms": "Terms",
     "success": "Thanks. File received.",
     "copyInfoText": "Can be used to see if the file has been sent and to make sure you have a back-up for yourself.",
-    "locInfoText": "This allows Podfy to share the location where you uploaded the POD in case of investigation on issues."
+    "locInfoText": "This allows Podfy to share the location where you uploaded the POD in case of investigation on issues.",
+    "whatIsThis": "What is this?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "nl": {
     "__name": "Nederlands",
     "heading": "Upload CMR / POD",
@@ -34,9 +35,10 @@
     "terms": "Voorwaarden",
     "success": "Bedankt. Bestand ontvangen.",
     "copyInfoText": "Kan worden gebruikt om te zien of het bestand is verzonden en om zeker te zijn van een back-up voor jezelf.",
-    "locInfoText": "Dit stelt Podfy in staat de locatie van de upload te delen bij onderzoek naar problemen."
+    "locInfoText": "Dit stelt Podfy in staat de locatie van de upload te delen bij onderzoek naar problemen.",
+    "whatIsThis": "Wat is dit?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "de": {
     "__name": "Deutsch",
     "heading": "CMR / POD hochladen",
@@ -53,9 +55,10 @@
     "terms": "Bedingungen",
     "success": "Danke. Datei empfangen.",
     "copyInfoText": "Kann genutzt werden, um den Versand zu prüfen und eine eigene Sicherung zu erhalten.",
-    "locInfoText": "Ermöglicht Podfy, den Upload-Ort bei Untersuchungen anzugeben."
+    "locInfoText": "Ermöglicht Podfy, den Upload-Ort bei Untersuchungen anzugeben.",
+    "whatIsThis": "Was ist das?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "fr": {
     "__name": "Français",
     "heading": "Téléverser CMR / POD",
@@ -72,9 +75,10 @@
     "terms": "Conditions",
     "success": "Merci. Fichier reçu.",
     "copyInfoText": "Permet de vérifier l’envoi et de garder une sauvegarde pour vous-même.",
-    "locInfoText": "Permet à Podfy d’indiquer le lieu de dépôt en cas d’enquête."
+    "locInfoText": "Permet à Podfy d’indiquer le lieu de dépôt en cas d’enquête.",
+    "whatIsThis": "Qu’est-ce que c’est ?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "es": {
     "__name": "Español",
     "heading": "Subir CMR / POD",
@@ -91,9 +95,10 @@
     "terms": "Términos",
     "success": "Gracias. Archivo recibido.",
     "copyInfoText": "Sirve para comprobar si el archivo se envió y para conservar una copia de respaldo.",
-    "locInfoText": "Permite a Podfy compartir el lugar donde subiste el POD en caso de investigación."
+    "locInfoText": "Permite a Podfy compartir el lugar donde subiste el POD en caso de investigación.",
+    "whatIsThis": "¿Qué es esto?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "it": {
     "__name": "Italiano",
     "heading": "Carica CMR / POD",
@@ -110,9 +115,10 @@
     "terms": "Termini",
     "success": "Grazie. File ricevuto.",
     "copyInfoText": "Utile per verificare l’invio e conservare una copia di backup per te.",
-    "locInfoText": "Consente a Podfy di indicare il luogo del caricamento in caso di indagine."
+    "locInfoText": "Consente a Podfy di indicare il luogo del caricamento in caso di indagine.",
+    "whatIsThis": "Che cos'è?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "pt": {
     "__name": "Português",
     "heading": "Carregar CMR / POD",
@@ -129,9 +135,10 @@
     "terms": "Termos",
     "success": "Obrigado. Ficheiro recebido.",
     "copyInfoText": "Pode ser usado para verificar o envio e manter uma cópia de segurança.",
-    "locInfoText": "Permite à Podfy indicar o local do carregamento em caso de investigação."
+    "locInfoText": "Permite à Podfy indicar o local do carregamento em caso de investigação.",
+    "whatIsThis": "O que é isto?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "pl": {
     "__name": "Polski",
     "heading": "Prześlij CMR / POD",
@@ -148,9 +155,10 @@
     "terms": "Warunki",
     "success": "Dziękujemy. Plik odebrano.",
     "copyInfoText": "Pozwala sprawdzić, czy plik został wysłany, i zachować własną kopię zapasową.",
-    "locInfoText": "Umożliwia Podfy podanie miejsca przesłania POD w razie dochodzenia."
+    "locInfoText": "Umożliwia Podfy podanie miejsca przesłania POD w razie dochodzenia.",
+    "whatIsThis": "Co to jest?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ro": {
     "__name": "Română",
     "heading": "Încarcă CMR / POD",
@@ -167,9 +175,10 @@
     "terms": "Termeni",
     "success": "Mulțumim. Fișier primit.",
     "copyInfoText": "Se poate folosi pentru a verifica dacă fișierul a fost trimis și pentru a păstra o copie de rezervă.",
-    "locInfoText": "Permite Podfy să indice locul în care ai încărcat POD-ul în caz de investigație."
+    "locInfoText": "Permite Podfy să indice locul în care ai încărcat POD-ul în caz de investigație.",
+    "whatIsThis": "Ce este aceasta?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "bg": {
     "__name": "Български",
     "heading": "Качване на CMR / POD",
@@ -186,9 +195,10 @@
     "terms": "Условия",
     "success": "Благодарим. Файлът е получен.",
     "copyInfoText": "Може да се използва за проверка на изпращането и за собствено резервно копие.",
-    "locInfoText": "Позволява на Podfy да посочи мястото на качване при разследване."
+    "locInfoText": "Позволява на Podfy да посочи мястото на качване при разследване.",
+    "whatIsThis": "Какво е това?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "hu": {
     "__name": "Magyar",
     "heading": "CMR / POD feltöltése",
@@ -205,9 +215,10 @@
     "terms": "Feltételek",
     "success": "Köszönjük. A fájl megérkezett.",
     "copyInfoText": "Hasznos az elküldés ellenőrzéséhez és saját biztonsági másolat megőrzéséhez.",
-    "locInfoText": "Lehetővé teszi a Podfy számára, hogy vizsgálat esetén jelezze a feltöltés helyét."
+    "locInfoText": "Lehetővé teszi a Podfy számára, hogy vizsgálat esetén jelezze a feltöltés helyét.",
+    "whatIsThis": "Mi ez?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "cs": {
     "__name": "Čeština",
     "heading": "Nahrát CMR / POD",
@@ -224,9 +235,10 @@
     "terms": "Podmínky",
     "success": "Děkujeme. Soubor přijat.",
     "copyInfoText": "Lze použít ke kontrole odeslání a k uchování vlastní zálohy.",
-    "locInfoText": "Umožňuje Podfy uvést místo nahrání v případě šetření."
+    "locInfoText": "Umožňuje Podfy uvést místo nahrání v případě šetření.",
+    "whatIsThis": "Co to je?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "sk": {
     "__name": "Slovenčina",
     "heading": "Nahrať CMR / POD",
@@ -243,9 +255,10 @@
     "terms": "Podmienky",
     "success": "Ďakujeme. Súbor prijatý.",
     "copyInfoText": "Možno použiť na kontrolu odoslania a pre vlastnú zálohu.",
-    "locInfoText": "Umožňuje Podfy uviesť miesto nahratia v prípade vyšetrovania."
+    "locInfoText": "Umožňuje Podfy uviesť miesto nahratia v prípade vyšetrovania.",
+    "whatIsThis": "Čo je to?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "sl": {
     "__name": "Slovenščina",
     "heading": "Naloži CMR / POD",
@@ -262,9 +275,10 @@
     "terms": "Pogoji",
     "success": "Hvala. Datoteka prejeta.",
     "copyInfoText": "Uporabno za preverjanje pošiljanja in za lastno varnostno kopijo.",
-    "locInfoText": "Podfy lahko navede mesto nalaganja v primeru preiskave."
+    "locInfoText": "Podfy lahko navede mesto nalaganja v primeru preiskave.",
+    "whatIsThis": "Kaj je to?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "hr": {
     "__name": "Hrvatski",
     "heading": "Učitaj CMR / POD",
@@ -281,9 +295,10 @@
     "terms": "Uvjeti",
     "success": "Hvala. Datoteka je primljena.",
     "copyInfoText": "Može poslužiti za provjeru slanja i kao sigurnosna kopija.",
-    "locInfoText": "Omogućuje Podfyju navođenje mjesta učitavanja u slučaju istrage."
+    "locInfoText": "Omogućuje Podfyju navođenje mjesta učitavanja u slučaju istrage.",
+    "whatIsThis": "Što je ovo?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "lt": {
     "__name": "Lietuvių",
     "heading": "Įkelti CMR / POD",
@@ -300,9 +315,10 @@
     "terms": "Sąlygos",
     "success": "Ačiū. Failas gautas.",
     "copyInfoText": "Leidžia patikrinti, ar failas išsiųstas, ir turėti savo atsarginę kopiją.",
-    "locInfoText": "Leidžia „Podfy“ nurodyti įkėlimo vietą tyrimo atveju."
+    "locInfoText": "Leidžia „Podfy“ nurodyti įkėlimo vietą tyrimo atveju.",
+    "whatIsThis": "Kas tai?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "lv": {
     "__name": "Latviešu",
     "heading": "Augšupielādēt CMR / POD",
@@ -319,9 +335,10 @@
     "terms": "Noteikumi",
     "success": "Paldies. Fails saņemts.",
     "copyInfoText": "Var izmantot, lai pārbaudītu nosūtīšanu un saglabātu rezerves kopiju sev.",
-    "locInfoText": "Ļauj Podfy norādīt augšupielādes vietu izmeklēšanas gadījumā."
+    "locInfoText": "Ļauj Podfy norādīt augšupielādes vietu izmeklēšanas gadījumā.",
+    "whatIsThis": "Kas tas ir?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "et": {
     "__name": "Eesti",
     "heading": "Laadi üles CMR / POD",
@@ -338,9 +355,10 @@
     "terms": "Tingimused",
     "success": "Aitäh. Fail vastu võetud.",
     "copyInfoText": "Võimaldab kontrollida saatmist ja hoida isiklikku varukoopiat.",
-    "locInfoText": "Võimaldab Podfyl näidata üleslaadimise asukohta uurimise korral."
+    "locInfoText": "Võimaldab Podfyl näidata üleslaadimise asukohta uurimise korral.",
+    "whatIsThis": "Mis see on?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "fi": {
     "__name": "Suomi",
     "heading": "Lataa CMR / POD",
@@ -357,9 +375,10 @@
     "terms": "Ehdot",
     "success": "Kiitos. Tiedosto vastaanotettu.",
     "copyInfoText": "Voit tarkistaa lähetyksen ja pitää oman varmuuskopion.",
-    "locInfoText": "Mahdollistaa Podfyn ilmoittaa lähetyspaikan tutkimustilanteissa."
+    "locInfoText": "Mahdollistaa Podfyn ilmoittaa lähetyspaikan tutkimustilanteissa.",
+    "whatIsThis": "Mikä tämä on?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "sv": {
     "__name": "Svenska",
     "heading": "Ladda upp CMR / POD",
@@ -376,9 +395,10 @@
     "terms": "Villkor",
     "success": "Tack. Fil mottagen.",
     "copyInfoText": "Kan användas för att kontrollera att filen skickats och för att behålla en säkerhetskopia.",
-    "locInfoText": "Låter Podfy ange platsen för uppladdningen vid utredningar."
+    "locInfoText": "Låter Podfy ange platsen för uppladdningen vid utredningar.",
+    "whatIsThis": "Vad är det här?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "da": {
     "__name": "Dansk",
     "heading": "Upload CMR / POD",
@@ -395,9 +415,10 @@
     "terms": "Vilkår",
     "success": "Tak. Fil modtaget.",
     "copyInfoText": "Kan bruges til at se, om filen er sendt, og for at have en sikkerhedskopi.",
-    "locInfoText": "Gør det muligt for Podfy at angive uploadstedet ved undersøgelser."
+    "locInfoText": "Gør det muligt for Podfy at angive uploadstedet ved undersøgelser.",
+    "whatIsThis": "Hvad er det her?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "el": {
     "__name": "Ελληνικά",
     "heading": "Ανέβασμα CMR / POD",
@@ -414,9 +435,10 @@
     "terms": "Όροι",
     "success": "Ευχαριστούμε. Το αρχείο ελήφθη.",
     "copyInfoText": "Χρήσιμο για επαλήθευση αποστολής και διατήρηση αντιγράφου ασφαλείας.",
-    "locInfoText": "Επιτρέπει στο Podfy να δηλώσει τον χώρο μεταφόρτωσης σε περίπτωση διερεύνησης."
+    "locInfoText": "Επιτρέπει στο Podfy να δηλώσει τον χώρο μεταφόρτωσης σε περίπτωση διερεύνησης.",
+    "whatIsThis": "Τι είναι αυτό;",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ga": {
     "__name": "Gaeilge",
     "heading": "Uaslódáil CMR / POD",
@@ -433,9 +455,10 @@
     "terms": "Téarmaí",
     "success": "Go raibh maith agat. Fuarthas an comhad.",
     "copyInfoText": "Is féidir é a úsáid chun a fhíorú an seoladh an comhad agus chun cúltaca a bheith agat duit féin.",
-    "locInfoText": "Ligeann sé do Podfy an láthair uaslódála a roinnt i gcás imscrúdaithe."
+    "locInfoText": "Ligeann sé do Podfy an láthair uaslódála a roinnt i gcás imscrúdaithe.",
+    "whatIsThis": "Cad é seo?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "mt": {
     "__name": "Malti",
     "heading": "Tella’ CMR / POD",
@@ -452,9 +475,10 @@
     "terms": "Termini",
     "success": "Grazzi. Il-fajl riċevut.",
     "copyInfoText": "Jintuża biex tivverifika t-trasmissjoni u biex iżżomm kopja ta’ sigurtà.",
-    "locInfoText": "Jippermetti lil Podfy jindika l-post tat-tella’ f’każ ta’ investigazzjoni."
+    "locInfoText": "Jippermetti lil Podfy jindika l-post tat-tella’ f’każ ta’ investigazzjoni.",
+    "whatIsThis": "X'inhu dan?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "uk": {
     "__name": "Українська",
     "heading": "Завантажити CMR / POD",
@@ -471,9 +495,10 @@
     "terms": "Умови",
     "success": "Дякуємо. Файл отримано.",
     "copyInfoText": "Можна використовувати, щоб перевірити надсилання й мати власну резервну копію.",
-    "locInfoText": "Дозволяє Podfy вказати місце завантаження у разі розслідування."
+    "locInfoText": "Дозволяє Podfy вказати місце завантаження у разі розслідування.",
+    "whatIsThis": "Що це?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "tr": {
     "__name": "Türkçe",
     "heading": "CMR / POD yükle",
@@ -490,9 +515,10 @@
     "terms": "Koşullar",
     "success": "Teşekkürler. Dosya alındı.",
     "copyInfoText": "Dosyanın gönderildiğini görmek ve kendinize bir yedek tutmak için kullanılabilir.",
-    "locInfoText": "Soruşturma durumunda POD’un yüklendiği konumu paylaşmaya izin verir."
+    "locInfoText": "Soruşturma durumunda POD’un yüklendiği konumu paylaşmaya izin verir.",
+    "whatIsThis": "Bu nedir?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "sr": {
     "__name": "Srpski",
     "heading": "Otpremi CMR / POD",
@@ -509,9 +535,10 @@
     "terms": "Uslovi",
     "success": "Hvala. Fajl je primljen.",
     "copyInfoText": "Može se koristiti za proveru slanja i čuvanje sopstvene rezervne kopije.",
-    "locInfoText": "Omogućava Podfy-u da navede mesto otpremanja u slučaju istrage."
+    "locInfoText": "Omogućava Podfy-u da navede mesto otpremanja u slučaju istrage.",
+    "whatIsThis": "Šta je ovo?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "bs": {
     "__name": "Bosanski",
     "heading": "Otpremi CMR / POD",
@@ -528,9 +555,10 @@
     "terms": "Uslovi",
     "success": "Hvala. Datoteka primljena.",
     "copyInfoText": "Može se koristiti za provjeru slanja i za vlastitu sigurnosnu kopiju.",
-    "locInfoText": "Omogućava Podfyju navođenje mjesta učitavanja u slučaju istrage."
+    "locInfoText": "Omogućava Podfyju navođenje mjesta učitavanja u slučaju istrage.",
+    "whatIsThis": "Šta je ovo?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "sq": {
     "__name": "Shqip",
     "heading": "Ngarko CMR / POD",
@@ -547,9 +575,10 @@
     "terms": "Kushtet",
     "success": "Faleminderit. Skedari u pranua.",
     "copyInfoText": "Mund të përdoret për të kontrolluar nëse skedari u dërgua dhe për të pasur një kopje rezervë për veten.",
-    "locInfoText": "Lejon Podfy të tregojë vendin e ngarkimit në rast hetimi."
+    "locInfoText": "Lejon Podfy të tregojë vendin e ngarkimit në rast hetimi.",
+    "whatIsThis": "Çfarë është kjo?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "mk": {
     "__name": "Македонски",
     "heading": "Подигни CMR / POD",
@@ -566,9 +595,10 @@
     "terms": "Услови",
     "success": "Благодариме. Датотеката е примена.",
     "copyInfoText": "Може да се користи за проверка на испраќањето и за сопствена резервна копија.",
-    "locInfoText": "Овозможува Podfy да го наведе местото на подигање во случај на истрага."
+    "locInfoText": "Овозможува Podfy да го наведе местото на подигање во случај на истрага.",
+    "whatIsThis": "Што е ова?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ru": {
     "__name": "Русский",
     "heading": "Загрузить CMR / POD",
@@ -585,9 +615,10 @@
     "terms": "Условия",
     "success": "Спасибо. Файл получен.",
     "copyInfoText": "Можно использовать, чтобы проверить отправку и сохранить резервную копию для себя.",
-    "locInfoText": "Позволяет Podfy указать место загрузки в случае расследования."
+    "locInfoText": "Позволяет Podfy указать место загрузки в случае расследования.",
+    "whatIsThis": "Что это?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "be": {
     "__name": "Беларуская",
     "heading": "Запампаваць CMR / POD",
@@ -604,9 +635,10 @@
     "terms": "Умовы",
     "success": "Дзякуй. Файл атрыманы.",
     "copyInfoText": "Можна выкарыстаць для праверкі адпраўкі і для ўласнай рэзервовай копіі.",
-    "locInfoText": "Дазваляе Podfy паказаць месца запампоўкі пры расследаванні."
+    "locInfoText": "Дазваляе Podfy паказаць месца запампоўкі пры расследаванні.",
+    "whatIsThis": "Што гэта?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ka": {
     "__name": "ქართული",
     "heading": "ატვირთეთ CMR / POD",
@@ -623,9 +655,10 @@
     "terms": "პირობები",
     "success": "გმადლობთ. ფაილი მიღებულია.",
     "copyInfoText": "შეგიძლიათ გამოიყენოთ მისაგებად, გაიგზავნა თუ არა ფაილი და გქონდეთ სარეზერვო ასლი.",
-    "locInfoText": "აძლევს Podfy-ს საშუალებას მიუთითოს ატვირთვის ადგილი გამოძიების შემთხვევაში."
+    "locInfoText": "აძლევს Podfy-ს საშუალებას მიუთითოს ატვირთვის ადგილი გამოძიების შემთხვევაში.",
+    "whatIsThis": "ეს რა არის?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "hy": {
     "__name": "Հայերեն",
     "heading": "Վերբեռնել CMR / POD",
@@ -642,9 +675,10 @@
     "terms": "Պայմաններ",
     "success": "Շնորհակալություն։ Ֆայլը ստացվեց։",
     "copyInfoText": "Կարելի է օգտագործել՝ ստուգելու համար արդյոք ֆայլը ուղարկվել է և ունենալու համար պահուստային պատճեն։",
-    "locInfoText": "Թույլ է տալիս Podfy-ին նշել վերբեռնումի վայրը ուսումնասիրության դեպքում։"
+    "locInfoText": "Թույլ է տալիս Podfy-ին նշել վերբեռնումի վայրը ուսումնասիրության դեպքում։",
+    "whatIsThis": "Սա ի՞նչ է։",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ro_MD": {
     "__name": "Română (Moldova)",
     "heading": "Încărcați CMR / POD",
@@ -661,9 +695,10 @@
     "terms": "Termeni",
     "success": "Mulțumim. Fișier primit.",
     "copyInfoText": "Poate fi folosit pentru a verifica trimiterea și pentru a păstra o copie de rezervă.",
-    "locInfoText": "Permite Podfy să indice locul încărcării în cazul unei investigații."
+    "locInfoText": "Permite Podfy să indice locul încărcării în cazul unei investigații.",
+    "whatIsThis": "Ce este aceasta?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ar": {
     "__name": "العربية",
     "heading": "رفع CMR / POD",
@@ -680,9 +715,10 @@
     "terms": "الشروط",
     "success": "شكرًا. تم استلام الملف.",
     "copyInfoText": "يمكن استخدامها للتحقق من إرسال الملف وللاحتفاظ بنسخة احتياطية لديك.",
-    "locInfoText": "يتيح لـ Podfy مشاركة موقع رفع POD عند الحاجة للتحقيق."
+    "locInfoText": "يتيح لـ Podfy مشاركة موقع رفع POD عند الحاجة للتحقيق.",
+    "whatIsThis": "ما هذا؟",
+    "emailPlaceholder": "name@example.com"
   },
-
   "fa": {
     "__name": "فارسی",
     "heading": "بارگذاری CMR / POD",
@@ -699,9 +735,10 @@
     "terms": "شرایط",
     "success": "متشکرم. فایل دریافت شد.",
     "copyInfoText": "برای بررسی ارسال فایل و داشتن نسخه پشتیبان مفید است.",
-    "locInfoText": "به Podfy اجازه می‌دهد در صورت بررسی، محل بارگذاری POD را اعلام کند."
+    "locInfoText": "به Podfy اجازه می‌دهد در صورت بررسی، محل بارگذاری POD را اعلام کند.",
+    "whatIsThis": "این چیست؟",
+    "emailPlaceholder": "name@example.com"
   },
-
   "hi": {
     "__name": "हिन्दी",
     "heading": "CMR / POD अपलोड करें",
@@ -718,9 +755,10 @@
     "terms": "नियम",
     "success": "धन्यवाद। फ़ाइल प्राप्त हुई।",
     "copyInfoText": "यह देखने के लिए उपयोगी है कि फ़ाइल भेजी गई है और आपके लिए बैकअप रखने के लिए।",
-    "locInfoText": "जांच के मामले में Podfy को अपलोड स्थान साझा करने की अनुमति देता है।"
+    "locInfoText": "जांच के मामले में Podfy को अपलोड स्थान साझा करने की अनुमति देता है।",
+    "whatIsThis": "यह क्या है?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ku": {
     "__name": "Kurdî (Kurmanji)",
     "heading": "CMR / POD bar bike",
@@ -737,9 +775,10 @@
     "terms": "Merc",
     "success": "Spas. Pel hat stendin.",
     "copyInfoText": "Dikarî bikar bîne da bêyî ku pel hate şandin û kopiyeyekê bo xwe biparêzî.",
-    "locInfoText": "Destûr dide Podfy ku di rewşên lêkolînê de cihê barkirinê parve bike."
+    "locInfoText": "Destûr dide Podfy ku di rewşên lêkolînê de cihê barkirinê parve bike.",
+    "whatIsThis": "Ev çi ye?",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ckb": {
     "__name": "کوردی (سۆرانی)",
     "heading": "بارکردنی CMR / POD",
@@ -756,9 +795,10 @@
     "terms": "مەرجەکان",
     "success": "سوپاس. پەڕگەکە وەردەگیرایە.",
     "copyInfoText": "کۆمەک دەکات بزانیت پەڕگەکە نێردراوە یان نا و بۆ هەڵواسینی کۆپیەکی پشتگیری.",
-    "locInfoText": "ڕەوش پێدادات بە Podfy بۆ هاوبەشکردنی شوێنی بارکردن لە کاتێکدا کەرەستەی لێکۆڵین هەیە."
+    "locInfoText": "ڕەوش پێدادات بە Podfy بۆ هاوبەشکردنی شوێنی بارکردن لە کاتێکدا کەرەستەی لێکۆڵین هەیە.",
+    "whatIsThis": "ئەمە چییە؟",
+    "emailPlaceholder": "name@example.com"
   },
-
   "ps": {
     "__name": "پښتو",
     "heading": "CMR / POD پورته کول",
@@ -775,6 +815,8 @@
     "terms": "شرطونه",
     "success": "مننه. دوتنه تر لاسه شوه.",
     "copyInfoText": "کارېدلی شي څو وګورئ دوتنه لېږل شوې ده او یوه شاتړ کاپي درسره وي.",
-    "locInfoText": "Podfy ته اجازه ورکوي چې د اړتیا په وخت کې د POD پورته کولو ځای شریک کړي."
+    "locInfoText": "Podfy ته اجازه ورکوي چې د اړتیا په وخت کې د POD پورته کولو ځای شریک کړي.",
+    "whatIsThis": "دا څه شی دی؟",
+    "emailPlaceholder": "name@example.com"
   }
 }
