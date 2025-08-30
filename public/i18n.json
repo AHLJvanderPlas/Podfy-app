@@ -17,7 +17,9 @@
     "copyInfoText": "Can be used to see if the file has been sent and to make sure you have a back-up for yourself.",
     "locInfoText": "This allows Podfy to share the location where you uploaded the POD in case of investigation on issues.",
     "whatIsThis": "What is this?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "nl": {
     "__name": "Nederlands",
@@ -37,7 +39,9 @@
     "copyInfoText": "Kan worden gebruikt om te zien of het bestand is verzonden en om zeker te zijn van een back-up voor jezelf.",
     "locInfoText": "Dit stelt Podfy in staat de locatie van de upload te delen bij onderzoek naar problemen.",
     "whatIsThis": "Wat is dit?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Onbekende referentie “{slug}”. Je kunt hieronder de standaardtool gebruiken.",
+    "learnAboutPodfy": "Meer over Podfy"
   },
   "de": {
     "__name": "Deutsch",
@@ -57,7 +61,9 @@
     "copyInfoText": "Kann genutzt werden, um den Versand zu prüfen und eine eigene Sicherung zu erhalten.",
     "locInfoText": "Ermöglicht Podfy, den Upload-Ort bei Untersuchungen anzugeben.",
     "whatIsThis": "Was ist das?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unbekannte Referenz „{slug}“. Du kannst unten das Standardtool verwenden.",
+    "learnAboutPodfy": "Mehr über Podfy"
   },
   "fr": {
     "__name": "Français",
@@ -77,7 +83,9 @@
     "copyInfoText": "Permet de vérifier l’envoi et de garder une sauvegarde pour vous-même.",
     "locInfoText": "Permet à Podfy d’indiquer le lieu de dépôt en cas d’enquête.",
     "whatIsThis": "Qu’est-ce que c’est ?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Référence inconnue « {slug} ». Vous pouvez utiliser l’outil par défaut ci‑dessous.",
+    "learnAboutPodfy": "En savoir plus sur Podfy"
   },
   "es": {
     "__name": "Español",
@@ -97,7 +105,9 @@
     "copyInfoText": "Sirve para comprobar si el archivo se envió y para conservar una copia de respaldo.",
     "locInfoText": "Permite a Podfy compartir el lugar donde subiste el POD en caso de investigación.",
     "whatIsThis": "¿Qué es esto?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Referencia desconocida “{slug}”. Puedes usar la herramienta predeterminada a continuación.",
+    "learnAboutPodfy": "Más sobre Podfy"
   },
   "it": {
     "__name": "Italiano",
@@ -117,7 +127,9 @@
     "copyInfoText": "Utile per verificare l’invio e conservare una copia di backup per te.",
     "locInfoText": "Consente a Podfy di indicare il luogo del caricamento in caso di indagine.",
     "whatIsThis": "Che cos'è?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "pt": {
     "__name": "Português",
@@ -137,7 +149,9 @@
     "copyInfoText": "Pode ser usado para verificar o envio e manter uma cópia de segurança.",
     "locInfoText": "Permite à Podfy indicar o local do carregamento em caso de investigação.",
     "whatIsThis": "O que é isto?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "pl": {
     "__name": "Polski",
@@ -157,7 +171,9 @@
     "copyInfoText": "Pozwala sprawdzić, czy plik został wysłany, i zachować własną kopię zapasową.",
     "locInfoText": "Umożliwia Podfy podanie miejsca przesłania POD w razie dochodzenia.",
     "whatIsThis": "Co to jest?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ro": {
     "__name": "Română",
@@ -177,7 +193,9 @@
     "copyInfoText": "Se poate folosi pentru a verifica dacă fișierul a fost trimis și pentru a păstra o copie de rezervă.",
     "locInfoText": "Permite Podfy să indice locul în care ai încărcat POD-ul în caz de investigație.",
     "whatIsThis": "Ce este aceasta?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "bg": {
     "__name": "Български",
@@ -197,7 +215,9 @@
     "copyInfoText": "Може да се използва за проверка на изпращането и за собствено резервно копие.",
     "locInfoText": "Позволява на Podfy да посочи мястото на качване при разследване.",
     "whatIsThis": "Какво е това?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "hu": {
     "__name": "Magyar",
@@ -217,7 +237,9 @@
     "copyInfoText": "Hasznos az elküldés ellenőrzéséhez és saját biztonsági másolat megőrzéséhez.",
     "locInfoText": "Lehetővé teszi a Podfy számára, hogy vizsgálat esetén jelezze a feltöltés helyét.",
     "whatIsThis": "Mi ez?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "cs": {
     "__name": "Čeština",
@@ -237,7 +259,9 @@
     "copyInfoText": "Lze použít ke kontrole odeslání a k uchování vlastní zálohy.",
     "locInfoText": "Umožňuje Podfy uvést místo nahrání v případě šetření.",
     "whatIsThis": "Co to je?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "sk": {
     "__name": "Slovenčina",
@@ -257,7 +281,9 @@
     "copyInfoText": "Možno použiť na kontrolu odoslania a pre vlastnú zálohu.",
     "locInfoText": "Umožňuje Podfy uviesť miesto nahratia v prípade vyšetrovania.",
     "whatIsThis": "Čo je to?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "sl": {
     "__name": "Slovenščina",
@@ -277,7 +303,9 @@
     "copyInfoText": "Uporabno za preverjanje pošiljanja in za lastno varnostno kopijo.",
     "locInfoText": "Podfy lahko navede mesto nalaganja v primeru preiskave.",
     "whatIsThis": "Kaj je to?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "hr": {
     "__name": "Hrvatski",
@@ -297,7 +325,9 @@
     "copyInfoText": "Može poslužiti za provjeru slanja i kao sigurnosna kopija.",
     "locInfoText": "Omogućuje Podfyju navođenje mjesta učitavanja u slučaju istrage.",
     "whatIsThis": "Što je ovo?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "lt": {
     "__name": "Lietuvių",
@@ -317,7 +347,9 @@
     "copyInfoText": "Leidžia patikrinti, ar failas išsiųstas, ir turėti savo atsarginę kopiją.",
     "locInfoText": "Leidžia „Podfy“ nurodyti įkėlimo vietą tyrimo atveju.",
     "whatIsThis": "Kas tai?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "lv": {
     "__name": "Latviešu",
@@ -337,7 +369,9 @@
     "copyInfoText": "Var izmantot, lai pārbaudītu nosūtīšanu un saglabātu rezerves kopiju sev.",
     "locInfoText": "Ļauj Podfy norādīt augšupielādes vietu izmeklēšanas gadījumā.",
     "whatIsThis": "Kas tas ir?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "et": {
     "__name": "Eesti",
@@ -357,7 +391,9 @@
     "copyInfoText": "Võimaldab kontrollida saatmist ja hoida isiklikku varukoopiat.",
     "locInfoText": "Võimaldab Podfyl näidata üleslaadimise asukohta uurimise korral.",
     "whatIsThis": "Mis see on?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "fi": {
     "__name": "Suomi",
@@ -377,7 +413,9 @@
     "copyInfoText": "Voit tarkistaa lähetyksen ja pitää oman varmuuskopion.",
     "locInfoText": "Mahdollistaa Podfyn ilmoittaa lähetyspaikan tutkimustilanteissa.",
     "whatIsThis": "Mikä tämä on?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "sv": {
     "__name": "Svenska",
@@ -397,7 +435,9 @@
     "copyInfoText": "Kan användas för att kontrollera att filen skickats och för att behålla en säkerhetskopia.",
     "locInfoText": "Låter Podfy ange platsen för uppladdningen vid utredningar.",
     "whatIsThis": "Vad är det här?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "da": {
     "__name": "Dansk",
@@ -417,7 +457,9 @@
     "copyInfoText": "Kan bruges til at se, om filen er sendt, og for at have en sikkerhedskopi.",
     "locInfoText": "Gør det muligt for Podfy at angive uploadstedet ved undersøgelser.",
     "whatIsThis": "Hvad er det her?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "el": {
     "__name": "Ελληνικά",
@@ -437,7 +479,9 @@
     "copyInfoText": "Χρήσιμο για επαλήθευση αποστολής και διατήρηση αντιγράφου ασφαλείας.",
     "locInfoText": "Επιτρέπει στο Podfy να δηλώσει τον χώρο μεταφόρτωσης σε περίπτωση διερεύνησης.",
     "whatIsThis": "Τι είναι αυτό;",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ga": {
     "__name": "Gaeilge",
@@ -457,7 +501,9 @@
     "copyInfoText": "Is féidir é a úsáid chun a fhíorú an seoladh an comhad agus chun cúltaca a bheith agat duit féin.",
     "locInfoText": "Ligeann sé do Podfy an láthair uaslódála a roinnt i gcás imscrúdaithe.",
     "whatIsThis": "Cad é seo?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "mt": {
     "__name": "Malti",
@@ -477,7 +523,9 @@
     "copyInfoText": "Jintuża biex tivverifika t-trasmissjoni u biex iżżomm kopja ta’ sigurtà.",
     "locInfoText": "Jippermetti lil Podfy jindika l-post tat-tella’ f’każ ta’ investigazzjoni.",
     "whatIsThis": "X'inhu dan?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "uk": {
     "__name": "Українська",
@@ -497,7 +545,9 @@
     "copyInfoText": "Можна використовувати, щоб перевірити надсилання й мати власну резервну копію.",
     "locInfoText": "Дозволяє Podfy вказати місце завантаження у разі розслідування.",
     "whatIsThis": "Що це?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "tr": {
     "__name": "Türkçe",
@@ -517,7 +567,9 @@
     "copyInfoText": "Dosyanın gönderildiğini görmek ve kendinize bir yedek tutmak için kullanılabilir.",
     "locInfoText": "Soruşturma durumunda POD’un yüklendiği konumu paylaşmaya izin verir.",
     "whatIsThis": "Bu nedir?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "sr": {
     "__name": "Srpski",
@@ -537,7 +589,9 @@
     "copyInfoText": "Može se koristiti za proveru slanja i čuvanje sopstvene rezervne kopije.",
     "locInfoText": "Omogućava Podfy-u da navede mesto otpremanja u slučaju istrage.",
     "whatIsThis": "Šta je ovo?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "bs": {
     "__name": "Bosanski",
@@ -557,7 +611,9 @@
     "copyInfoText": "Može se koristiti za provjeru slanja i za vlastitu sigurnosnu kopiju.",
     "locInfoText": "Omogućava Podfyju navođenje mjesta učitavanja u slučaju istrage.",
     "whatIsThis": "Šta je ovo?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "sq": {
     "__name": "Shqip",
@@ -577,7 +633,9 @@
     "copyInfoText": "Mund të përdoret për të kontrolluar nëse skedari u dërgua dhe për të pasur një kopje rezervë për veten.",
     "locInfoText": "Lejon Podfy të tregojë vendin e ngarkimit në rast hetimi.",
     "whatIsThis": "Çfarë është kjo?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "mk": {
     "__name": "Македонски",
@@ -597,7 +655,9 @@
     "copyInfoText": "Може да се користи за проверка на испраќањето и за сопствена резервна копија.",
     "locInfoText": "Овозможува Podfy да го наведе местото на подигање во случај на истрага.",
     "whatIsThis": "Што е ова?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ru": {
     "__name": "Русский",
@@ -617,7 +677,9 @@
     "copyInfoText": "Можно использовать, чтобы проверить отправку и сохранить резервную копию для себя.",
     "locInfoText": "Позволяет Podfy указать место загрузки в случае расследования.",
     "whatIsThis": "Что это?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "be": {
     "__name": "Беларуская",
@@ -637,7 +699,9 @@
     "copyInfoText": "Можна выкарыстаць для праверкі адпраўкі і для ўласнай рэзервовай копіі.",
     "locInfoText": "Дазваляе Podfy паказаць месца запампоўкі пры расследаванні.",
     "whatIsThis": "Што гэта?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ka": {
     "__name": "ქართული",
@@ -657,7 +721,9 @@
     "copyInfoText": "შეგიძლიათ გამოიყენოთ მისაგებად, გაიგზავნა თუ არა ფაილი და გქონდეთ სარეზერვო ასლი.",
     "locInfoText": "აძლევს Podfy-ს საშუალებას მიუთითოს ატვირთვის ადგილი გამოძიების შემთხვევაში.",
     "whatIsThis": "ეს რა არის?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "hy": {
     "__name": "Հայերեն",
@@ -677,7 +743,9 @@
     "copyInfoText": "Կարելի է օգտագործել՝ ստուգելու համար արդյոք ֆայլը ուղարկվել է և ունենալու համար պահուստային պատճեն։",
     "locInfoText": "Թույլ է տալիս Podfy-ին նշել վերբեռնումի վայրը ուսումնասիրության դեպքում։",
     "whatIsThis": "Սա ի՞նչ է։",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ro_MD": {
     "__name": "Română (Moldova)",
@@ -697,7 +765,9 @@
     "copyInfoText": "Poate fi folosit pentru a verifica trimiterea și pentru a păstra o copie de rezervă.",
     "locInfoText": "Permite Podfy să indice locul încărcării în cazul unei investigații.",
     "whatIsThis": "Ce este aceasta?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ar": {
     "__name": "العربية",
@@ -717,7 +787,9 @@
     "copyInfoText": "يمكن استخدامها للتحقق من إرسال الملف وللاحتفاظ بنسخة احتياطية لديك.",
     "locInfoText": "يتيح لـ Podfy مشاركة موقع رفع POD عند الحاجة للتحقيق.",
     "whatIsThis": "ما هذا؟",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "fa": {
     "__name": "فارسی",
@@ -737,7 +809,9 @@
     "copyInfoText": "برای بررسی ارسال فایل و داشتن نسخه پشتیبان مفید است.",
     "locInfoText": "به Podfy اجازه می‌دهد در صورت بررسی، محل بارگذاری POD را اعلام کند.",
     "whatIsThis": "این چیست؟",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "hi": {
     "__name": "हिन्दी",
@@ -757,7 +831,9 @@
     "copyInfoText": "यह देखने के लिए उपयोगी है कि फ़ाइल भेजी गई है और आपके लिए बैकअप रखने के लिए।",
     "locInfoText": "जांच के मामले में Podfy को अपलोड स्थान साझा करने की अनुमति देता है।",
     "whatIsThis": "यह क्या है?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ku": {
     "__name": "Kurdî (Kurmanji)",
@@ -777,7 +853,9 @@
     "copyInfoText": "Dikarî bikar bîne da bêyî ku pel hate şandin û kopiyeyekê bo xwe biparêzî.",
     "locInfoText": "Destûr dide Podfy ku di rewşên lêkolînê de cihê barkirinê parve bike.",
     "whatIsThis": "Ev çi ye?",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ckb": {
     "__name": "کوردی (سۆرانی)",
@@ -797,7 +875,9 @@
     "copyInfoText": "کۆمەک دەکات بزانیت پەڕگەکە نێردراوە یان نا و بۆ هەڵواسینی کۆپیەکی پشتگیری.",
     "locInfoText": "ڕەوش پێدادات بە Podfy بۆ هاوبەشکردنی شوێنی بارکردن لە کاتێکدا کەرەستەی لێکۆڵین هەیە.",
     "whatIsThis": "ئەمە چییە؟",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   },
   "ps": {
     "__name": "پښتو",
@@ -817,6 +897,8 @@
     "copyInfoText": "کارېدلی شي څو وګورئ دوتنه لېږل شوې ده او یوه شاتړ کاپي درسره وي.",
     "locInfoText": "Podfy ته اجازه ورکوي چې د اړتیا په وخت کې د POD پورته کولو ځای شریک کړي.",
     "whatIsThis": "دا څه شی دی؟",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
+    "learnAboutPodfy": "Learn about Podfy"
   }
 }
