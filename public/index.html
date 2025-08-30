@@ -4,123 +4,159 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title id="pageTitle">PODFY — Upload POD</title>
+
+  <!-- Global stylesheet -->
   <link rel="stylesheet" href="/styles.css" />
-  <link id="favicon" rel="icon" href="/logos/podfy-favicon-adaptive.svg" type="image/svg+xml">
+
+  <!-- Single adaptive favicon: zwart in light, wit in dark (via prefers-color-scheme in de SVG) -->
+  <link rel="icon" href="/logos/podfy-favicon-adaptive.svg" type="image/svg+xml">
 </head>
 <body>
+  <!-- Runtime banner voor status/alerts -->
   <div id="banner" class="banner" hidden></div>
 
   <!-- ===== SITE HEADER (brand + language) ===== -->
-<header class="site-header" role="banner">
-    <!-- New inner wrapper to align with main container -->
+  <header class="site-header" role="banner">
     <div class="header-inner">
       <div class="brand">
+        <!-- Initieel logo; wordt door main.js vervangen op basis van het thema -->
         <img id="brandLogo" alt="Company logo" src="/logos/default.svg" height="28" />
       </div>
-<!-- Language selector -->
-<div class="lang">
-  <button id="translateBtn" class="lang-trigger" aria-haspopup="menu" aria-expanded="false">
-    <!-- Globe icon -->
-    <img class="lang-ic" src="/icons/Language-01.svg" alt="" aria-hidden="true">
 
-    <span id="currentLangLabel">English</span>
-    <svg class="lang-caret" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
-    </svg>
-  </button>
+      <!-- Language selector -->
+      <div class="lang">
+        <button id="translateBtn" class="lang-trigger" aria-haspopup="menu" aria-expanded="false">
+          <!-- Globe icon -->
+          <img class="lang-ic" src="/icons/Language-01.svg" alt="" aria-hidden="true">
+          <span id="currentLangLabel">English</span>
+          <svg class="lang-caret" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+          </svg>
+        </button>
 
-  <div id="langMenu" class="lang-panel" role="menu" aria-label="Select language" hidden></div>
-</div>
+        <!-- Wordt door main.js gevuld met talen -->
+        <div id="langMenu" class="lang-panel" role="menu" aria-label="Select language" hidden></div>
+      </div>
     </div>
   </header>
 
   <!-- ===== MAIN: uploader ===== -->
-<main class="container" role="main" aria-live="polite">
+  <main class="container" role="main" aria-live="polite">
+    <!-- H1 voor pagina (SEO/a11y); tekst wordt door i18n gezet -->
     <h1 id="heading" data-i18n="heading">Upload CMR / POD</h1>
 
-<!-- Dropzone (new) -->
-<!-- ===== HERO / DROPZONE ===== -->
-<section class="dz-wrap">
-  <div id="dropzone" class="dropzone dz-hero" tabindex="0" aria-label="Upload area">
-    <!-- Light-gray Podfy icon -->
-    <div class="dz-icon-mask" aria-hidden="true"></div>
+    <!-- ===== HERO / DROPZONE ===== -->
+    <section class="dz-wrap">
+      <div id="dropzone" class="dropzone dz-hero" tabindex="0" aria-label="Upload area">
+        <!-- Decoratieve achtergrond-icoon -->
+        <div class="dz-icon-mask" aria-hidden="true"></div>
 
-    <h2 class="dz-title" data-i18n="heading">Upload CMR / POD</h2>
+        <!-- Titel in de hero; kan gelijk zijn aan h1, maar wordt apart geüpdatet -->
+        <h2 class="dz-title" data-i18n="heading">Upload CMR / POD</h2>
 
-    <p class="dz-sub" data-i18n="dzText">Drag & drop your document/photo here</p>
+        <p class="dz-sub" data-i18n="dzText">Drag & drop your document/photo here</p>
 
-    <div class="dz-actions">
-      <!-- Hidden inputs -->
-      <input id="fileInput" type="file"
-             accept=".pdf,.jpg,.jpeg,.png,.heic,.heif"
-             hidden />
-      <input id="cameraInput" type="file"
-             accept="image/*"
-             capture="environment"
-             hidden />
+        <div class="dz-actions">
+          <!-- Verborgen inputs -->
+          <input id="fileInput" type="file"
+                 accept=".pdf,.jpg,.jpeg,.png,.heic,.heif"
+                 hidden />
+          <input id="cameraInput" type="file"
+                 accept="image/*"
+                 capture="environment"
+                 hidden />
 
-      <!-- Visible buttons -->
-      <button type="button" class="btn" id="chooseBtn" data-i18n="chooseFile">Choose file</button>
-      <button type="button" class="btn" id="cameraBtn" data-i18n="takePhoto">Take photo</button>
-    </div>
+          <!-- Zichtbare knoppen -->
+          <button type="button" class="btn" id="chooseBtn" data-i18n="chooseFile">Choose file</button>
+          <button type="button" class="btn" id="cameraBtn" data-i18n="takePhoto">Take photo</button>
+        </div>
 
-    <p class="dz-constraints" id="acceptText" data-i18n="acceptText">
-      Accepted: PDF, JPG, PNG, HEIC · Max 25 MB
-    </p>
-  </div>
-</section>
+        <p class="dz-constraints" id="acceptText" data-i18n="acceptText">
+          Accepted: PDF, JPG, PNG, HEIC · Max 25 MB
+        </p>
+      </div>
+    </section>
 
     <!-- Options row: LOCATION FIRST, then SHARE COPY -->
     <div class="options-row">
-      <!-- Location (preferred) FIRST, not bold -->
+      <!-- Locatie (optioneel) -->
       <div class="option">
         <label class="checkbox">
           <input id="locCheck" type="checkbox" />
           <span data-i18n="shareLocation">Share my location (optional)</span>
         </label>
-        <button class="info-btn" type="button" aria-expanded="false" aria-controls="locInfo" title="What is this?">i</button>
-        <div id="locInfo" class="popover" hidden tabindex="-1">
+
+        <!-- Info-knopje met i18n voor title/aria-label -->
+        <button
+          class="info-btn"
+          type="button"
+          aria-expanded="false"
+          aria-controls="locInfo"
+          data-i18n-title="whatIsThis"
+          data-i18n-aria-label="whatIsThis">i</button>
+
+        <!-- Popover-tekst; i18n + focusable voor a11y -->
+        <div id="locInfo" class="popover" hidden tabindex="-1" data-i18n="locInfoText">
           This allows Podfy to share the location where you uploaded the POD in case of investigation on issues.
         </div>
       </div>
 
-      <!-- Email copy SECOND; email field appears only if checked -->
+      <!-- E-mailkopie (optioneel); e-mailveld verschijnt alleen indien aangevinkt -->
       <div class="option">
         <label class="checkbox">
           <input id="copyCheck" type="checkbox" />
           <span data-i18n="emailMeCopy">Email me a copy</span>
         </label>
-        <button class="info-btn" type="button" aria-expanded="false" aria-controls="copyInfo" title="What is this?">i</button>
-        <div id="copyInfo" class="popover" hidden tabindex="-1">
+
+        <!-- Info-knopje met i18n voor title/aria-label -->
+        <button
+          class="info-btn"
+          type="button"
+          aria-expanded="false"
+          aria-controls="copyInfo"
+          data-i18n-title="whatIsThis"
+          data-i18n-aria-label="whatIsThis">i</button>
+
+        <!-- Popover-tekst; i18n + focusable -->
+        <div id="copyInfo" class="popover" hidden tabindex="-1" data-i18n="copyInfoText">
           Can be used to see if the file has been sent and to make sure you have a back-up for yourself.
         </div>
       </div>
     </div>
 
-    <!-- Email field (hidden until “Email me a copy” checked) -->
+    <!-- E-mailveld (hidden tot checkbox geactiveerd is) -->
     <div id="emailWrap" class="email-wrap" hidden>
-      <input id="emailField" type="email" placeholder="name@example.com" autocomplete="email" />
+      <input
+        id="emailField"
+        type="email"
+        placeholder="name@example.com"
+        data-i18n-placeholder="emailPlaceholder"
+        autocomplete="email" />
     </div>
 
+    <!-- Status van locatie/geo -->
     <div id="locStatus" class="small"></div>
 
-    <!-- Full-width submit button -->
+    <!-- Submit -->
     <button id="submitBtn" class="primary primary-full" disabled data-i18n="submit">Submit</button>
 
+    <!-- Privacy-notitie -->
     <p class="small" id="privacyNote" data-i18n="privacy">
       Security & privacy: Files are sent securely and deleted after delivery.
     </p>
 
+    <!-- Live status van upload/resultaat -->
     <div id="status" class="status" role="status" aria-live="assertive"></div>
   </main>
 
   <!-- ===== FOOTER ===== -->
-<footer class="site-footer">
-    <a href="https://podfy.net/introduction" target="_blank" rel="noopener" aria-label="Introduction" data-i18n="help">Need help?</a>
-    <a href="https://podfy.net/privacy" target="_blank" rel="noopener" aria-label="Privacy Notice" data-i18n="privacyNotice">Privacy Notice</a>
-    <a href="https://podfy.net/terms" target="_blank" rel="noopener" aria-label="Terms" data-i18n="terms">Terms</a>
+  <footer class="site-footer">
+    <a href="https://podfy.net/introduction" target="_blank" rel="noopener" data-i18n="help">Need help?</a>
+    <a href="https://podfy.net/privacy"      target="_blank" rel="noopener" data-i18n="privacyNotice">Privacy Notice</a>
+    <a href="https://podfy.net/terms"         target="_blank" rel="noopener" data-i18n="terms">Terms</a>
   </footer>
 
+  <!-- App logic -->
   <script src="/main.js" defer></script>
 </body>
 </html>
