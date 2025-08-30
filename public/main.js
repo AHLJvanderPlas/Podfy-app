@@ -1,167 +1,178 @@
 /* public/main.js — Podfy app client */
+
 (() => {
-  const qs = (s) => document.querySelector(s);
+  const qs  = (s) => document.querySelector(s);
   const qsa = (s) => Array.from(document.querySelectorAll(s));
 
-  // --------- Elements ----------
-  const translateBtn = qs('#translateBtn');
-  const langMenu     = qs('#langMenu');
-  const banner       = qs('#banner');
+  // ---------- Elements ----------
+  const brandLogo   = qs('#brandLogo');
+  const banner      = qs('#banner');
 
-  const dropzone     = qs('#dropzone');
-  const fileInput    = qs('#fileInput');
-  const chooseBtn    = qs('#chooseBtn');
+  // Upload UI
+  const dropzone    = qs('#dropzone');
+  const fileInput   = qs('#fileInput');
+  const chooseBtn   = qs('#chooseBtn');
+  const cameraInput = qs('#cameraInput');
+  const cameraBtn   = qs('#cameraBtn');
+  const submitBtn   = qs('#submitBtn');
+  const statusEl    = qs('#status');
 
-  const cameraInput  = qs('#cameraInput');
-  const cameraBtn    = qs('#cameraBtn');
+  // Copy/email + location
+  const copyCheck   = qs('#copyCheck');
+  const emailWrap   = qs('#emailWrap');
+  const emailField  = qs('#emailField');
+  const locCheck    = qs('#locCheck');
+  const locStatus   = qs('#locStatus');
 
-  const submitBtn    = qs('#submitBtn');
-  const statusEl     = qs('#status');
+  // Language UI
+  const langTrigger = qs('#translateBtn');   // the globe button
+  const langMenu    = qs('#langMenu');       // dropdown panel
+  const langLabel   = qs('#currentLangLabel');
 
-  const copyCheck    = qs('#copyCheck');
-  const emailWrap    = qs('#emailWrap');
-  const emailField   = qs('#emailField');
-
-  const locCheck     = qs('#locCheck');
-  const locStatus    = qs('#locStatus');
-
-  const brandLogo    = qs('#brandLogo');
-
-  // --------- Slug from path ----------
+  // ---------- Slug ----------
   const path    = new URL(location.href).pathname.replace(/\/+$/,'') || '/';
   const rawSlug = path === '/' ? '' : path.slice(1).toLowerCase();
-  let   slug    = rawSlug || 'default';        // used for theming if known
+  let   slug    = rawSlug || 'default';
 
-  // --------- Globals ----------
-  let strings = {};
-  let currentLang = 'en';
+  // ---------- State ----------
   let themes = {};
   let theme  = null;
+  let strings = {};
+  let currentLang = 'en';
 
-  // --------- Language helpers ----------
+  // ---------- Helpers: language codes ----------
   function normalizeLangCode(code) {
     if (!code) return '';
     let c = code.toLowerCase().replace('_','-');
-    // special-case mappings to our keys
     if (c === 'ro-md') return 'ro_MD';
-    if (c === 'ckb' || c === 'ku-iq') return 'ckb'; // Kurdish Sorani
-    if (c.startsWith('pt-')) return 'pt';           // PT-BR, PT-PT → pt
-    return c.split('-')[0];                         // base language e.g. 'de'
+    if (c === 'ckb' || c === 'ku-iq') return 'ckb';
+    if (c.startsWith('pt-')) return 'pt';
+    return c.split('-')[0];
   }
 
   function pickInitialLang(available) {
-    // 1) ?lang=
     const urlLang = new URLSearchParams(location.search).get('lang');
     if (urlLang) {
       const k = normalizeLangCode(urlLang);
       if (available[k]) return k;
       if (k === 'ro' && available['ro_MD']) return 'ro_MD';
     }
-    // 2) localStorage
     const stored = localStorage.getItem('podfy_lang');
     if (stored && available[stored]) return stored;
-    // 3) browser-preferred
-    const prefs = (navigator.languages && navigator.languages.length
-      ? navigator.languages : [navigator.language || 'en']).map(normalizeLangCode);
+
+    const prefs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'])
+      .map(normalizeLangCode);
     for (const cand of prefs) {
       if (available[cand]) return cand;
       if (cand === 'ro' && available['ro_MD']) return 'ro_MD';
     }
-    // 4) fallback
     return 'en';
   }
 
-function applyLang(code) {
-  const dict = strings[code] || strings['en'] || {};
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (dict[key]) el.textContent = dict[key];
-  });
-
-  currentLang = code;
-  localStorage.setItem('podfy_lang', code);
-
-  const label = dict.__name ? dict.__name : code.toUpperCase();
-  (document.getElementById('currentLangLabel') || document.getElementById('translateBtn')).textContent = label;
-
-  // reflect selection in menu
-  const menu = document.getElementById('langMenu');
-  if (menu) {
-    menu.querySelectorAll('.lang-item').forEach(btn => {
-      btn.setAttribute('aria-checked', String(btn.getAttribute('data-lang') === code));
+  // ---------- Apply language ----------
+  function applyLang(code) {
+    const dict = strings[code] || strings['en'] || {};
+    qsa('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) el.textContent = dict[key];
     });
-  }
-}
+    currentLang = code;
+    localStorage.setItem('podfy_lang', code);
 
-function buildLangMenu() {
-  const menu = document.getElementById('langMenu');
-  if (!menu) return;
+    const label = dict.__name ? dict.__name : code.toUpperCase();
+    if (langLabel) langLabel.textContent = label;
+    else if (langTrigger) langTrigger.textContent = label;
 
-  const entries = Object.keys(strings).map(k => ({
-    key: k,
-    name: strings[k].__name || k
-  })).sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
-
-  menu.innerHTML = '';
-  entries.forEach(({ key, name }) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'lang-item';
-    btn.setAttribute('role', 'menuitemradio');
-    btn.setAttribute('data-lang', key);
-    btn.setAttribute('aria-checked', String(key === currentLang));
-
-    const bullet = document.createElement('span');
-    bullet.className = 'lang-bullet';
-
-    const label = document.createElement('span');
-    label.textContent = name;
-
-    btn.appendChild(bullet);
-    btn.appendChild(label);
-
-    btn.addEventListener('click', () => {
-      applyLang(key);
-      menu.hidden = true;
-      const trigger = document.getElementById('translateBtn');
-      if (trigger) trigger.setAttribute('aria-expanded', 'false');
-    });
-
-    menu.appendChild(btn);
-  });
-}
-
-// Toggle open/close
-const translateBtnEl = document.getElementById('translateBtn');
-translateBtnEl?.addEventListener('click', () => {
-  const menu = document.getElementById('langMenu');
-  if (!menu) return;
-  const open = menu.hidden === false;
-  menu.hidden = open;
-  translateBtnEl.setAttribute('aria-expanded', String(!open));
-});
-document.addEventListener('click', (e) => {
-  const menu = document.getElementById('langMenu');
-  const btn  = document.getElementById('translateBtn');
-  if (!menu || !btn) return;
-  if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
-    if (menu.hidden === false) {
-      menu.hidden = true;
-      btn.setAttribute('aria-expanded', 'false');
+    // reflect selection in menu
+    if (langMenu) {
+      langMenu.querySelectorAll('.lang-item').forEach(btn => {
+        btn.setAttribute('aria-checked', String(btn.getAttribute('data-lang') === code));
+      });
     }
   }
-});
 
-  // --------- Theme load ----------
+  // ---------- Build language menu ----------
+  function buildLangMenu() {
+    if (!langMenu) return;
+
+    const entries = Object.keys(strings).map(k => ({
+      key: k,
+      name: strings[k].__name || k
+    })).sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
+
+    langMenu.innerHTML = '';
+    entries.forEach(({ key, name }) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lang-item';
+      btn.setAttribute('role', 'menuitemradio');
+      btn.setAttribute('data-lang', key);
+      btn.setAttribute('aria-checked', String(key === currentLang));
+
+      const bullet = document.createElement('span');
+      bullet.className = 'lang-bullet';
+
+      const label = document.createElement('span');
+      label.textContent = name;
+
+      btn.appendChild(bullet);
+      btn.appendChild(label);
+
+      btn.addEventListener('click', () => {
+        applyLang(key);
+        langMenu.hidden = true;
+        langTrigger?.setAttribute('aria-expanded', 'false');
+      });
+
+      langMenu.appendChild(btn);
+    });
+  }
+
+  // ---------- Toggle wiring (open/close dropdown) ----------
+  function wireLanguageToggle() {
+    const btn  = langTrigger;
+    const menu = langMenu;
+    if (!btn || !menu) return;
+
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const open = menu.hidden === false;
+      menu.hidden = open;
+      btn.setAttribute('aria-expanded', String(!open));
+    });
+
+    menu.addEventListener('click', (ev) => ev.stopPropagation());
+
+    document.addEventListener('click', (ev) => {
+      if (!btn.contains(ev.target) && !menu.contains(ev.target)) {
+        if (menu.hidden === false) {
+          menu.hidden = true;
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && menu.hidden === false) {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      }
+    });
+  }
+
+  // ---------- Theme load ----------
   async function loadTheme() {
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
     themes = await res.json();
 
     const isKnown = !!themes[slug];
     theme = isKnown ? themes[slug] : (themes['default'] || {});
-
     if (!isKnown && rawSlug) {
-      // Unknown slug banner and fallback visuals
       if (banner) {
         banner.hidden = false;
         banner.innerHTML =
@@ -171,37 +182,35 @@ document.addEventListener('click', (e) => {
       slug = 'default';
     }
 
-    // Apply colors
     const r = document.documentElement;
     const c = theme.colors || {};
-    r.style.setProperty('--brand-primary', c.primary || '#000');
+    r.style.setProperty('--brand-primary', c.primary || '#000000');
     r.style.setProperty('--brand-accent',  c.accent  || '#1F2937');
     r.style.setProperty('--brand-text',    c.text    || '#0B1220');
     r.style.setProperty('--brand-muted',   c.muted   || '#6B7280');
     r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
-    r.style.setProperty('--brand-button-text', c.buttonText || '#FFF');
-    r.style.setProperty('--header-bg', (theme.header && theme.header.bg) || '#FFF');
+    r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
+    r.style.setProperty('--header-bg', (theme.header && theme.header.bg) || '#FFFFFF');
 
-    // Header logo
     if (brandLogo && (theme.logo || theme.favicon)) {
       brandLogo.src = theme.logo || theme.favicon;
     }
 
-    // Favicons (optional light/dark pair if present)
-    const favLight = theme.favicon || theme.logo || '/logos/default.svg';
-    const favDark  = theme.faviconDark || theme.logoDark || favLight;
+    // Optional favicons
     const linkLight = document.getElementById('faviconLight');
     const linkDark  = document.getElementById('faviconDark');
+    const favLight  = theme.favicon || theme.logo || '/logos/default.svg';
+    const favDark   = theme.faviconDark || theme.logoDark || favLight;
     if (linkLight) linkLight.href = favLight;
     if (linkDark)  linkDark.href  = favDark;
   }
 
-  // --------- i18n load ----------
+  // ---------- i18n load ----------
   async function loadI18n() {
     const res = await fetch('/i18n.json?v=' + Date.now(), { cache: 'no-store' });
     strings = await res.json();
 
-    // Ensure "takePhoto" exists (fallback English label if missing)
+    // Ensure key exists for the camera button if some locales missed it
     Object.keys(strings).forEach(k => {
       if (!strings[k].takePhoto) strings[k].takePhoto = (k === 'nl') ? 'Foto maken' : 'Take photo';
     });
@@ -209,24 +218,12 @@ document.addEventListener('click', (e) => {
     const initial = pickInitialLang(strings);
     applyLang(initial);
     buildLangMenu();
+    wireLanguageToggle();
   }
 
-  // --------- UI wiring ----------
+  // ---------- Upload UI wiring ----------
   function wireUI() {
-    // Translate menu toggle
-    translateBtn?.addEventListener('click', () => {
-      if (!langMenu) return;
-      langMenu.hidden = !langMenu.hidden;
-    });
-    // Close lang menu when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!langMenu) return;
-      if (!langMenu.contains(e.target) && e.target !== translateBtn) {
-        langMenu.hidden = true;
-      }
-    });
-
-    // Copy-to-email: show/hide the email field
+    // Toggle email field
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
       if (emailWrap) {
@@ -235,25 +232,26 @@ document.addEventListener('click', (e) => {
       }
     });
 
-    // Dropzone visuals & wiring
-const enableSubmitIfFile = () => {
-  const hasFile = !!(fileInput?.files && fileInput.files.length);
-  if (submitBtn) submitBtn.disabled = !hasFile;
-  // color the icon when a file is ready
-  document.getElementById('dropzone')?.classList.toggle('ready', hasFile);
-};
+    // Enable/disable submit + color icon when a file is present
+    const enableSubmitIfFile = () => {
+      const hasFile = !!(fileInput?.files && fileInput.files.length);
+      if (submitBtn) submitBtn.disabled = !hasFile;
+      // Turn the dropzone icon to primary when ready
+      document.getElementById('dropzone')?.classList.toggle('ready', hasFile);
+    };
 
+    // File pickers
     chooseBtn?.addEventListener('click', () => fileInput?.click());
     cameraBtn?.addEventListener('click', () => cameraInput?.click());
 
     cameraInput?.addEventListener('change', () => {
       if (cameraInput.files && cameraInput.files.length) {
-        // copy camera selection to main input so the rest works the same
         fileInput.files = cameraInput.files;
         enableSubmitIfFile();
       }
     });
 
+    // Drag/drop visuals
     dropzone?.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropzone.classList.add('dragover');
@@ -272,7 +270,7 @@ const enableSubmitIfFile = () => {
     });
     fileInput?.addEventListener('change', enableSubmitIfFile);
 
-    // Optional client location capture (only when user checks the box)
+    // Location capture on demand
     locCheck?.addEventListener('change', () => {
       if (!locStatus) return;
       locStatus.textContent = '';
@@ -296,44 +294,27 @@ const enableSubmitIfFile = () => {
       }
     });
 
-    // Info popovers (the little ⓘ buttons)
-    qsa('.info-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id  = btn.getAttribute('aria-controls');
-        const pop = id ? document.getElementById(id) : null;
-        const open = pop && pop.hidden === false;
-        qsa('.popover').forEach(p => p.hidden = true);
-        if (pop) {
-          pop.hidden = open; // toggle
-          btn.setAttribute('aria-expanded', String(!open));
-        }
-      });
-    });
-
-    // Submit
+    // Submit handler
     submitBtn?.addEventListener('click', async () => {
       if (!fileInput?.files || !fileInput.files.length) return;
 
       submitBtn.disabled = true;
-      statusEl && (statusEl.textContent = 'Uploading…');
+      if (statusEl) statusEl.textContent = 'Uploading…';
 
       const f = fileInput.files[0];
       const form = new FormData();
       form.append('file', f);
 
-      // Always send original slug typed in URL (even if unknown)
       form.append('slug_original', rawSlug || 'default');
       form.append('slug_known', themes[rawSlug] ? '1' : '0');
 
-      // Email copy if requested
       if (copyCheck?.checked && emailField?.value && emailField.value.includes('@')) {
         form.append('email', emailField.value.trim());
       }
 
-      // Client GPS if captured
       if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
-        form.append('lat', locStatus.dataset.lat);
-        form.append('lon', locStatus.dataset.lon);
+        form.append('lat',  locStatus.dataset.lat);
+        form.append('lon',  locStatus.dataset.lon);
         if (locStatus.dataset.acc) form.append('acc', locStatus.dataset.acc);
         if (locStatus.dataset.ts)  form.append('loc_ts', locStatus.dataset.ts);
       }
@@ -341,26 +322,28 @@ const enableSubmitIfFile = () => {
       try {
         const resp = await fetch('/api/upload', { method: 'POST', body: form });
         if (!resp.ok) throw new Error('Upload failed');
-        const data = await resp.json(); // eslint-disable-line no-unused-vars
-        const dict = strings[currentLang] || strings['en'] || {};
-        statusEl && (statusEl.textContent = dict.success || 'Thanks. File received.');
+        const _data = await resp.json(); // eslint-disable-line no-unused-vars
 
-        // Reset inputs
+        const dict = strings[currentLang] || strings['en'] || {};
+        if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
+
+        // Reset inputs & states
         if (fileInput) fileInput.value = '';
         if (cameraInput) cameraInput.value = '';
-        document.getElementById('dropzone')?.classList.remove('ready');
         submitBtn.disabled = true;
+        document.getElementById('dropzone')?.classList.remove('ready');
       } catch (err) {
-        statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
+        if (statusEl) statusEl.textContent = 'Upload failed. Please try again.';
       } finally {
         setTimeout(() => { submitBtn && (submitBtn.disabled = false); }, 400);
       }
     });
   }
 
-  // --------- Init ----------
+  // ---------- Init ----------
   (async function init() {
     await Promise.all([loadTheme(), loadI18n()]);
     wireUI();
   })();
+
 })();
