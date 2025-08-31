@@ -1,264 +1,323 @@
 /*
- * Podfy styles.css — cleaned & documented
- *  - Add new components under the COMPONENTS section; utilities under UTILITIES.
+ * Podfy styles.css — clean & documented
+ * - Theme tokens under :root
+ * - Components grouped below
  */
 
 /* ===== THEME TOKENS (CSS Variables) ===== */
 :root {
-  --brand-primary:#000;           /* primary button bg */
-  --brand-accent:#1F2937;         /* accents, icons */
-  --brand-text:#0B1220;           /* body text */
-  --brand-muted:#6B7280;          /* helper text */
-  --brand-border:#E5E7EB;         /* borders */
-  --brand-button-text:#FFF;       /* button text */
-  --header-bg:#FFF;               /* header background */
+  --brand-primary: #000000;        /* primary (Submit) bg */
+  --brand-accent:  #1F2937;        /* accents, icons */
+  --brand-text:    #0B1220;        /* body text */
+  --brand-muted:   #6B7280;        /* helper text */
+  --brand-border:  #E5E7EB;        /* borders */
+  --brand-button-text: #FFFFFF;    /* primary button text */
 
-  /* Dropzone icon & hover colors */
-  --dz-icon-base:#CBD5E1;         /* light gray icon default */
-  --dz-accent:#16A34A;            /* icon on dragover (green-600) */
-  --dz-hover-bg:#F3F4F6;          /* dropzone bg on dragover */
-  --dz-hover-bord:#CBD5E1;        /* dropzone border on dragover */
-}* { box-sizing: border-box; }html,
+  --header-bg: #FFFFFF;            /* header/banner background */
 
-/* ===== BASE ELEMENTS & RESET ===== */
- body { height:100%; }body {
-  margin:0;
-  font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  color:var(--brand-text);
-  background:#fff;
+  /* Dropzone colors */
+  --dz-icon-base: #CBD5E1;         /* default icon fill (gray-300) */
+  --dz-accent:    #16A34A;         /* on dragover (green-600) */
+  --dz-hover-bg:  #F3F4F6;         /* dropzone bg on dragover (gray-100) */
+  --dz-hover-bord:#CBD5E1;         /* dropzone border on dragover */
 }
 
-/* --- Unknown-slug banner --- */
+/* ===== RESET / BASE ===== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: var(--brand-text);
+  background: #fff;
+}
+
+/* ===== BANNER (unknown slug) ===== */
 .banner {
   box-sizing: border-box;
-  display: block;                 /* zorgt dat margin auto werkt en hoogte meeschakelt */
+  display: block;
   max-width: 720px;
-  margin: 16px auto 0;            /* bovenruimte + centreren */
+  margin: 16px auto 0;
   padding: 12px 16px;
 
-  background: #FFF7ED;            /* licht amber */
-  border: 1px solid #FED7AA;      /* randkleur */
-  color: #7C2D12;                 /* tekstkleur (contrasterend) */
+  background: #FFF7ED;          /* light amber */
+  border: 1px solid #FED7AA;    /* amber border */
+  color: #7C2D12;               /* dark amber text */
   border-radius: 10px;
 
-  line-height: 1.45;              /* betere leesbaarheid bij meerdere regels */
-  white-space: normal;            /* multi-line tekst */
-  overflow-wrap: anywhere;        /* breekt lange slugs/URL’s */
-  word-break: break-word;         /* fallback voor oudere browsers */
-  hyphens: auto;                  /* automatische afbreking waar kan */
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 
-  /* subtiele diepte, zonder contrast te verlagen */
   box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 6px 12px rgba(0,0,0,.04);
 }
-
-/* Banner verbergen via [hidden] attribuut */
 .banner[hidden] { display: none !important; }
-
 .banner a {
-  color: inherit;                 /* link volgt tekstkleur banner */
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
-  font-weight: 600;               /* iets prominenter */
+  font-weight: 600;
 }
-
 .banner a:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
 
-/* Donkere modus kleuren (prefers-color-scheme)
+/* (If you want dark mode later, uncomment the WHOLE block, braces included)
 @media (prefers-color-scheme: dark) {
   .banner {
-    background: #2B1D12;*/         
-    /*border-color: #9A3412;*/       
-     /*color: #FDE68A;*/              
-    /*box-shadow: none;            
+    background: #2B1D12;
+    border-color: #9A3412;
+    color: #FDE68A;
+    box-shadow: none;
   }
-}*/
+}
+*/
 
-/* --- Header aligned to container edges --- */
+/* ===== HEADER ===== */
 .site-header {
-  background:var(--header-bg);
-  border-bottom:1px solid var(--brand-border);
-  padding:0; 
-  
-  /* inner handles padding */
-}.header-inner {
-  max-width:720px;
-  margin:0 auto;
-  padding:16px 20px;
-  display:flex;
-  justify-content:space-between; 
-  
-  /* logo left, translate right */
-  align-items:center;
-}.brand img { display:block; height:28px }
+  background: var(--header-bg, #ffffff);
+  border-bottom: 1px solid var(--brand-border);
+  padding: 0;
+}
+.header-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;           /* logo left, language right */
+}
+.brand img { display: block; height: 28px; }
 
-/* --- Main container --- */
-/* ===== LAYOUT & UTILITY HELPERS ===== */
-
-/* Centers content and limits width */
-.container { max-width:720px; margin:32px auto; padding:0 20px }
+/* ===== MAIN CONTAINER ===== */
+.container { max-width: 720px; margin: 32px auto; padding: 0 20px; }
 
 /* ===== TYPOGRAPHY ===== */
-h1 { margin:16px 0 24px; font-size:28px; line-height:1.2 }
+h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 
-/* --- Dropzone (generic) --- */
+/* ===== DROPZONE (hero) ===== */
+.dz-wrap { margin: 16px 0 8px; }
+
 .dropzone {
-  border:2px dashed var(--brand-border);
-  border-radius:8px; padding:32px; text-align:center;
-  transition:background-color .15s ease, border-color .15s ease;
-}#fileInput { display:none }
+  border: 2px dashed var(--brand-border);
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
+  transition: background-color .15s ease, border-color .15s ease;
+}
 
-/* --- Row below dropzone (Choose file + helper) --- */
-.row { display:flex; gap:16px; align-items:center; margin:16px 0 }
+/* Large hero style */
+.dropzone.dz-hero {
+  border-radius: 10px;
+  background: #fff;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 24px;
+  transition: background-color .15s ease, border-color .15s ease;
+}
 
-/* Primary button styles */
+/* Podfy icon as mask so we can recolor per state */
+.dz-icon-mask {
+  width: 72px; height: 72px;
+  background-color: var(--dz-icon-base);
+  -webkit-mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
+  mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
+  opacity: .95;
+  margin-bottom: 12px;
+  transition: background-color .15s ease, opacity .15s ease;
+}
+
+/* Headline + help text inside the hero */
+.dz-title { font-size: 20px; line-height: 1.2; margin: 4px 0; }
+.dz-sub   { color: var(--brand-muted); margin: 6px 0 14px; }
+
+/* Buttons row under the icon/text */
+.dz-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 2px 0 8px;
+}
+
+/* Accepted types line */
+.dz-constraints {
+  margin-top: 8px;
+  color: var(--brand-muted);
+  font-size: 14px;
+}
+
+/* Drag-over state */
+.dropzone.dz-hero.dragover {
+  background: var(--dz-hover-bg);
+  border-color: var(--dz-hover-bord);
+}
+.dropzone.dz-hero.dragover .dz-icon-mask {
+  background-color: var(--dz-accent);
+  opacity: 1;
+}
+
+/* File selected (Submit enabled) */
+.dropzone.dz-hero.ready .dz-icon-mask {
+  background-color: var(--brand-primary);
+  opacity: 1;
+}
+
+/* ===== BUTTONS ===== */
+/* Neutral gray buttons for Choose/Camera (decoupled from Submit) */
+#chooseBtn,
+#cameraBtn,
 .btn {
-  border:1px solid var(--brand-border);
-  border-radius:8px; padding:10px 14px; cursor:pointer;
-  background:#fff;
-}.help { color:var(--brand-muted) }
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--brand-border);
+  background: #F3F4F6;                    /* gray */
+  color: var(--brand-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .02s ease-in-out;
+}
+#chooseBtn:hover,
+#cameraBtn:hover,
+.btn:hover {
+  background: #E5E7EB;
+  border-color: #D1D5DB;
+}
+#chooseBtn:active,
+#cameraBtn:active,
+.btn:active { transform: translateY(1px); }
+#chooseBtn:focus-visible,
+#cameraBtn:focus-visible,
+.btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
-/* --- Options row: LOCATION FIRST, then COPY --- */
+/* Primary (Submit) button keeps brand color */
+.primary {
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  background: var(--brand-primary);
+  color: var(--brand-button-text);
+  cursor: pointer;
+}
+.primary[disabled] { opacity: .5; cursor: not-allowed; }
+.primary-full { width: 100%; display: block; }
+
+/* ===== OPTIONS (location + email) ===== */
 .options-row {
-  display:flex; flex-wrap:wrap;
-  gap:12px 16px; align-items:center;
-  margin:12px 0 4px;
-}@media (min-width:640px) { .options-row{ gap:12px 24px } }.option {
-  position:relative;
-  display:inline-flex; align-items:center; gap:8px;
-  padding:4px 0; border:0; background:transparent;
-}.checkbox { display:inline-flex; align-items:center; gap:8px }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  margin: 12px 0 4px;
+}
+@media (min-width: 640px) { .options-row { gap: 12px 24px; } }
+
+.option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+}
+.checkbox { display: inline-flex; align-items: center; gap: 8px; }
 
 /* Info “i” button + popover */
 .info-btn {
-  width:20px; height:20px; min-width:20px;
-  border-radius:50%; border:1px solid var(--brand-border);
-  font:12px/18px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  background:#fff; color:var(--brand-accent);
-  text-align:center; cursor:pointer;
-}.info-btn:hover { background:#f7f7f7 }.popover {
-  position:absolute; top:28px; left:0;
-  max-width:360px; padding:10px 12px;
-  border:1px solid var(--brand-border); background:#fff;
-  border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,.06);
-  z-index:20; color:var(--brand-text); font-size:14px
+  width: 20px; height: 20px; min-width: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--brand-border);
+  font: 12px/18px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: #fff; color: var(--brand-accent);
+  text-align: center; cursor: pointer;
+}
+.info-btn:hover { background: #f7f7f7; }
+
+.popover {
+  position: absolute; top: 28px; left: 0;
+  max-width: 360px; padding: 10px 12px;
+  border: 1px solid var(--brand-border);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+  z-index: 20;
+  color: var(--brand-text);
+  font-size: 14px;
 }
 
-/* --- Email field (shown only when “Email me a copy” is checked) --- */
-.email-wrap { margin-top:8px }.email-wrap input[type="email"] {
-  width:100%; max-width:480px;
-  padding:10px 12px; border:1px solid var(--brand-border); border-radius:8px
+/* Email field (shown only when checkbox is checked) */
+.email-wrap { margin-top: 8px; }
+.email-wrap input[type="email"] {
+  width: 100%; max-width: 480px;
+  padding: 10px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
 }
 
-/* --- Submit button (full width to match container/dropzone) --- */
-.primary {
-  margin-top:12px; border:none; border-radius:10px;
-  padding:12px 18px; background:var(--brand-primary);
-  color:var(--brand-button-text); cursor:pointer
-}.primary[disabled] { opacity:.5; cursor:not-allowed }.primary-full { width:100%; display:block }
+/* ===== STATUS / FOOTER ===== */
+.small  { color: var(--brand-muted); margin-top: 12px; }
+.status { margin-top: 16px; min-height: 24px; }
 
-/* --- Small/help text + status --- */
-.small { color:var(--brand-muted); margin-top:12px }.status { margin-top:16px; min-height:24px }
-
-/* --- Footer --- */
 .site-footer {
-  display:flex; gap:28px; justify-content:center;
-  padding:24px; color:var(--brand-accent)
-}.site-footer a { color:var(--brand-accent); text-decoration:none }.site-footer a:hover { text-decoration:underline }
-
-/* --- Drop area hero --- */
-.dz-wrap { margin:16px 0 8px; }.dropzone.dz-hero {
-  border:2px dashed var(--brand-border);
-  border-radius:10px;
-  background:#fff;
-  min-height:240px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:36px 24px;
-  transition: background-color .15s ease, border-color .15s ease;
-}/* Podfy icon via mask so we can recolor it by state */
-.dz-icon-mask {
-  width:72px;
-  height:72px;
-  background-color:var(--dz-icon-base); /* default: light gray */
-  -webkit-mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
-  mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
-  opacity:.95;
-  margin-bottom:12px;
-  transition: background-color .15s ease, opacity .15s ease;
-}/* Titles & body inside dropzone */
-.dz-title {
-  font-size:20px;
-  line-height:1.2;
-  margin:4px 0;
-}.dz-sub {
-  color:var(--brand-muted);
-  margin:6px 0 14px;
-}.dz-actions {
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:center;
-  margin:2px 0 8px;
-}.dz-constraints {
-  margin-top:8px;
-  color:var(--brand-muted);
-  font-size:14px;
+  display: flex; gap: 28px; justify-content: center;
+  padding: 24px; color: var(--brand-accent);
 }
+.site-footer a { color: var(--brand-accent); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
 
-/* Buttons used inside the drop area */
-/* Primary button styles */
-.btn {
-  border:1px solid var(--brand-border);
-  border-radius:10px;
-  background:#fff;
-  padding:10px 14px;
-  cursor:pointer;
-}.btn:hover { background:#f8f8f8 }
+/* ===== LANGUAGE PICKER ===== */
+.lang { position: relative; }
+.lang-trigger {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; color: #111827;
+  border: 1px solid var(--brand-border); border-radius: 10px;
+  padding: 8px 12px; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.lang-trigger:hover { background: #f8f8f8; }
+.lang-ic { width: 18px; height: 18px; color: #6B7280; }
+.lang-caret { width: 14px; height: 14px; color: #6B7280; transition: transform .15s ease; }
+.lang-trigger[aria-expanded="true"] .lang-caret { transform: rotate(180deg); }
 
-/* State: dragging a file over the box */
-.dropzone.dz-hero.dragover {
-  background:var(--dz-hover-bg);
-  border-color:var(--dz-hover-bord);
-}.dropzone.dz-hero.dragover .dz-icon-mask {
-  background-color:var(--dz-accent); 
-  /* green */
-  opacity:1;}
+.lang-panel {
+  position: absolute; right: 0; top: 44px; z-index: 50;
+  width: 220px; max-height: 320px; overflow: auto;
+  background: #fff; border: 1px solid var(--brand-border);
+  border-radius: 12px; box-shadow: 0 10px 24px rgba(0,0,0,.10);
+  padding: 6px;
+}
+.lang-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; border: 0; background: transparent;
+  padding: 10px 10px; cursor: pointer; border-radius: 8px;
+  color: #111827; text-align: left;
+}
+.lang-item:hover { background: #F3F4F6; }
+.lang-bullet {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid #9CA3AF; display: inline-block; position: relative; flex: 0 0 16px;
+}
+.lang-item[aria-checked="true"] .lang-bullet { border-color: #2563EB; }
+.lang-item[aria-checked="true"] .lang-bullet::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 8px; height: 8px;
+  border-radius: 50%; background: #2563EB;
+}
+#currentLangLabel { font-weight: 600; }
 
-/* State: file selected (submit enabled) */
-/* We toggle .ready on the dropzone from JS when a file is present */
-.dropzone.dz-hero.ready .dz-icon-mask {
-  background-color:var(--brand-primary); 
-  /* match primary button color */
-  opacity:1;}
-
-/* Language selector (globe + dropdown) */
-.lang { position: relative; }.lang-trigger {
-  display:flex; align-items:center; gap:10px;
-  background:#fff; color:#111827;
-  border:1px solid var(--brand-border); border-radius:10px;
-  padding:8px 12px; cursor:pointer;
-  box-shadow:0 1px 2px rgba(0,0,0,.04);
-}.lang-trigger:hover { background:#f8f8f8; }.lang-ic { width:18px; height:18px; color:#6B7280; }.lang-caret { width:14px; height:14px; color:#6B7280; transition:transform .15s ease; }.lang-trigger[aria-expanded="true"] .lang-caret { transform:rotate(180deg); }.lang-panel {
-  position:absolute; right:0; top:44px; z-index:50;
-  width: 220px; max-height: 320px; overflow:auto;
-  background:#fff; border:1px solid var(--brand-border);
-  border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.10);
-  padding:6px;
-}.lang-item {
-  display:flex; align-items:center; gap:10px;
-  width:100%; border:0; background:transparent;
-  padding:10px 10px; cursor:pointer; border-radius:8px;
-  color:#111827; text-align:left;
-}.lang-item:hover { background:#F3F4F6; }.lang-bullet {
-  width:16px; height:16px; border-radius:50%;
-  border:2px solid #9CA3AF; display:inline-block; position:relative; flex:0 0 16px;
-}.lang-item[aria-checked="true"] .lang-bullet { border-color:#2563EB; }.lang-item[aria-checked="true"] .lang-bullet::after {
-  content:""; position:absolute; top:2px; left:2px; width:8px; height:8px;
-  border-radius:50%; background:#2563EB;
-}#currentLangLabel { font-weight:600; }
+/* ===== UTILITIES ===== */
+.row { display: flex; gap: 16px; align-items: center; margin: 16px 0; }
+.help { color: var(--brand-muted); }
+#fileInput { display: none; } /* keep hidden via CSS (not the hidden attribute) */
