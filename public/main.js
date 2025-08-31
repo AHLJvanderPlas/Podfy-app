@@ -291,11 +291,41 @@
     // Disable submit until a file is selected
     if (submitBtn) submitBtn.disabled = true;
 
+    // Email checkbox: show/hide + required
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
-      emailWrap?.classList.toggle('hidden', !show);
-      if (!show && emailField) emailField.value = '';
+
+      if (emailWrap) {
+        emailWrap.classList.toggle('hidden', !show);
+        emailWrap.hidden = !show; // also toggle the attribute
+      }
+      if (emailField) {
+        if (show) {
+          if (emailField.type !== 'email') emailField.type = 'email';
+          emailField.required = true;
+          emailField.setAttribute('aria-required', 'true');
+          emailField.focus();
+        } else {
+          emailField.required = false;
+          emailField.removeAttribute('aria-required');
+          emailField.setCustomValidity && emailField.setCustomValidity('');
+          emailField.value = '';
+        }
+      }
     });
+
+    // Initialize email field visibility on load
+    (function initEmailCopyUI() {
+      const show = !!copyCheck?.checked;
+      if (emailWrap) {
+        emailWrap.classList.toggle('hidden', !show);
+        emailWrap.hidden = !show;
+      }
+      if (emailField) {
+        if (show && emailField.type !== 'email') emailField.type = 'email';
+        emailField.required = !!show;
+      }
+    })();
 
     chooseBtn?.addEventListener('click', () => fileInput?.click());
     cameraBtn?.addEventListener('click', () => cameraInput?.click());
@@ -360,6 +390,14 @@
     // Submit click → upload selected file
     submitBtn?.addEventListener('click', (e) => {
       e.preventDefault();
+      // If email copy is requested, ensure valid email
+      if (copyCheck?.checked) {
+        if (!emailField?.value || !emailField.checkValidity()) {
+          emailField?.reportValidity && emailField.reportValidity();
+          statusEl && (statusEl.textContent = 'Please enter a valid email address.');
+          return;
+        }
+      }
       if (selectedFile) submitFile(selectedFile);
     });
   }
@@ -399,7 +437,7 @@
     form.append('slug_known', themes[rawSlug] ? '1' : '0');
     if (refFromPath) form.append('reference', refFromPath);
 
-    if (copyCheck?.checked && emailField?.value && emailField.value.includes('@')) {
+    if (copyCheck?.checked && emailField?.value && emailField.checkValidity && emailField.checkValidity()) {
       form.append('email', emailField.value.trim());
     }
 
