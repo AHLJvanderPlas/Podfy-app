@@ -418,9 +418,6 @@
   function wireUI() {
     if (submitBtn) submitBtn.disabled = true;
 
-    // (Removed) copying submit styles to choose/camera buttons
-    // We keep their own neutral styling now.
-
     // Email checkbox: show/hide + required
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
@@ -481,6 +478,15 @@
     if (dz) {
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
 
+      // SHIELD: if buttons live inside the dropzone, stop their events in capture phase
+      const actionsWrap = document.querySelector('.dz-actions');
+      if (actionsWrap) {
+        const shield = (e) => { e.stopPropagation(); };
+        actionsWrap.addEventListener('touchstart', shield, { capture: true, passive: false });
+        actionsWrap.addEventListener('touchend',   shield, { capture: true, passive: false });
+        actionsWrap.addEventListener('click',      shield, { capture: true });
+      }
+
       ['dragenter', 'dragover'].forEach(ev => {
         dz.addEventListener(ev, (e) => {
           prevent(e);
@@ -509,7 +515,7 @@
         }
       });
 
-      // Block click + keyboard activation inside the dropzone
+      // Block click + keyboard activation on the dropzone itself
       dz.addEventListener('click', (e) => e.preventDefault());
       dz.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
@@ -596,7 +602,7 @@
       selectedFile = null;
       dropzone?.classList.remove('ready');
 
-      // IMPORTANT: cancel any pending picker fallback timers so dialogs don't re-open
+      // cancel any pending picker fallback timers so dialogs don't re-open
       [fileInput, cameraInput].forEach(cancelTimersForInput);
 
       if (fileInput) fileInput.value = '';
