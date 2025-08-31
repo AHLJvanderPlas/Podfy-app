@@ -102,7 +102,7 @@
 .container { max-width:720px; margin:32px auto; padding:0 20px }
 
 /* ===== TYPOGRAPHY ===== */
-h1 { margin:16px 0 24px; font-size:32px; line-height:1.2 }
+h1 { margin:16px 0 24px; font-size:28px; line-height:1.2 }
 
 /* --- Dropzone (generic) --- */
 .dropzone {
