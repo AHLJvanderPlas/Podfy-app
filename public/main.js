@@ -1,7 +1,6 @@
 /* public/main.js — Podfy
    - Drag & drop only dropzone; file selection via buttons
    - Reliable file/camera pickers (mobile/desktop) with cancelable off-screen fallback
-   - Prevent double trigger (touchend + click)
    - No auto-upload; Submit triggers upload
    - Email field required when checked
    - GPS-only from client; backend chooses IP fallback if GPS absent
@@ -392,26 +391,14 @@
     }, 400);
   }
 
-  function bindTapAndClick(el, handler) {
+  // --- NEW: user-activation-safe binder (pointerup preferred, no preventDefault) ---
+  function bindUserActivation(el, handler) {
     if (!el) return;
-    let locked = false;
-    const wrapped = (e) => {
-      if (locked) return;
-      locked = true;
-      setTimeout(() => (locked = false), 250); // coalesce touchend+click
-      handler(e);
-    };
-    el.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      wrapped(e);
-    }, { passive: false });
-
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      wrapped(e);
-    });
+    if (window.PointerEvent) {
+      el.addEventListener('pointerup', handler);    // counts as a trusted user activation
+    } else {
+      el.addEventListener('click', handler);        // fallback for older browsers
+    }
   }
 
   // ---------- Upload wiring ----------
@@ -469,9 +456,9 @@
       }
     })();
 
-    // Buttons (single gesture, double-fire proof)
-    bindTapAndClick(chooseBtn, () => resilientOpen(fileInput));
-    bindTapAndClick(cameraBtn, () => resilientOpen(cameraInput));
+    // Buttons → open pickers (now pointerup/click without preventDefault)
+    bindUserActivation(chooseBtn, () => resilientOpen(fileInput));
+    bindUserActivation(cameraBtn, () => resilientOpen(cameraInput));
 
     // --- Dropzone: drag & drop only (no click-to-open) ---
     const dz = dropzone;
