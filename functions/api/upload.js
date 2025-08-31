@@ -1,7 +1,7 @@
 // functions/api/upload.js
 // Stores files in R2 with new naming and metadata.
 // Filename: <PodfyID(8 Crockford)>_<YYYYMMDD>_<HHmm>_<CompanySlug>[_<Reference>].ext
-// Also stores customMetadata: { podfy_id, reference, slug_active, slug_original, ... }
+// Also stores customMetadata with SINGLE location + qualifier: "GPS" or "IP".
 // Includes a HEAD collision check: regenerates ID if the key already exists.
 
 export const onRequestPost = async ({ request, env }) => {
@@ -27,21 +27,27 @@ export const onRequestPost = async ({ request, env }) => {
     // Uploader email (optional)
     const emailCopy = String(form.get("email") || "").trim();
 
-    // Optional client geo from the form
-    const lat    = form.get("lat") || "";
-    const lon    = form.get("lon") || "";
-    const acc    = form.get("acc") || "";
-    const loc_ts = form.get("loc_ts") || "";
+    // --- Client precise geo (from browser) -----------------------------------
+    // Only present if the user checked the box and granted permission.
+    const latPrecise = form.get("lat");
+    const lonPrecise = form.get("lon");
+    const accPrecise = form.get("accuracy") || form.get("acc"); // accept acc or accuracy
+    const locTs      = form.get("loc_ts");
 
-    // --- Server-side approximate geo (from Cloudflare) -----------------------
+    // --- IP-based geo (Cloudflare Workers) -----------------------------------
     const cf = request.cf || {};
-    const ip_lat = cf.latitude ? String(cf.latitude) : "";
-    const ip_lon = cf.longitude ? String(cf.longitude) : "";
-    const ip_city = cf.city || "";
-    const ip_country = cf.country || "";
-    const ip_region = cf.region || "";
-    const ip_continent = cf.continent || "";
-    const ip_co = cf.colo || "";
+    const ipLat   = cf.latitude;
+    const ipLon   = cf.longitude;
+    const ipZip   = (cf.postalCode || "").toString();
+    const ipISO2  = (cf.country || "").toString().toUpperCase(); // ISO 3166-1 alpha-2
+
+    // Build the formal ISO2+postal-prefix code, e.g. NL37 / NL10
+    const buildLocationCode = (iso2, postal) => {
+      if (!iso2) return undefined;
+      const digits = (postal || "").replace(/\D+/g, "");
+      const prefix = digits.slice(0, 2); // first two digits if available
+      return prefix ? `${iso2}${prefix}` : iso2;
+    };
 
     // --- Load per-slug config for mail routing/theme -------------------------
     const themesRes = await fetch(new URL("/themes.json", request.url));
@@ -52,7 +58,6 @@ export const onRequestPost = async ({ request, env }) => {
     // --- Naming helpers ------------------------------------------------------
     const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"; // no I,L,O,U
     function genPodfyId(len = 8) {
-      // crypto.getRandomValues is available in workers
       const bytes = new Uint8Array(len);
       crypto.getRandomValues(bytes);
       let out = "";
@@ -74,15 +79,12 @@ export const onRequestPost = async ({ request, env }) => {
     const ext = safeName.includes(".") ? safeName.split(".").pop() : "bin";
     const contentType = file.type || "application/octet-stream";
 
-    // Determine storage folder to keep compatibility (use activeSlug so it’s canonical)
-    // If you want a flat bucket, set folder = activeSlug or simply omit folder usage below.
-    const folder = activeSlug; // do NOT create extra subfolders for reference
+    // Determine storage folder (keep canonical per company)
+    const folder = activeSlug; // flat bucket per brand; no extra per-ref folder
 
     // Build filename:
     // <PodfyID8>_<YYYYMMDD>_<HHmm>_<CompanySlug>[_<Reference>].ext
     const { ymd, hhmm } = tsParts(new Date());
-
-    // Compose base name with optional reference
     const makeBase = (podfyId) => {
       const parts = [podfyId, ymd, hhmm, activeSlug];
       if (reference) parts.push(reference);
@@ -94,60 +96,87 @@ export const onRequestPost = async ({ request, env }) => {
     let base = makeBase(podfyId);
     let key = `${folder}/${base}.${ext}`;
 
-    // Up to 6 attempts is more than enough; collisions are already astronomically rare
     for (let attempt = 0; attempt < 6; attempt++) {
       const exists = await env.PODFY_BUCKET.head(key);
       if (!exists) break; // good to use
-      // regenerate a new ID and rebuild key
       podfyId = genPodfyId(8);
       base = makeBase(podfyId);
       key = `${folder}/${base}.${ext}`;
     }
 
+    // --- Decide SINGLE location + qualifier (GPS preferred; else IP) ---------
+    let locationMeta = null;
+
+    if (latPrecise && lonPrecise) {
+      // Use precise browser location (user-allowed)
+      locationMeta = {
+        locationQualifier: "GPS",
+        lat: String(latPrecise),
+        lon: String(lonPrecise),
+        ...(accPrecise ? { accuracyM: String(accPrecise) } : {}),
+        ...(locTs ? { locationTimestamp: String(locTs) } : {})
+        // No postal/ISO code here (would need reverse geocoding)
+      };
+    } else if (ipLat && ipLon) {
+      // Fallback to IP-based (Cloudflare)
+      locationMeta = {
+        locationQualifier: "IP",
+        lat: String(ipLat),
+        lon: String(ipLon),
+        ...(ipISO2 ? { locationCode: buildLocationCode(ipISO2, ipZip) } : {})
+      };
+    }
+
     // --- Store original file in R2 -------------------------------------------
     const bodyBytes = await file.arrayBuffer();
+
+    // Build minimal custom metadata (trimmed; one location only)
+    const customMetadata = {
+      // primary identifiers
+      podfy_id: podfyId,
+      reference: reference || "",
+
+      // storage & slugs
+      folder,
+      slug_active: activeSlug,
+      slug_original: originalSlug,
+      slug_known: String(slugKnown),
+
+      // file
+      orig_name: safeName,
+      orig_type: contentType,
+
+      // uploader
+      uploader_email: emailCopy || "",
+
+      // SINGLE location (either GPS or IP)
+      ...(locationMeta || {})
+    };
+
     await env.PODFY_BUCKET.put(key, bodyBytes, {
       httpMetadata: {
         contentType,
         contentDisposition: `attachment; filename="${base}.${ext}"`
       },
-      customMetadata: {
-        // primary identifiers
-        podfy_id: podfyId,         // store the 8-char Crockford ID
-        reference: reference || "",
-
-        // storage & slugs
-        folder,                     // e.g., "dsv" or "default"
-        slug_active: activeSlug,    // used for routing/theme
-        slug_original: originalSlug,// what the driver typed
-        slug_known: String(slugKnown),
-
-        // file
-        orig_name: safeName,
-        orig_type: contentType,
-
-        // uploader
-        uploader_email: emailCopy || "",
-
-        // client GPS (if provided)
-        lat: String(lat || ""),
-        lon: String(lon || ""),
-        acc: String(acc || ""),
-        loc_ts: String(loc_ts || ""),
-
-        // IP-based geo
-        ip_lat, ip_lon, ip_city, ip_country, ip_region, ip_continent, ip_co
-      }
+      customMetadata
     });
 
     // --- Mail notifications ---------------------------------------------------
     const fromEmail = env.MAIL_FROM || "no-reply@podfy.app";
     const subject   = `POD/CMR received — ${activeSlug}${reference ? ` — REF ${reference}` : ""}`;
 
-    const locLineClient = (lat && lon) ? `${lat},${lon}${acc ? ` (~${acc}m)` : ""}` : "Not provided";
-    const locLineIP = (ip_lat && ip_lon)
-      ? `${ip_lat},${ip_lon} (${ip_city || "?"}, ${ip_region || "?"}, ${ip_country || "?"})`
-      : "Not available";
+    // Compose a single readable location line for the notification
+    let locationLine = "Not available";
+    if (locationMeta) {
+      const q = locationMeta.locationQualifier;
+      if (q === "GPS") {
+        const accTxt = locationMeta.accuracyM ? ` (~${locationMeta.accuracyM}m)` : "";
+        locationLine = `GPS: ${locationMeta.lat},${locationMeta.lon}${accTxt}`;
+      } else if (q === "IP") {
+        const codeTxt = locationMeta.locationCode ? ` [${locationMeta.locationCode}]` : "";
+        locationLine = `IP: ${locationMeta.lat},${locationMeta.lon}${codeTxt}`;
+      }
+    }
 
     const text =
 `A new POD/CMR was uploaded.
@@ -161,8 +190,7 @@ Podfy ID: ${podfyId}
 ${reference ? `Reference: ${reference}\n` : ""}
 
 Uploader email copy requested: ${emailCopy ? "Yes" : "No"}
-Client GPS (permission-based): ${locLineClient}
-Server IP-based location: ${locLineIP}
+Location: ${locationLine}
 `;
 
     const send = (msg) =>
@@ -173,19 +201,21 @@ Server IP-based location: ${locLineIP}
       });
 
     // Ops email
-    await send({
-      personalizations: [{ to: [{ email: mailTo }] }],
-      from: { email: fromEmail, name: "PODFY" },
-      subject,
-      content: [{ type: "text/plain", value: text }]
-    });
+    if (mailTo) {
+      await send({
+        personalizations: [{ to: [{ email: mailTo }] }],
+        from: { email: fromEmail, name: "PODFY" },
+        subject,
+        content: [{ type: "text/plain", value: text }]
+      });
+    }
 
     // Copy to uploader (if provided)
     if (emailCopy) {
       await send({
         personalizations: [{ to: [{ email: emailCopy }] }],
         from: { email: fromEmail, name: "PODFY" },
-        reply_to: [{ email: mailTo }],
+        reply_to: mailTo ? [{ email: mailTo }] : undefined,
         subject: "Copy of your uploaded POD/CMR",
         content: [{ type: "text/plain", value: `Thanks. Your file has been received.\n${reference ? `Reference: ${reference}\n` : ""}Podfy ID: ${podfyId}` }]
       });
