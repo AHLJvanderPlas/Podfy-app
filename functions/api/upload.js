@@ -83,10 +83,10 @@ export const onRequestPost = async ({ request, env }) => {
     const folder = activeSlug; // flat bucket per brand; no extra per-ref folder
 
     // Build filename:
-    // <PodfyID8>_<YYYYMMDD>_<HHmm>_<CompanySlug>[_<Reference>].ext
+    // <YYYYMMDD>_<HHmm>_<PodfyID8>_<CompanySlug>[_<Reference>].ext
     const { ymd, hhmm } = tsParts(new Date());
     const makeBase = (podfyId) => {
-      const parts = [podfyId, ymd, hhmm, activeSlug];
+      const parts = [ymd, hhmm, podfyId, activeSlug];
       if (reference) parts.push(reference);
       return parts.join("_");
     };
