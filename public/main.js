@@ -1,4 +1,4 @@
-/* public/main.js — Podfy app client (updated for /[company]/[ref]) */
+/* public/main.js — Podfy app client (fixed: header bg, language menu, info popovers, ref support) */
 
 (() => {
   const qs  = (s) => document.querySelector(s);
@@ -27,32 +27,28 @@
   const locStatus   = qs('#locStatus');
 
   // Language UI
-  const langTrigger = qs('#translateBtn');
-  const langMenu    = qs('#langMenu');
+  const langTrigger = qs('#translateBtn');   // the globe button
+  const langMenu    = qs('#langMenu');       // dropdown panel
   const langLabel   = qs('#currentLangLabel');
 
   // ---------- Slug + Reference from path ----------
-  // Accept: /            -> slug='',  ref=''
-  //         /dhl         -> slug='dhl', ref=''
-  //         /dhl/REF123  -> slug='dhl', ref='REF123'
+  // Accept /, /{company}, or /{company}/{ref}
   const path = new URL(location.href).pathname.replace(/\/+$/,'') || '/';
   const segs = path.split('/').filter(Boolean);
   const rawSlug = (segs[0] || '').toLowerCase();
   const refFromPathRaw = segs[1] || '';
-  // sanitize ref for transport
   const refFromPath = refFromPathRaw.replace(/[^A-Za-z0-9._-]/g, '');
   let   slug = rawSlug || 'default';
 
-  // Heading we will update if reference exists
   const heading = qs('#heading');
 
   // ---------- State ----------
   let themes = {};
   let theme  = null;
-  let strings = {};
+  let langStrings = {};
   let currentLang = 'en';
 
-  // ---------- Helpers: language codes ----------
+  // ---------- Lang helpers ----------
   function normalizeLangCode(code) {
     if (!code) return '';
     let c = code.toLowerCase().replace('_','-');
@@ -61,7 +57,6 @@
     if (c.startsWith('pt-')) return 'pt';
     return c.split('-')[0];
   }
-
   function pickInitialLang(available) {
     const urlLang = new URLSearchParams(location.search).get('lang');
     if (urlLang) {
@@ -77,7 +72,7 @@
   // ---------- Unknown slug banner ----------
   function renderUnknownSlugBanner(slugValue) {
     if (!banner) return;
-    const dict = strings[currentLang] || strings['en'] || {};
+    const dict = langStrings[currentLang] || langStrings['en'] || {};
     const msgTmpl   = dict.unknownSlug || 'Unknown reference “{slug}”. Please verify the URL or use the general uploader.';
     const linkLabel = dict.learnAboutPodfy || 'Learn about Podfy';
     const msg = msgTmpl.replace('{slug}', slugValue);
@@ -87,7 +82,119 @@
     banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
   }
 
-  // ---------- Theme load ----------
+  // ---------- Build language menu (restored) ----------
+  function buildLangMenu() {
+    if (!langMenu || !langStrings) return;
+    const entries = Object.keys(langStrings).map(k => ({
+      key: k,
+      name: langStrings[k].__name || k
+    })).sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
+
+    langMenu.innerHTML = '';
+    entries.forEach(({ key, name }) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lang-item';
+      btn.setAttribute('role', 'menuitemradio');
+      btn.setAttribute('aria-checked', String(key === currentLang));
+      btn.setAttribute('data-lang', key);
+      btn.textContent = name;
+      btn.addEventListener('click', () => {
+        applyLang(key);
+        closeLangMenu();
+      });
+      langMenu.appendChild(btn);
+    });
+    reflectLangSelection();
+  }
+  function reflectLangSelection() {
+    if (langLabel) {
+      const dict = langStrings[currentLang] || {};
+      langLabel.textContent = dict.__name || currentLang.toUpperCase();
+    }
+    if (langMenu) {
+      langMenu.querySelectorAll('.lang-item').forEach(btn => {
+        btn.setAttribute('aria-checked', String(btn.getAttribute('data-lang') === currentLang));
+      });
+    }
+  }
+  function openLangMenu() {
+    if (!langMenu || !langTrigger) return;
+    langMenu.hidden = false;
+    langMenu.setAttribute('aria-hidden', 'false');
+    langTrigger.setAttribute('aria-expanded', 'true');
+  }
+  function closeLangMenu() {
+    if (!langMenu || !langTrigger) return;
+    langMenu.hidden = true;
+    langMenu.setAttribute('aria-hidden', 'true');
+    langTrigger.setAttribute('aria-expanded', 'false');
+  }
+  function wireLanguageMenu() {
+    if (!langTrigger || !langMenu) return;
+    langTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = !!langMenu.hidden;
+      if (willOpen) openLangMenu(); else closeLangMenu();
+    });
+    document.addEventListener('click', (e) => {
+      if (!langTrigger.contains(e.target) && !langMenu.contains(e.target)) closeLangMenu();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLangMenu();
+    });
+  }
+
+  // ---------- Info popovers (fixed target selector) ----------
+  function wireInfoPopovers() {
+    // Buttons have class="info-btn" and use aria-controls to point to popover <div>s
+    const buttons = qsa('.info-btn');
+    const popovers = new Map();
+    buttons.forEach(btn => {
+      const id = btn.getAttribute('aria-controls');
+      const pop = id ? document.getElementById(id) : null;
+      if (!pop) return;
+      popovers.set(btn, pop);
+      btn.setAttribute('aria-expanded', btn.getAttribute('aria-expanded') || 'false');
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-hidden', pop.hasAttribute('hidden') ? 'true' : 'false');
+
+      btn.addEventListener('click', (e) => {
+        const p = popovers.get(btn);
+        if (!p) return;
+        const willOpen = p.hasAttribute('hidden');
+        p.hidden = !willOpen ? true : false;
+        p.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+        btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) setTimeout(() => { if (p.focus) p.setAttribute('tabindex','-1'), p.focus(); }, 0);
+        e.stopPropagation();
+      });
+    });
+
+    // Close when clicking outside or pressing Escape
+    document.addEventListener('click', (e) => {
+      const isBtn = Array.from(popovers.keys()).some(b => b === e.target);
+      const inPop = Array.from(popovers.values()).some(p => p.contains(e.target));
+      if (!isBtn && !inPop) {
+        popovers.forEach((p, btn) => {
+          p.hidden = true;
+          p.setAttribute('aria-hidden', 'true');
+          btn.setAttribute('aria-expanded', 'false');
+        });
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        popovers.forEach((p, btn) => {
+          p.hidden = true;
+          p.setAttribute('aria-hidden', 'true');
+          btn.setAttribute('aria-expanded', 'false');
+        });
+      }
+    });
+  }
+
+  // ---------- Theme load (fixed: sets --header-bg) ----------
   async function loadTheme() {
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
     themes = await res.json();
@@ -108,27 +215,28 @@
     r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
     r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
 
+    // NEW: header background variable (used by .site-header in styles.css)
+    const headerBg = (theme.header && theme.header.bg) || '#FFFFFF';
+    r.style.setProperty('--header-bg', headerBg);
+
     if (brandLogo && theme.logo) brandLogo.src = theme.logo;
     const favicon = qs('link[rel="icon"]');
     if (favicon && theme.favicon) favicon.href = theme.favicon;
 
-    // Update the on-page title (H1) to include the reference if present
+    // Update H1 title depending on presence of ref in the URL
     if (heading) {
-      if (refFromPath) {
-        heading.textContent = `Upload CMR / POD for shipment ${refFromPath}`;
-      } else {
-        heading.textContent = 'Upload CMR / POD';
-      }
+      if (refFromPath) heading.textContent = `Upload CMR / POD for shipment ${refFromPath}`;
+      else heading.textContent = 'Upload CMR / POD';
     }
   }
 
   // ---------- i18n ----------
-  let langStrings = {};
   async function loadI18n() {
     const res = await fetch('/i18n.json?v=' + Date.now(), { cache: 'no-store' });
     langStrings = await res.json();
     const first = pickInitialLang(langStrings);
     applyLang(first);
+    buildLangMenu();
   }
 
   function applyLang(code) {
@@ -139,7 +247,7 @@
     });
     currentLang = code;
 
-    // translate common attributes for i18n
+    // Translate common attributes for i18n
     qsa('[data-i18n-title]').forEach(el => {
       const key = el.getAttribute('data-i18n-title');
       if (dict[key]) el.setAttribute('title', dict[key]);
@@ -153,78 +261,25 @@
       if (dict[key]) el.setAttribute('placeholder', dict[key]);
     });
 
-    // meta descriptions
+    // Meta descriptions
     const desc   = document.querySelector('meta[name="description"]');
     const ogDesc = document.querySelector('meta[property="og:description"]');
     const twDesc = document.querySelector('meta[name="twitter:description"]');
     const meta   = dict.metaDescription || (langStrings.en && langStrings.en.metaDescription) || '';
     [desc, ogDesc, twDesc].forEach(m => m && m.setAttribute('content', meta));
 
-    // update <html> lang + dir
+    // <html> lang + dir
     const rtl = new Set(['ar','fa','he','ur']);
     document.documentElement.setAttribute('lang', code);
     document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
 
-    // If an unknown slug banner is visible, re-render in the new language
-    if (banner && !banner.hidden && ((banner.dataset && banner.dataset.type === 'unknownSlug') || (rawSlug && !themes[rawSlug]))) {
-      const slugValue = (banner.dataset && banner.dataset.slug) ? banner.dataset.slug : rawSlug;
-      if (typeof renderUnknownSlugBanner === 'function' && slugValue) renderUnknownSlugBanner(slugValue);
-    }
+    // Keep ref-specific heading after language changes
+    if (refFromPath && heading) heading.textContent = `Upload CMR / POD for shipment ${refFromPath}`;
 
-    // Reflect selected language button (if menu exists)
-    if (langLabel) langLabel.textContent = dict.__name ? dict.__name : code.toUpperCase();
-    if (langMenu) {
-      langMenu.querySelectorAll('.lang-item').forEach(btn => {
-        btn.setAttribute('aria-checked', String(btn.getAttribute('data-lang') === code));
-      });
-    }
+    reflectLangSelection();
   }
 
-  // ---------- Popovers (help menus etc.) ----------
-  const popovers = new Map();
-  function wirePopovers() {
-    const buttons = qsa('[data-popover]');
-    buttons.forEach(btn => {
-      const id = btn.getAttribute('aria-controls');
-      const pop = id ? document.getElementById(id) : null;
-      if (!pop) return;
-      popovers.set(btn, pop);
-      btn.setAttribute('aria-expanded', btn.getAttribute('aria-expanded') || 'false');
-      pop.setAttribute('role', 'dialog');
-      pop.setAttribute('aria-hidden', pop.hasAttribute('hidden') ? 'true' : 'false');
-
-      btn.addEventListener('click', (e) => {
-        const pop = popovers.get(btn);
-        if (!pop) return;
-        const willOpen = pop.hasAttribute('hidden');
-        pop.hidden = !willOpen ? true : false;
-        pop.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-        btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-        if (willOpen) setTimeout(() => { if (pop.focus) pop.setAttribute('tabindex','-1'), pop.focus(); }, 0);
-        e.stopPropagation();
-      });
-    });
-
-    document.addEventListener('click', (e) => {
-      const isBtn = Array.from(popovers.keys()).some(b => b === e.target);
-      const inPop = Array.from(popovers.values()).some(pop => pop.contains(e.target));
-      if (!isBtn && !inPop) popovers.forEach((pop, btn) => {
-        pop.hidden = true;
-        pop.setAttribute('aria-hidden', 'true');
-        btn.setAttribute('aria-expanded', 'false');
-      });
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') popovers.forEach((pop, btn) => {
-        pop.hidden = true;
-        pop.setAttribute('aria-hidden', 'true');
-        btn.setAttribute('aria-expanded', 'false');
-      });
-    });
-  }
-
-  /** Sets up the upload UI: file pickers, copy-to-email toggle, submit handling, and status updates. */
+  // ---------- Upload wiring ----------
   function wireUI() {
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
@@ -268,7 +323,6 @@
       const dict = langStrings[currentLang] || langStrings['en'] || {};
       if (!f) return;
 
-      // optionally fetch a location
       await tryGetLocation();
 
       if (submitBtn) submitBtn.disabled = true;
@@ -276,20 +330,14 @@
 
       const form = new FormData();
       form.append('file', f);
-
-      // Slug we saw in the URL (first path segment)
       form.append('slug_original', rawSlug || 'default');
       form.append('slug_known', themes[rawSlug] ? '1' : '0');
-
-      // Reference, if provided in path (second segment)
       if (refFromPath) form.append('reference', refFromPath);
 
-      // Optional copy to uploader
       if (copyCheck?.checked && emailField?.value && emailField.value.includes('@')) {
         form.append('email', emailField.value.trim());
       }
 
-      // Optional geo (client)
       if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
         form.append('lat',  locStatus.dataset.lat);
         form.append('lon',  locStatus.dataset.lon);
@@ -303,8 +351,6 @@
         await resp.json();
 
         if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
-
-        // Reset inputs & states
         if (fileInput) fileInput.value = '';
         if (cameraInput) cameraInput.value = '';
         if (submitBtn) submitBtn.disabled = false;
@@ -316,7 +362,6 @@
       }
     }
 
-    // Hook file inputs
     fileInput?.addEventListener('change', () => {
       const f = fileInput.files && fileInput.files[0];
       if (f) submitFile(f);
@@ -329,9 +374,11 @@
 
   // ---------- Init ----------
   (async function init() {
-    await loadI18n();      // load strings first
-    await loadTheme();     // then theme
-    wirePopovers();
+    await loadI18n();
+    await loadTheme();
+    buildLangMenu();
+    wireLanguageMenu();
+    wireInfoPopovers();
     wireUI();
   })();
 
