@@ -1,4 +1,4 @@
-/* public/main.js — Podfy app client (fixed: header bg, language menu, info popovers, ref support, localized ref title, dropzone drag coloring) */
+/* public/main.js — Podfy app client (localized title, header bg, language menu, info popovers, dropzone coloring, NO auto-submit on drop/pick) */
 
 (() => {
   const qs  = (s) => document.querySelector(s);
@@ -27,8 +27,8 @@
   const locStatus   = qs('#locStatus');
 
   // Language UI
-  const langTrigger = qs('#translateBtn');   // the globe button
-  const langMenu    = qs('#langMenu');       // dropdown panel
+  const langTrigger = qs('#translateBtn');   // globe button
+  const langMenu    = qs('#langMenu');       // dropdown
   const langLabel   = qs('#currentLangLabel');
 
   // ---------- Slug + Reference from path ----------
@@ -46,6 +46,7 @@
   let theme  = null;
   let langStrings = {};
   let currentLang = 'en';
+  let selectedFile = null; // <-- user-selected file (drop/pick) awaiting submit
 
   // ---------- Lang helpers ----------
   function normalizeLangCode(code) {
@@ -211,6 +212,8 @@
     r.style.setProperty('--brand-muted',   c.muted   || '#6B7280');
     r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
     r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
+
+    // header background used by .site-header
     const headerBg = (theme.header && theme.header.bg) || '#FFFFFF';
     r.style.setProperty('--header-bg', headerBg);
 
@@ -270,6 +273,7 @@
     document.documentElement.setAttribute('lang', code);
     document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
 
+    // Keep localized title with/without ref after language changes
     if (heading) {
       if (refFromPath) {
         const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
@@ -284,6 +288,9 @@
 
   // ---------- Upload wiring ----------
   function wireUI() {
+    // Disable submit until a file is selected
+    if (submitBtn) submitBtn.disabled = true;
+
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
       emailWrap?.classList.toggle('hidden', !show);
@@ -301,7 +308,7 @@
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
       });
 
-      // drag & drop coloring + file handling
+      // drag & drop coloring + selection (no auto-submit)
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
       ['dragenter', 'dragover'].forEach(ev => {
         dz.addEventListener(ev, (e) => {
@@ -322,84 +329,104 @@
         const files = e.dataTransfer && e.dataTransfer.files;
         const f = files && files[0];
         if (f) {
+          selectedFile = f;
           dz.classList.add('ready');
-          submitFile(f);
+          if (submitBtn) submitBtn.disabled = false;
+          if (statusEl) statusEl.textContent = ''; // or show "File ready"
         }
       });
     }
 
-    async function tryGetLocation() {
-      if (!locCheck?.checked || !navigator.geolocation || !locStatus) return;
-      locStatus.textContent = 'Requesting location…';
-      return new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition((pos) => {
-          const c = pos.coords || {};
-          const ts = pos.timestamp ? String(pos.timestamp) : '';
-          locStatus.textContent = `Location ready (${c.latitude?.toFixed(5)}, ${c.longitude?.toFixed(5)})`;
-          locStatus.dataset.lat = String(c.latitude || '');
-          locStatus.dataset.lon = String(c.longitude || '');
-          locStatus.dataset.acc = String(c.accuracy || '');
-          locStatus.dataset.ts  = ts;
-          resolve();
-        }, () => {
-          locStatus.textContent = 'Unable to get location (permission denied?)';
-          resolve();
-        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
-      });
-    }
-
-    async function submitFile(f) {
-      const dict = langStrings[currentLang] || langStrings['en'] || {};
-      if (!f) return;
-
-      await tryGetLocation();
-
-      if (submitBtn) submitBtn.disabled = true;
-      statusEl && (statusEl.textContent = dict.uploading || 'Uploading…');
-
-      const form = new FormData();
-      form.append('file', f);
-      form.append('slug_original', rawSlug || 'default');
-      form.append('slug_known', themes[rawSlug] ? '1' : '0');
-      if (refFromPath) form.append('reference', refFromPath);
-
-      if (copyCheck?.checked && emailField?.value && emailField.value.includes('@')) {
-        form.append('email', emailField.value.trim());
-      }
-
-      if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
-        form.append('lat',  locStatus.dataset.lat);
-        form.append('lon',  locStatus.dataset.lon);
-        if (locStatus.dataset.acc) form.append('acc', locStatus.dataset.acc);
-        if (locStatus.dataset.ts)  form.append('loc_ts', locStatus.dataset.ts);
-      }
-
-      try {
-        const resp = await fetch('/api/upload', { method: 'POST', body: form });
-        if (!resp.ok) throw new Error('Upload failed');
-        await resp.json();
-
-        if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
-        dropzone?.classList.remove('ready');
-        if (fileInput) fileInput.value = '';
-        if (cameraInput) cameraInput.value = '';
-        if (submitBtn) submitBtn.disabled = false;
-        setTimeout(() => { submitBtn && (submitBtn.disabled = false); }, 400);
-      } catch (err) {
-        console.error(err);
-        if (statusEl) statusEl.textContent = 'Upload failed. Please try again.';
-        setTimeout(() => { submitBtn && (submitBtn.disabled = false); }, 400);
-      }
-    }
-
+    // On file picker/camera selection: just select, don’t upload
     fileInput?.addEventListener('change', () => {
       const f = fileInput.files && fileInput.files[0];
-      if (f) { dropzone?.classList.add('ready'); submitFile(f); }
+      if (f) {
+        selectedFile = f;
+        dropzone?.classList.add('ready');
+        if (submitBtn) submitBtn.disabled = false;
+        if (statusEl) statusEl.textContent = '';
+      }
     });
     cameraInput?.addEventListener('change', () => {
       const f = cameraInput.files && cameraInput.files[0];
-      if (f) { dropzone?.classList.add('ready'); submitFile(f); }
+      if (f) {
+        selectedFile = f;
+        dropzone?.classList.add('ready');
+        if (submitBtn) submitBtn.disabled = false;
+        if (statusEl) statusEl.textContent = '';
+      }
     });
+
+    // Submit click → upload selected file
+    submitBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (selectedFile) submitFile(selectedFile);
+    });
+  }
+
+  async function tryGetLocation() {
+    if (!locCheck?.checked || !navigator.geolocation || !locStatus) return;
+    locStatus.textContent = 'Requesting location…';
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const c = pos.coords || {};
+        const ts = pos.timestamp ? String(pos.timestamp) : '';
+        locStatus.textContent = `Location ready (${c.latitude?.toFixed(5)}, ${c.longitude?.toFixed(5)})`;
+        locStatus.dataset.lat = String(c.latitude || '');
+        locStatus.dataset.lon = String(c.longitude || '');
+        locStatus.dataset.acc = String(c.accuracy || '');
+        locStatus.dataset.ts  = ts;
+        resolve();
+      }, () => {
+        locStatus.textContent = 'Unable to get location (permission denied?)';
+        resolve();
+      }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+    });
+  }
+
+  async function submitFile(f) {
+    const dict = langStrings[currentLang] || langStrings['en'] || {};
+    if (!f) return;
+
+    await tryGetLocation();
+
+    if (submitBtn) submitBtn.disabled = true;
+    statusEl && (statusEl.textContent = dict.uploading || 'Uploading…');
+
+    const form = new FormData();
+    form.append('file', f);
+    form.append('slug_original', rawSlug || 'default');
+    form.append('slug_known', themes[rawSlug] ? '1' : '0');
+    if (refFromPath) form.append('reference', refFromPath);
+
+    if (copyCheck?.checked && emailField?.value && emailField.value.includes('@')) {
+      form.append('email', emailField.value.trim());
+    }
+
+    if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
+      form.append('lat',  locStatus.dataset.lat);
+      form.append('lon',  locStatus.dataset.lon);
+      if (locStatus.dataset.acc) form.append('acc', locStatus.dataset.acc);
+      if (locStatus.dataset.ts)  form.append('loc_ts', locStatus.dataset.ts);
+    }
+
+    try {
+      const resp = await fetch('/api/upload', { method: 'POST', body: form });
+      if (!resp.ok) throw new Error('Upload failed');
+      await resp.json();
+
+      if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
+      // reset UI
+      selectedFile = null;
+      dropzone?.classList.remove('ready');
+      if (fileInput) fileInput.value = '';
+      if (cameraInput) cameraInput.value = '';
+      if (submitBtn) submitBtn.disabled = true;
+    } catch (err) {
+      console.error(err);
+      if (statusEl) statusEl.textContent = 'Upload failed. Please try again.';
+      if (submitBtn) submitBtn.disabled = false;
+    }
   }
 
   // ---------- Init ----------
