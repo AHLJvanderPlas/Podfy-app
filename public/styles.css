@@ -66,16 +66,15 @@
   outline-offset: 2px;
 }
 
-/* Donkere modus kleuren (prefers-color-scheme) */
-/*@media (prefers-color-scheme: dark) {
+/* Donkere modus kleuren (prefers-color-scheme)
+@media (prefers-color-scheme: dark) {
   .banner {
-    background: #2B1D12;*/         /* donkere tint */
-    /*border-color: #9A3412;*/       /* donkere rand */
-     /*color: #FDE68A;*/              /* lichte tekst */
-    /*box-shadow: none;            /* schaduw weghouden in dark mode */
+    background: #2B1D12;*/         
+    /*border-color: #9A3412;*/       
+     /*color: #FDE68A;*/              
+    /*box-shadow: none;            
   }
-}
-
+}*/
 
 /* --- Header aligned to container edges --- */
 .site-header {
