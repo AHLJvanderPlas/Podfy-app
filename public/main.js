@@ -1,4 +1,10 @@
-/* public/main.js — Podfy app client (localized title, header bg, language menu, info popovers, dropzone coloring, NO auto-submit on drop/pick) */
+/* public/main.js — Podfy
+   - Robust buttons (desktop/mobile) + no auto-upload
+   - Email field required when checked
+   - /[company]/[ref] support with localized headingWithRef
+   - Drag & drop coloring restored
+   - GPS-only submit (lat/lon/accuracy/timestamp) if user opts in
+*/
 
 (() => {
   const qs  = (s) => document.querySelector(s);
@@ -31,6 +37,8 @@
   const langMenu    = qs('#langMenu');       // dropdown
   const langLabel   = qs('#currentLangLabel');
 
+  const heading     = qs('#heading');
+
   // ---------- Slug + Reference from path ----------
   const path = new URL(location.href).pathname.replace(/\/+$/,'') || '/';
   const segs = path.split('/').filter(Boolean);
@@ -39,16 +47,14 @@
   const refFromPath = refFromPathRaw.replace(/[^A-Za-z0-9._-]/g, '');
   let   slug = rawSlug || 'default';
 
-  const heading = qs('#heading');
-
   // ---------- State ----------
   let themes = {};
   let theme  = null;
   let langStrings = {};
   let currentLang = 'en';
-  let selectedFile = null; // <-- user-selected file (drop/pick) awaiting submit
+  let selectedFile = null; // file awaiting submit
 
-  // ---------- Lang helpers ----------
+  // ---------- Helpers ----------
   function normalizeLangCode(code) {
     if (!code) return '';
     let c = code.toLowerCase().replace('_','-');
@@ -82,12 +88,11 @@
     banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
   }
 
-  // ---------- Build language menu ----------
+  // ---------- Language menu ----------
   function buildLangMenu() {
     if (!langMenu || !langStrings) return;
     const entries = Object.keys(langStrings).map(k => ({
-      key: k,
-      name: langStrings[k].__name || k
+      key: k, name: langStrings[k].__name || k
     })).sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
 
     langMenu.innerHTML = '';
@@ -197,12 +202,12 @@
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
     themes = await res.json();
 
-    const isKnown = !!themes[slug];
-    theme = isKnown ? themes[slug] : (themes['default'] || {});
+    const isKnown = !!themes[rawSlug];
+    theme = isKnown ? themes[rawSlug] : (themes['default'] || {});
     if (!isKnown && rawSlug) {
       renderUnknownSlugBanner(rawSlug);
-      slug = 'default';
     }
+    if (!isKnown) slug = 'default';
 
     const r = document.documentElement;
     const c = theme.colors || {};
@@ -213,7 +218,6 @@
     r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
     r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
 
-    // header background used by .site-header
     const headerBg = (theme.header && theme.header.bg) || '#FFFFFF';
     r.style.setProperty('--header-bg', headerBg);
 
@@ -273,7 +277,7 @@
     document.documentElement.setAttribute('lang', code);
     document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
 
-    // Keep localized title with/without ref after language changes
+    // keep localized title with/without ref after language changes
     if (heading) {
       if (refFromPath) {
         const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
@@ -284,6 +288,78 @@
     }
 
     reflectLangSelection();
+  }
+
+  // ---------- Location (GPS only from client) ----------
+  function setLocDataFromPosition(pos) {
+    const c = pos && pos.coords ? pos.coords : {};
+    const ts = pos && pos.timestamp ? String(pos.timestamp) : String(Date.now());
+    if (!locStatus) return;
+
+    if (typeof c.latitude === 'number' && typeof c.longitude === 'number') {
+      locStatus.textContent = `Location ready (${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)})`;
+      locStatus.dataset.lat = String(c.latitude);
+      locStatus.dataset.lon = String(c.longitude);
+      if (typeof c.accuracy === 'number') locStatus.dataset.acc = String(c.accuracy);
+      locStatus.dataset.ts = ts;
+    } else {
+      locStatus.textContent = 'Location unavailable';
+      ['lat','lon','acc','ts'].forEach(k => delete locStatus.dataset[k]);
+    }
+  }
+
+  async function requestLocationFix() {
+    if (!navigator.geolocation || !locStatus) return;
+    locStatus.textContent = 'Requesting location…';
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { setLocDataFromPosition(pos); resolve(true); },
+        (err) => {
+          console.warn('Geolocation error:', err);
+          locStatus.textContent = 'Unable to get location (permission denied or timeout)';
+          ['lat','lon','acc','ts'].forEach(k => delete locStatus.dataset[k]);
+          resolve(false);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    });
+  }
+
+  // ---------- Buttons (robust mobile/desktop) ----------
+  function resilientOpen(inputEl) {
+    if (!inputEl) return;
+    const before = inputEl.files && inputEl.files.length;
+    inputEl.click?.();
+
+    // fallback if picker didn't open / no selection happened
+    setTimeout(() => {
+      const after = inputEl.files && inputEl.files.length;
+      if (after && after !== before) return;
+      const prevDisplay = inputEl.style.display;
+      const prevOpacity = inputEl.style.opacity;
+      inputEl.style.display = 'block';
+      inputEl.style.opacity = '0.001';
+      inputEl.focus?.();
+      setTimeout(() => {
+        inputEl.style.display = prevDisplay || '';
+        inputEl.style.opacity = prevOpacity || '';
+      }, 3000);
+    }, 400);
+  }
+
+  function bindTapAndClick(el, handler) {
+    if (!el) return;
+    el.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handler(e);
+    }, { passive: false });
+
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handler(e);
+    });
   }
 
   // ---------- Upload wiring ----------
@@ -297,7 +373,7 @@
 
       if (emailWrap) {
         emailWrap.classList.toggle('hidden', !show);
-        emailWrap.hidden = !show; // also toggle the attribute
+        emailWrap.hidden = !show;
       }
       if (emailField) {
         if (show) {
@@ -313,26 +389,43 @@
         }
       }
     });
-
-    // Initialize email field visibility on load
+    // Initialize email UI on load
     (function initEmailCopyUI() {
       const show = !!copyCheck?.checked;
-      if (emailWrap) {
-        emailWrap.classList.toggle('hidden', !show);
-        emailWrap.hidden = !show;
+      if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
+      if (emailField) { if (show && emailField.type !== 'email') emailField.type = 'email'; emailField.required = !!show; }
+    })();
+
+    // Location checkbox: show status + request fix immediately
+    locCheck?.addEventListener('change', async () => {
+      const on = !!locCheck.checked;
+      if (locStatus) {
+        locStatus.classList.toggle('hidden', !on);
+        if (!on) {
+          locStatus.textContent = '';
+          ['lat','lon','acc','ts'].forEach(k => delete locStatus.dataset[k]);
+        } else {
+          await requestLocationFix();
+        }
       }
-      if (emailField) {
-        if (show && emailField.type !== 'email') emailField.type = 'email';
-        emailField.required = !!show;
+    });
+    // Init location UI on load
+    (() => {
+      const on = !!locCheck?.checked;
+      if (locStatus) {
+        locStatus.classList.toggle('hidden', !on);
+        if (on) requestLocationFix();
       }
     })();
 
-    chooseBtn?.addEventListener('click', () => fileInput?.click());
-    cameraBtn?.addEventListener('click', () => cameraInput?.click());
+    // Robust buttons
+    bindTapAndClick(chooseBtn, () => resilientOpen(fileInput));
+    bindTapAndClick(cameraBtn, () => resilientOpen(cameraInput));
 
+    // Dropzone
     const dz = dropzone;
     if (dz) {
-      const pick = () => fileInput?.click();
+      const pick = () => resilientOpen(fileInput);
       dz.addEventListener('click', pick);
       dz.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
@@ -362,7 +455,7 @@
           selectedFile = f;
           dz.classList.add('ready');
           if (submitBtn) submitBtn.disabled = false;
-          if (statusEl) statusEl.textContent = ''; // or show "File ready"
+          if (statusEl) statusEl.textContent = '';
         }
       });
     }
@@ -388,9 +481,10 @@
     });
 
     // Submit click → upload selected file
-    submitBtn?.addEventListener('click', (e) => {
+    submitBtn?.addEventListener('click', async (e) => {
       e.preventDefault();
-      // If email copy is requested, ensure valid email
+
+      // If email copy is requested, require valid email
       if (copyCheck?.checked) {
         if (!emailField?.value || !emailField.checkValidity()) {
           emailField?.reportValidity && emailField.reportValidity();
@@ -398,35 +492,20 @@
           return;
         }
       }
-      if (selectedFile) submitFile(selectedFile);
+
+      if (selectedFile) await submitFile(selectedFile);
     });
   }
 
-  async function tryGetLocation() {
-    if (!locCheck?.checked || !navigator.geolocation || !locStatus) return;
-    locStatus.textContent = 'Requesting location…';
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const c = pos.coords || {};
-        const ts = pos.timestamp ? String(pos.timestamp) : '';
-        locStatus.textContent = `Location ready (${c.latitude?.toFixed(5)}, ${c.longitude?.toFixed(5)})`;
-        locStatus.dataset.lat = String(c.latitude || '');
-        locStatus.dataset.lon = String(c.longitude || '');
-        locStatus.dataset.acc = String(c.accuracy || '');
-        locStatus.dataset.ts  = ts;
-        resolve();
-      }, () => {
-        locStatus.textContent = 'Unable to get location (permission denied?)';
-        resolve();
-      }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
-    });
-  }
-
+  // ---------- Upload ----------
   async function submitFile(f) {
     const dict = langStrings[currentLang] || langStrings['en'] || {};
     if (!f) return;
 
-    await tryGetLocation();
+    // Refresh GPS right before submit if requested
+    if (locCheck?.checked) {
+      await requestLocationFix();
+    }
 
     if (submitBtn) submitBtn.disabled = true;
     statusEl && (statusEl.textContent = dict.uploading || 'Uploading…');
@@ -437,15 +516,17 @@
     form.append('slug_known', themes[rawSlug] ? '1' : '0');
     if (refFromPath) form.append('reference', refFromPath);
 
+    // Email (only if valid)
     if (copyCheck?.checked && emailField?.value && emailField.checkValidity && emailField.checkValidity()) {
       form.append('email', emailField.value.trim());
     }
 
+    // Append GPS fields only (backend will fallback to IP if these are missing)
     if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
       form.append('lat',  locStatus.dataset.lat);
       form.append('lon',  locStatus.dataset.lon);
-      if (locStatus.dataset.acc) form.append('acc', locStatus.dataset.acc);
-      if (locStatus.dataset.ts)  form.append('loc_ts', locStatus.dataset.ts);
+      if (locStatus.dataset.acc) form.append('accuracy', locStatus.dataset.acc);
+      if (locStatus.dataset.ts)  form.append('loc_ts',  locStatus.dataset.ts);
     }
 
     try {
