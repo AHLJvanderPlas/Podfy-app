@@ -1,4 +1,4 @@
-/* public/main.js — Podfy app client (fixed: header bg, language menu, info popovers, ref support) */
+/* public/main.js — Podfy app client (fixed: header bg, language menu, info popovers, ref support, localized ref title) */
 
 (() => {
   const qs  = (s) => document.querySelector(s);
@@ -32,7 +32,6 @@
   const langLabel   = qs('#currentLangLabel');
 
   // ---------- Slug + Reference from path ----------
-  // Accept /, /{company}, or /{company}/{ref}
   const path = new URL(location.href).pathname.replace(/\/+$/,'') || '/';
   const segs = path.split('/').filter(Boolean);
   const rawSlug = (segs[0] || '').toLowerCase();
@@ -82,7 +81,7 @@
     banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
   }
 
-  // ---------- Build language menu (restored) ----------
+  // ---------- Build language menu ----------
   function buildLangMenu() {
     if (!langMenu || !langStrings) return;
     const entries = Object.keys(langStrings).map(k => ({
@@ -145,9 +144,8 @@
     });
   }
 
-  // ---------- Info popovers (fixed target selector) ----------
+  // ---------- Info popovers ----------
   function wireInfoPopovers() {
-    // Buttons have class="info-btn" and use aria-controls to point to popover <div>s
     const buttons = qsa('.info-btn');
     const popovers = new Map();
     buttons.forEach(btn => {
@@ -171,7 +169,6 @@
       });
     });
 
-    // Close when clicking outside or pressing Escape
     document.addEventListener('click', (e) => {
       const isBtn = Array.from(popovers.keys()).some(b => b === e.target);
       const inPop = Array.from(popovers.values()).some(p => p.contains(e.target));
@@ -194,7 +191,7 @@
     });
   }
 
-  // ---------- Theme load (fixed: sets --header-bg) ----------
+  // ---------- Theme load ----------
   async function loadTheme() {
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
     themes = await res.json();
@@ -215,7 +212,7 @@
     r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
     r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
 
-    // NEW: header background variable (used by .site-header in styles.css)
+    // header background used by .site-header
     const headerBg = (theme.header && theme.header.bg) || '#FFFFFF';
     r.style.setProperty('--header-bg', headerBg);
 
@@ -223,10 +220,15 @@
     const favicon = qs('link[rel="icon"]');
     if (favicon && theme.favicon) favicon.href = theme.favicon;
 
-    // Update H1 title depending on presence of ref in the URL
+    // Update H1 title with localization support
     if (heading) {
-      if (refFromPath) heading.textContent = `Upload CMR / POD for shipment ${refFromPath}`;
-      else heading.textContent = 'Upload CMR / POD';
+      const dict = langStrings[currentLang] || langStrings['en'] || {};
+      if (refFromPath) {
+        const tmpl = dict.headingWithRef || 'Upload CMR / POD for reference {ref}';
+        heading.textContent = tmpl.replace('{ref}', refFromPath);
+      } else {
+        heading.textContent = dict.heading || 'Upload CMR / POD';
+      }
     }
   }
 
@@ -247,7 +249,7 @@
     });
     currentLang = code;
 
-    // Translate common attributes for i18n
+    // Translate attributes
     qsa('[data-i18n-title]').forEach(el => {
       const key = el.getAttribute('data-i18n-title');
       if (dict[key]) el.setAttribute('title', dict[key]);
@@ -273,8 +275,15 @@
     document.documentElement.setAttribute('lang', code);
     document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
 
-    // Keep ref-specific heading after language changes
-    if (refFromPath && heading) heading.textContent = `Upload CMR / POD for shipment ${refFromPath}`;
+    // Keep localized ref title after language changes
+    if (heading) {
+      if (refFromPath) {
+        const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
+        heading.textContent = tmpl.replace('{ref}', refFromPath);
+      } else {
+        heading.textContent = (langStrings[code] && langStrings[code].heading) || 'Upload CMR / POD';
+      }
+    }
 
     reflectLangSelection();
   }
