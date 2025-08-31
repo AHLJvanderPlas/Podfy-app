@@ -1,10 +1,11 @@
-/* public/main.js — Podfy (mobile camera + desktop reopen fix)
-   - Reliable file/camera pickers (single gesture, cancelable fallback)
+/* public/main.js — Podfy
+   - Drag & drop only dropzone; file selection via buttons
+   - Reliable file/camera pickers (mobile/desktop) with cancelable off-screen fallback
    - Prevent double trigger (touchend + click)
    - No auto-upload; Submit triggers upload
    - Email field required when checked
-   - GPS-only from client; backend chooses IP fallback
-   - Title localization with headingWithRef
+   - GPS-only from client; backend chooses IP fallback if GPS absent
+   - Title localization with headingWithRef and meta description per i18n
 */
 
 (() => {
@@ -16,16 +17,16 @@
   const banner      = qs('#banner');
 
   const dropzone    = qs('#dropzone');
-  const fileInput   = qs('#fileInput');      // general picker
+  const fileInput   = qs('#fileInput');   // general picker
   const chooseBtn   = qs('#chooseBtn');
 
-  const cameraInput = qs('#cameraInput');    // camera-only input (accept="image/*" capture="environment")
+  const cameraInput = qs('#cameraInput'); // camera-only picker (accept="image/*" capture="environment")
   const cameraBtn   = qs('#cameraBtn');
 
   const submitBtn   = qs('#submitBtn');
   const statusEl    = qs('#status');
 
-  // Email copy
+  // Email
   const copyCheck   = qs('#copyCheck');
   const emailWrap   = qs('#emailWrap');
   const emailField  = qs('#emailField');
@@ -34,14 +35,14 @@
   const locCheck    = qs('#locCheck');
   const locStatus   = qs('#locStatus');
 
-  // Language UI
+  // Language
   const langTrigger = qs('#translateBtn');
   const langMenu    = qs('#langMenu');
   const langLabel   = qs('#currentLangLabel');
 
   const heading     = qs('#heading');
 
-  // ---------- Slug + Reference ----------
+  // ---------- Path: slug + optional reference ----------
   const path = new URL(location.href).pathname.replace(/\/+$/,'') || '/';
   const segs = path.split('/').filter(Boolean);
   const rawSlug = (segs[0] || '').toLowerCase();
@@ -71,7 +72,7 @@
       const k = normalizeLangCode(urlLang);
       if (available[k]) return k;
     }
-    const nav = navigator.languages && navigator.languages[0] || navigator.language || 'en';
+    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
     const k = normalizeLangCode(nav);
     if (available[k]) return k;
     return 'en';
@@ -277,6 +278,7 @@
     document.documentElement.setAttribute('lang', code);
     document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
 
+    // keep localized title with/without ref after language changes
     if (heading) {
       if (refFromPath) {
         const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
@@ -328,7 +330,11 @@
   function cancelTimersForInput(inputEl) {
     if (!inputEl) return;
     if (inputEl._fallbackTimer) { clearTimeout(inputEl._fallbackTimer); inputEl._fallbackTimer = null; }
-    if (inputEl._revertTimer)   { clearTimeout(inputEl._revertTimer);   inputEl._revertTimer = null; inputEl.style.display=''; inputEl.style.opacity=''; }
+    if (inputEl._revertTimer)   { clearTimeout(inputEl._revertTimer);   inputEl._revertTimer = null; }
+    if (inputEl._prevStyles) {
+      Object.assign(inputEl.style, inputEl._prevStyles);
+      inputEl._prevStyles = null;
+    }
   }
 
   function resilientOpen(inputEl) {
@@ -350,16 +356,38 @@
     // Fallback if dialog didn’t open / selection not made
     inputEl._fallbackTimer = setTimeout(() => {
       if (opened) return;
-      const prevDisplay = inputEl.style.display;
-      const prevOpacity = inputEl.style.opacity;
-      inputEl.style.display = 'block';
-      inputEl.style.opacity = '0.001'; // virtually invisible but interactive
+
+      // Move input fully off-screen but still interactive for iOS
+      inputEl._prevStyles = {
+        position: inputEl.style.position,
+        left:     inputEl.style.left,
+        top:      inputEl.style.top,
+        width:    inputEl.style.width,
+        height:   inputEl.style.height,
+        opacity:  inputEl.style.opacity,
+        display:  inputEl.style.display
+      };
+      Object.assign(inputEl.style, {
+        display:  'block',
+        position: 'fixed',
+        left:     '-9999px',
+        top:      '0',
+        width:    '1px',
+        height:   '1px',
+        opacity:  '0'
+      });
+
+      // iOS sometimes needs a focus() before showing the chooser
       inputEl.focus?.();
+
       inputEl._revertTimer = setTimeout(() => {
-        inputEl.style.display = prevDisplay || '';
-        inputEl.style.opacity = prevOpacity || '';
+        if (inputEl._prevStyles) {
+          Object.assign(inputEl.style, inputEl._prevStyles);
+          inputEl._prevStyles = null;
+        }
         inputEl._revertTimer = null;
       }, 3000);
+
       inputEl._fallbackTimer = null;
     }, 400);
   }
@@ -390,11 +418,20 @@
   function wireUI() {
     if (submitBtn) submitBtn.disabled = true;
 
+    // Match Choose/Camera buttons to Submit button style (so they look identical)
+    if (submitBtn) {
+      if (chooseBtn) chooseBtn.className = submitBtn.className;
+      if (cameraBtn) cameraBtn.className = submitBtn.className + ' btn-ghost';
+    }
+
     // Email checkbox: show/hide + required
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
 
-      if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
+      if (emailWrap) {
+        emailWrap.classList.toggle('hidden', !show);
+        emailWrap.hidden = !show;
+      }
       if (emailField) {
         if (show) {
           if (emailField.type !== 'email') emailField.type = 'email';
@@ -409,6 +446,7 @@
         }
       }
     });
+    // Initialize email UI on load
     (function initEmailCopyUI() {
       const show = !!copyCheck?.checked;
       if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
@@ -428,6 +466,7 @@
         }
       }
     });
+    // Init location UI on load
     (() => {
       const on = !!locCheck?.checked;
       if (locStatus) {
@@ -436,20 +475,15 @@
       }
     })();
 
-    // Robust buttons (single gesture, double-fire proof)
+    // Buttons (single gesture, double-fire proof)
     bindTapAndClick(chooseBtn, () => resilientOpen(fileInput));
     bindTapAndClick(cameraBtn, () => resilientOpen(cameraInput));
 
-    // Dropzone
+    // --- Dropzone: drag & drop only (no click-to-open) ---
     const dz = dropzone;
     if (dz) {
-      const pick = () => resilientOpen(fileInput);
-      dz.addEventListener('click', pick);
-      dz.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
-      });
-
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+
       ['dragenter', 'dragover'].forEach(ev => {
         dz.addEventListener(ev, (e) => {
           prevent(e);
@@ -457,12 +491,14 @@
           dz.classList.add('dragover');
         });
       });
+
       ['dragleave', 'dragend'].forEach(ev => {
         dz.addEventListener(ev, (e) => {
           prevent(e);
           dz.classList.remove('dragover');
         });
       });
+
       dz.addEventListener('drop', (e) => {
         prevent(e);
         dz.classList.remove('dragover');
@@ -475,9 +511,15 @@
           if (statusEl) statusEl.textContent = '';
         }
       });
+
+      // Block click + keyboard activation inside the dropzone
+      dz.addEventListener('click', (e) => e.preventDefault());
+      dz.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+      });
     }
 
-    // On file picker/camera selection: just select, don’t upload
+    // On file picker/camera selection: select file, don’t upload
     fileInput?.addEventListener('change', () => {
       const f = fileInput.files && fileInput.files[0];
       if (f) {
@@ -501,6 +543,7 @@
     submitBtn?.addEventListener('click', async (e) => {
       e.preventDefault();
 
+      // If email copy is requested, require valid email
       if (copyCheck?.checked) {
         if (!emailField?.value || !emailField.checkValidity()) {
           emailField?.reportValidity && emailField.reportValidity();
@@ -532,11 +575,12 @@
     form.append('slug_known', themes[rawSlug] ? '1' : '0');
     if (refFromPath) form.append('reference', refFromPath);
 
+    // Email (only if valid)
     if (copyCheck?.checked && emailField?.value && emailField.checkValidity && emailField.checkValidity()) {
       form.append('email', emailField.value.trim());
     }
 
-    // GPS fields only; backend picks IP fallback
+    // GPS fields only; backend picks IP fallback if GPS absent
     if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
       form.append('lat',  locStatus.dataset.lat);
       form.append('lon',  locStatus.dataset.lon);
@@ -550,6 +594,7 @@
       await resp.json();
 
       if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
+
       // reset UI
       selectedFile = null;
       dropzone?.classList.remove('ready');
