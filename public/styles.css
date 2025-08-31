@@ -67,12 +67,12 @@
 }
 
 /* Donkere modus kleuren (prefers-color-scheme) */
-@media (prefers-color-scheme: dark) {
+/*@media (prefers-color-scheme: dark) {
   .banner {
-    background: #2B1D12;         /* donkere tint */
-    border-color: #9A3412;       /* donkere rand */
-    color: #FDE68A;              /* lichte tekst */
-    box-shadow: none;            /* schaduw weghouden in dark mode */
+    background: #2B1D12;*/         /* donkere tint */
+    /*border-color: #9A3412;*/       /* donkere rand */
+     /*color: #FDE68A;*/              /* lichte tekst */
+    /*box-shadow: none;            /* schaduw weghouden in dark mode */
   }
 }
 
