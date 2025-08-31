@@ -1,9 +1,10 @@
-/* public/main.js — Podfy
-   - Robust buttons (desktop/mobile) + no auto-upload
+/* public/main.js — Podfy (mobile camera + desktop reopen fix)
+   - Reliable file/camera pickers (single gesture, cancelable fallback)
+   - Prevent double trigger (touchend + click)
+   - No auto-upload; Submit triggers upload
    - Email field required when checked
-   - /[company]/[ref] support with localized headingWithRef
-   - Drag & drop coloring restored
-   - GPS-only submit (lat/lon/accuracy/timestamp) if user opts in
+   - GPS-only from client; backend chooses IP fallback
+   - Title localization with headingWithRef
 */
 
 (() => {
@@ -14,12 +15,13 @@
   const brandLogo   = qs('#brandLogo');
   const banner      = qs('#banner');
 
-  // Upload UI
   const dropzone    = qs('#dropzone');
-  const fileInput   = qs('#fileInput');
+  const fileInput   = qs('#fileInput');      // general picker
   const chooseBtn   = qs('#chooseBtn');
-  const cameraInput = qs('#cameraInput');
+
+  const cameraInput = qs('#cameraInput');    // camera-only input (accept="image/*" capture="environment")
   const cameraBtn   = qs('#cameraBtn');
+
   const submitBtn   = qs('#submitBtn');
   const statusEl    = qs('#status');
 
@@ -33,13 +35,13 @@
   const locStatus   = qs('#locStatus');
 
   // Language UI
-  const langTrigger = qs('#translateBtn');   // globe button
-  const langMenu    = qs('#langMenu');       // dropdown
+  const langTrigger = qs('#translateBtn');
+  const langMenu    = qs('#langMenu');
   const langLabel   = qs('#currentLangLabel');
 
   const heading     = qs('#heading');
 
-  // ---------- Slug + Reference from path ----------
+  // ---------- Slug + Reference ----------
   const path = new URL(location.href).pathname.replace(/\/+$/,'') || '/';
   const segs = path.split('/').filter(Boolean);
   const rawSlug = (segs[0] || '').toLowerCase();
@@ -52,9 +54,9 @@
   let theme  = null;
   let langStrings = {};
   let currentLang = 'en';
-  let selectedFile = null; // file awaiting submit
+  let selectedFile = null;
 
-  // ---------- Helpers ----------
+  // ---------- Language helpers ----------
   function normalizeLangCode(code) {
     if (!code) return '';
     let c = code.toLowerCase().replace('_','-');
@@ -204,9 +206,7 @@
 
     const isKnown = !!themes[rawSlug];
     theme = isKnown ? themes[rawSlug] : (themes['default'] || {});
-    if (!isKnown && rawSlug) {
-      renderUnknownSlugBanner(rawSlug);
-    }
+    if (!isKnown && rawSlug) renderUnknownSlugBanner(rawSlug);
     if (!isKnown) slug = 'default';
 
     const r = document.documentElement;
@@ -277,7 +277,6 @@
     document.documentElement.setAttribute('lang', code);
     document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
 
-    // keep localized title with/without ref after language changes
     if (heading) {
       if (refFromPath) {
         const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
@@ -325,56 +324,77 @@
     });
   }
 
-  // ---------- Buttons (robust mobile/desktop) ----------
+  // ---------- Picker helpers (mobile/desktop safe) ----------
+  function cancelTimersForInput(inputEl) {
+    if (!inputEl) return;
+    if (inputEl._fallbackTimer) { clearTimeout(inputEl._fallbackTimer); inputEl._fallbackTimer = null; }
+    if (inputEl._revertTimer)   { clearTimeout(inputEl._revertTimer);   inputEl._revertTimer = null; inputEl.style.display=''; inputEl.style.opacity=''; }
+  }
+
   function resilientOpen(inputEl) {
     if (!inputEl) return;
-    const before = inputEl.files && inputEl.files.length;
+
+    // Clear any prior timers before opening
+    cancelTimersForInput(inputEl);
+
+    let opened = false;
+    const onChange = () => {
+      opened = true;
+      cancelTimersForInput(inputEl); // stop fallback if a file was chosen
+    };
+    inputEl.addEventListener('change', onChange, { once: true });
+
+    // Try normal programmatic click within user gesture
     inputEl.click?.();
 
-    // fallback if picker didn't open / no selection happened
-    setTimeout(() => {
-      const after = inputEl.files && inputEl.files.length;
-      if (after && after !== before) return;
+    // Fallback if dialog didn’t open / selection not made
+    inputEl._fallbackTimer = setTimeout(() => {
+      if (opened) return;
       const prevDisplay = inputEl.style.display;
       const prevOpacity = inputEl.style.opacity;
       inputEl.style.display = 'block';
-      inputEl.style.opacity = '0.001';
+      inputEl.style.opacity = '0.001'; // virtually invisible but interactive
       inputEl.focus?.();
-      setTimeout(() => {
+      inputEl._revertTimer = setTimeout(() => {
         inputEl.style.display = prevDisplay || '';
         inputEl.style.opacity = prevOpacity || '';
+        inputEl._revertTimer = null;
       }, 3000);
+      inputEl._fallbackTimer = null;
     }, 400);
   }
 
   function bindTapAndClick(el, handler) {
     if (!el) return;
+    let locked = false;
+    const wrapped = (e) => {
+      if (locked) return;
+      locked = true;
+      setTimeout(() => (locked = false), 250); // coalesce touchend+click
+      handler(e);
+    };
     el.addEventListener('touchend', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      handler(e);
+      wrapped(e);
     }, { passive: false });
 
     el.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      handler(e);
+      wrapped(e);
     });
   }
 
   // ---------- Upload wiring ----------
   function wireUI() {
-    // Disable submit until a file is selected
     if (submitBtn) submitBtn.disabled = true;
 
     // Email checkbox: show/hide + required
     copyCheck?.addEventListener('change', () => {
       const show = !!copyCheck.checked;
 
-      if (emailWrap) {
-        emailWrap.classList.toggle('hidden', !show);
-        emailWrap.hidden = !show;
-      }
+      if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
       if (emailField) {
         if (show) {
           if (emailField.type !== 'email') emailField.type = 'email';
@@ -389,7 +409,6 @@
         }
       }
     });
-    // Initialize email UI on load
     (function initEmailCopyUI() {
       const show = !!copyCheck?.checked;
       if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
@@ -409,7 +428,6 @@
         }
       }
     });
-    // Init location UI on load
     (() => {
       const on = !!locCheck?.checked;
       if (locStatus) {
@@ -418,7 +436,7 @@
       }
     })();
 
-    // Robust buttons
+    // Robust buttons (single gesture, double-fire proof)
     bindTapAndClick(chooseBtn, () => resilientOpen(fileInput));
     bindTapAndClick(cameraBtn, () => resilientOpen(cameraInput));
 
@@ -431,7 +449,6 @@
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
       });
 
-      // drag & drop coloring + selection (no auto-submit)
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
       ['dragenter', 'dragover'].forEach(ev => {
         dz.addEventListener(ev, (e) => {
@@ -484,7 +501,6 @@
     submitBtn?.addEventListener('click', async (e) => {
       e.preventDefault();
 
-      // If email copy is requested, require valid email
       if (copyCheck?.checked) {
         if (!emailField?.value || !emailField.checkValidity()) {
           emailField?.reportValidity && emailField.reportValidity();
@@ -502,7 +518,7 @@
     const dict = langStrings[currentLang] || langStrings['en'] || {};
     if (!f) return;
 
-    // Refresh GPS right before submit if requested
+    // refresh GPS before submit if requested
     if (locCheck?.checked) {
       await requestLocationFix();
     }
@@ -516,12 +532,11 @@
     form.append('slug_known', themes[rawSlug] ? '1' : '0');
     if (refFromPath) form.append('reference', refFromPath);
 
-    // Email (only if valid)
     if (copyCheck?.checked && emailField?.value && emailField.checkValidity && emailField.checkValidity()) {
       form.append('email', emailField.value.trim());
     }
 
-    // Append GPS fields only (backend will fallback to IP if these are missing)
+    // GPS fields only; backend picks IP fallback
     if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
       form.append('lat',  locStatus.dataset.lat);
       form.append('lon',  locStatus.dataset.lon);
@@ -538,6 +553,10 @@
       // reset UI
       selectedFile = null;
       dropzone?.classList.remove('ready');
+
+      // IMPORTANT: cancel any pending picker fallback timers so dialogs don't re-open
+      [fileInput, cameraInput].forEach(cancelTimersForInput);
+
       if (fileInput) fileInput.value = '';
       if (cameraInput) cameraInput.value = '';
       if (submitBtn) submitBtn.disabled = true;
