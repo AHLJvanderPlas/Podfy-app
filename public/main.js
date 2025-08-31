@@ -418,11 +418,8 @@
   function wireUI() {
     if (submitBtn) submitBtn.disabled = true;
 
-    // Match Choose/Camera buttons to Submit button style (so they look identical)
-    if (submitBtn) {
-      if (chooseBtn) chooseBtn.className = submitBtn.className;
-      if (cameraBtn) cameraBtn.className = submitBtn.className + ' btn-ghost';
-    }
+    // (Removed) copying submit styles to choose/camera buttons
+    // We keep their own neutral styling now.
 
     // Email checkbox: show/hide + required
     copyCheck?.addEventListener('change', () => {
