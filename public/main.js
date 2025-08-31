@@ -1,4 +1,4 @@
-/* public/main.js — Podfy app client (fixed: header bg, language menu, info popovers, ref support, localized ref title) */
+/* public/main.js — Podfy app client (fixed: header bg, language menu, info popovers, ref support, localized ref title, dropzone drag coloring) */
 
 (() => {
   const qs  = (s) => document.querySelector(s);
@@ -211,8 +211,6 @@
     r.style.setProperty('--brand-muted',   c.muted   || '#6B7280');
     r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
     r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
-
-    // header background used by .site-header
     const headerBg = (theme.header && theme.header.bg) || '#FFFFFF';
     r.style.setProperty('--header-bg', headerBg);
 
@@ -220,7 +218,7 @@
     const favicon = qs('link[rel="icon"]');
     if (favicon && theme.favicon) favicon.href = theme.favicon;
 
-    // Update H1 title with localization support
+    // Localized H1 title
     if (heading) {
       const dict = langStrings[currentLang] || langStrings['en'] || {};
       if (refFromPath) {
@@ -249,7 +247,6 @@
     });
     currentLang = code;
 
-    // Translate attributes
     qsa('[data-i18n-title]').forEach(el => {
       const key = el.getAttribute('data-i18n-title');
       if (dict[key]) el.setAttribute('title', dict[key]);
@@ -263,19 +260,16 @@
       if (dict[key]) el.setAttribute('placeholder', dict[key]);
     });
 
-    // Meta descriptions
     const desc   = document.querySelector('meta[name="description"]');
     const ogDesc = document.querySelector('meta[property="og:description"]');
     const twDesc = document.querySelector('meta[name="twitter:description"]');
     const meta   = dict.metaDescription || (langStrings.en && langStrings.en.metaDescription) || '';
     [desc, ogDesc, twDesc].forEach(m => m && m.setAttribute('content', meta));
 
-    // <html> lang + dir
     const rtl = new Set(['ar','fa','he','ur']);
     document.documentElement.setAttribute('lang', code);
     document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
 
-    // Keep localized ref title after language changes
     if (heading) {
       if (refFromPath) {
         const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
@@ -305,6 +299,32 @@
       dz.addEventListener('click', pick);
       dz.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
+      });
+
+      // drag & drop coloring + file handling
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      ['dragenter', 'dragover'].forEach(ev => {
+        dz.addEventListener(ev, (e) => {
+          prevent(e);
+          if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+          dz.classList.add('dragover');
+        });
+      });
+      ['dragleave', 'dragend'].forEach(ev => {
+        dz.addEventListener(ev, (e) => {
+          prevent(e);
+          dz.classList.remove('dragover');
+        });
+      });
+      dz.addEventListener('drop', (e) => {
+        prevent(e);
+        dz.classList.remove('dragover');
+        const files = e.dataTransfer && e.dataTransfer.files;
+        const f = files && files[0];
+        if (f) {
+          dz.classList.add('ready');
+          submitFile(f);
+        }
       });
     }
 
@@ -360,6 +380,7 @@
         await resp.json();
 
         if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
+        dropzone?.classList.remove('ready');
         if (fileInput) fileInput.value = '';
         if (cameraInput) cameraInput.value = '';
         if (submitBtn) submitBtn.disabled = false;
@@ -373,11 +394,11 @@
 
     fileInput?.addEventListener('change', () => {
       const f = fileInput.files && fileInput.files[0];
-      if (f) submitFile(f);
+      if (f) { dropzone?.classList.add('ready'); submitFile(f); }
     });
     cameraInput?.addEventListener('change', () => {
       const f = cameraInput.files && cameraInput.files[0];
-      if (f) submitFile(f);
+      if (f) { dropzone?.classList.add('ready'); submitFile(f); }
     });
   }
 
