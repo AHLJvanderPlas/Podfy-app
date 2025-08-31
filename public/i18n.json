@@ -45,7 +45,7 @@
     "unknownSlug": "Onbekende referentie “{slug}”. Je kunt hieronder de standaardtool gebruiken.",
     "learnAboutPodfy": "Meer over Podfy",
     "metaDescription": "Leg POD/CMR vast en deel bij aflevering—zonder IT-integratie. Voor verladers en opdrachtgevers die sneller willen afronden.",
-    "headingWithRef": "CMR / POD uploaden voor referentie {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "de": {
     "__name": "Deutsch",
@@ -69,7 +69,7 @@
     "unknownSlug": "Unbekannte Referenz „{slug}“. Du kannst unten das Standardtool verwenden.",
     "learnAboutPodfy": "Mehr über Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "CMR / POD für Referenz {ref} hochladen"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "fr": {
     "__name": "Français",
@@ -93,7 +93,7 @@
     "unknownSlug": "Référence inconnue « {slug} ». Vous pouvez utiliser l’outil par défaut ci‑dessous.",
     "learnAboutPodfy": "En savoir plus sur Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Téléverser CMR / POD pour la référence {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "es": {
     "__name": "Español",
@@ -117,7 +117,7 @@
     "unknownSlug": "Referencia desconocida “{slug}”. Puedes usar la herramienta predeterminada a continuación.",
     "learnAboutPodfy": "Más sobre Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Subir CMR / POD para la referencia {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "it": {
     "__name": "Italiano",
@@ -141,7 +141,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Carica CMR / POD per riferimento {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "pt": {
     "__name": "Português",
@@ -165,7 +165,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Carregar CMR / POD para a referência {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "pl": {
     "__name": "Polski",
@@ -189,7 +189,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Prześlij CMR / POD dla referencji {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ro": {
     "__name": "Română",
@@ -213,7 +213,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Încarcă CMR / POD pentru referința {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "bg": {
     "__name": "Български",
@@ -237,7 +237,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Качване на CMR / POD за референция {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "hu": {
     "__name": "Magyar",
@@ -261,7 +261,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "CMR / POD feltöltése a(z) {ref} hivatkozásra"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "cs": {
     "__name": "Čeština",
@@ -285,7 +285,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Nahrát CMR / POD pro referenci {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "sk": {
     "__name": "Slovenčina",
@@ -309,7 +309,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Nahrať CMR / POD pre referenciu {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "sl": {
     "__name": "Slovenščina",
@@ -333,7 +333,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Naloži CMR / POD za referenco {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "hr": {
     "__name": "Hrvatski",
@@ -357,7 +357,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Učitaj CMR / POD za referencu {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "lt": {
     "__name": "Lietuvių",
@@ -381,7 +381,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Įkelti CMR / POD pagal referenciją {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "lv": {
     "__name": "Latviešu",
@@ -405,7 +405,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Augšupielādēt CMR / POD atsaucei {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "et": {
     "__name": "Eesti",
@@ -429,7 +429,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Laadi üles CMR / POD viite {ref} jaoks"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "fi": {
     "__name": "Suomi",
@@ -453,7 +453,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Lataa CMR / POD viitteelle {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "sv": {
     "__name": "Svenska",
@@ -477,7 +477,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Ladda upp CMR / POD för referens {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "da": {
     "__name": "Dansk",
@@ -525,7 +525,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Μεταφόρτωση CMR / POD για αναφορά {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ga": {
     "__name": "Gaeilge",
@@ -549,7 +549,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Uaslódáil CMR / POD do thagairt {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "mt": {
     "__name": "Malti",
@@ -573,7 +573,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Tella’ CMR / POD għar-referenza {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "uk": {
     "__name": "Українська",
@@ -597,7 +597,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Завантажити CMR / POD для посилання {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "tr": {
     "__name": "Türkçe",
@@ -621,7 +621,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "CMR / POD’yi {ref} referansı için yükle"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "sr": {
     "__name": "Srpski",
@@ -645,7 +645,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Otpremi CMR / POD za referencu {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "bs": {
     "__name": "Bosanski",
@@ -669,7 +669,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Otpremi CMR / POD za referencu {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "sq": {
     "__name": "Shqip",
@@ -693,7 +693,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Ngarko CMR / POD për referencën {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "mk": {
     "__name": "Македонски",
@@ -717,7 +717,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Подигни CMR / POD за референца {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ru": {
     "__name": "Русский",
@@ -741,7 +741,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Загрузить CMR / POD для ссылки {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "be": {
     "__name": "Беларуская",
@@ -765,7 +765,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Запампаваць CMR / POD для спасылкі {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ka": {
     "__name": "ქართული",
@@ -789,7 +789,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "ატვირთეთ CMR / POD მითითებისთვის {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "hy": {
     "__name": "Հայերեն",
@@ -813,7 +813,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Վերբեռնել CMR / POD հղման համար {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ro_MD": {
     "__name": "Română (Moldova)",
@@ -837,7 +837,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "Încărcați CMR / POD pentru referința {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ar": {
     "__name": "العربية",
@@ -861,7 +861,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "رفع CMR / POD للمرجع {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "fa": {
     "__name": "فارسی",
@@ -885,7 +885,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "بارگذاری CMR / POD برای مرجع {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "hi": {
     "__name": "हिन्दी",
@@ -909,7 +909,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "संदर्भ {ref} के लिए CMR / POD अपलोड करें"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ku": {
     "__name": "Kurdî (Kurmanji)",
@@ -933,7 +933,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "CMR / POD bar bike ji bo referansê {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ckb": {
     "__name": "کوردی (سۆرانی)",
@@ -957,7 +957,7 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "بارکردنی CMR / POD بۆ ڕەفرەنس {ref}"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   },
   "ps": {
     "__name": "پښتو",
@@ -981,6 +981,6 @@
     "unknownSlug": "Unknown reference “{slug}”. You can use the default tool below.",
     "learnAboutPodfy": "Learn about Podfy",
     "metaDescription": "Capture and share POD/CMR on delivery—no IT integration. Built for shippers and transport buyers to close deliveries faster.",
-    "headingWithRef": "د مرجع {ref} لپاره CMR / POD پورته کړئ"
+    "headingWithRef": "Upload CMR / POD for reference {ref}"
   }
 }
