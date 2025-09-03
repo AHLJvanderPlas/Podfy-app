@@ -219,6 +219,22 @@
     "status": "Demo"
   },
 
+  "sn": {
+    "brandName": "Shark Ninja",
+    "logo": "/logos/sharkninja.svg",
+    "mailTo": "pod+SharkNinja@podfy.app",
+    "colors": {
+      "primary": "#D75726",
+      "accent": "#111111",
+      "text": "#0B1220",
+      "muted": "#6B7280",
+      "border": "#E5E7EB",
+      "buttonText": "#111111"
+    },
+    "header": { "bg": "#FFFFFF" },
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Pilot"
+  },
   "furore": {
     "brandName": "Furore",
     "logo": "/logos/furorew.svg",
