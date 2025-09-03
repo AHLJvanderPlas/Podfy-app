@@ -1,231 +1,218 @@
 // functions/api/upload.js
-// Stores files in R2 with new naming and metadata.
-// Filename: <PodfyID(8 Crockford)>_<YYYYMMDD>_<HHmm>_<CompanySlug>[_<Reference>].ext
-// Also stores customMetadata with SINGLE location + qualifier: "GPS" or "IP".
-// Includes a HEAD collision check: regenerates ID if the key already exists.
 
-export const onRequestPost = async ({ request, env }) => {
-  try {
-    const ct = request.headers.get("content-type") || "";
-    if (!ct.includes("multipart/form-data")) {
-      return new Response("Bad Request", { status: 400 });
-    }
+import themes from "../../public/themes.json" assert { type: "json" };
+import { resolveEmailTheme, buildHtml, pickFromAddress, sendMail } from "../_mail.js";
 
+// --- utility helpers ---
+const nowParts = (d = new Date()) => {
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = pad(d.getUTCMonth() + 1);
+  const day = pad(d.getUTCDate());
+  const hh = pad(d.getUTCHours());
+  const mm = pad(d.getUTCMinutes());
+  const ss = pad(d.getUTCSeconds());
+  return { ymd: `${y}${m}${day}`, hhmm: `${hh}${mm}`, hhmmss: `${hh}${mm}${ss}` };
+};
+
+const randomId = (len = 8) =>
+  Array.from(crypto.getRandomValues(new Uint8Array(len)))
+    .map((b) => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[b % 26])
+    .join("");
+
+const getContentType = (file) =>
+  file?.type || file?.headers?.get?.("Content-Type") || "application/octet-stream";
+
+const asNumber = (v, def = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : def;
+};
+
+// Try to parse request body as form-data first; fall back to JSON
+async function parseRequest(request) {
+  const ct = request.headers.get("content-type") || "";
+  if (ct.includes("multipart/form-data")) {
     const form = await request.formData();
-    const file = form.get("file");
-    if (!file) return new Response("Missing file", { status: 400 });
-
-    // --- Slug handling -------------------------------------------------------
-    const providedSlug = String(form.get("slug_original") || form.get("brand") || "").trim();
-    const originalSlug = providedSlug.toLowerCase().replace(/[^a-z0-9-]/g, "");
-    const slugKnown    = String(form.get("slug_known") || "").trim() === "1";
-
-    // Optional reference from the form (posted by public/main.js)
-    const referenceRaw = String(form.get("reference") || "").trim();
-    const reference    = referenceRaw.replace(/[^A-Za-z0-9._-]/g, ""); // filename-safe
-
-    // Uploader email (optional)
-    const emailCopy = String(form.get("email") || "").trim();
-
-    // --- Client precise geo (from browser) -----------------------------------
-    // Only present if the user checked the box and granted permission.
-    const latPrecise = form.get("lat");
-    const lonPrecise = form.get("lon");
-    const accPrecise = form.get("accuracy") || form.get("acc"); // accept acc or accuracy
-    const locTs      = form.get("loc_ts");
-
-    // --- IP-based geo (Cloudflare Workers) -----------------------------------
-    const cf = request.cf || {};
-    const ipLat   = cf.latitude;
-    const ipLon   = cf.longitude;
-    const ipZip   = (cf.postalCode || "").toString();
-    const ipISO2  = (cf.country || "").toString().toUpperCase(); // ISO 3166-1 alpha-2
-
-    // Build the formal ISO2+postal-prefix code, e.g. NL37 / NL10
-    const buildLocationCode = (iso2, postal) => {
-      if (!iso2) return undefined;
-      const digits = (postal || "").replace(/\D+/g, "");
-      const prefix = digits.slice(0, 2); // first two digits if available
-      return prefix ? `${iso2}${prefix}` : iso2;
-    };
-
-    // --- Load per-slug config for mail routing/theme -------------------------
-    const themesRes = await fetch(new URL("/themes.json", request.url));
-    const themes = await themesRes.json();
-    const activeSlug = themes[originalSlug] ? originalSlug : "default";
-    const mailTo = (themes[activeSlug] && themes[activeSlug].mailTo) || env.MAIL_TO || "";
-
-    // --- Naming helpers ------------------------------------------------------
-    const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"; // no I,L,O,U
-    function genPodfyId(len = 8) {
-      const bytes = new Uint8Array(len);
-      crypto.getRandomValues(bytes);
-      let out = "";
-      for (let i = 0; i < len; i++) out += crockford[bytes[i] % crockford.length];
-      return out;
-    }
-    function tsParts(d = new Date()) {
-      const pad = (n, w = 2) => String(n).padStart(w, "0");
-      const y = String(d.getFullYear());
-      const m = pad(d.getMonth() + 1);
-      const day = pad(d.getDate());
-      const hh = pad(d.getHours());
-      const mm = pad(d.getMinutes()); // minutes only (no seconds)
-      return { ymd: `${y}${m}${day}`, hhmm: `${hh}${mm}` };
-    }
-
-    // sanitize filename
-    const safeName = (file.name || "upload.bin").replace(/[^A-Za-z0-9_.-]/g, "_");
-    const ext = safeName.includes(".") ? safeName.split(".").pop() : "bin";
-    const contentType = file.type || "application/octet-stream";
-
-    // Determine storage folder (keep canonical per company)
-    const folder = activeSlug; // flat bucket per brand; no extra per-ref folder
-
-    // Build filename:
-    // <YYYYMMDD>_<HHmm>_<PodfyID8>_<CompanySlug>[_<Reference>].ext
-    const { ymd, hhmm } = tsParts(new Date());
-    const makeBase = (podfyId) => {
-      const parts = [ymd, hhmm, podfyId, activeSlug];
-      if (reference) parts.push(reference);
-      return parts.join("_");
-    };
-
-    // Compute object key with collision guard (HEAD → regenerate if exists)
-    let podfyId = genPodfyId(8);
-    let base = makeBase(podfyId);
-    let key = `${folder}/${base}.${ext}`;
-
-    for (let attempt = 0; attempt < 6; attempt++) {
-      const exists = await env.PODFY_BUCKET.head(key);
-      if (!exists) break; // good to use
-      podfyId = genPodfyId(8);
-      base = makeBase(podfyId);
-      key = `${folder}/${base}.${ext}`;
-    }
-
-    // --- Decide SINGLE location + qualifier (GPS preferred; else IP) ---------
-    let locationMeta = null;
-
-    if (latPrecise && lonPrecise) {
-      // Use precise browser location (user-allowed)
-      locationMeta = {
-        locationQualifier: "GPS",
-        lat: String(latPrecise),
-        lon: String(lonPrecise),
-        ...(accPrecise ? { accuracyM: String(accPrecise) } : {}),
-        ...(locTs ? { locationTimestamp: String(locTs) } : {})
-        // No postal/ISO code here (would need reverse geocoding)
-      };
-    } else if (ipLat && ipLon) {
-      // Fallback to IP-based (Cloudflare)
-      locationMeta = {
-        locationQualifier: "IP",
-        lat: String(ipLat),
-        lon: String(ipLon),
-        ...(ipISO2 ? { locationCode: buildLocationCode(ipISO2, ipZip) } : {})
-      };
-    }
-
-    // --- Store original file in R2 -------------------------------------------
-    const bodyBytes = await file.arrayBuffer();
-
-    // Build minimal custom metadata (trimmed; one location only)
-    const customMetadata = {
-      // primary identifiers
-      podfy_id: podfyId,
-      reference: reference || "",
-
-      // storage & slugs
-      folder,
-      slug_active: activeSlug,
-      slug_original: originalSlug,
-      slug_known: String(slugKnown),
-
-      // file
-      orig_name: safeName,
-      orig_type: contentType,
-
-      // uploader
-      uploader_email: emailCopy || "",
-
-      // SINGLE location (either GPS or IP)
-      ...(locationMeta || {})
-    };
-
-    await env.PODFY_BUCKET.put(key, bodyBytes, {
-      httpMetadata: {
-        contentType,
-        contentDisposition: `attachment; filename="${base}.${ext}"`
+    const file = form.get("file") || form.get("upload") || null;
+    const payload = {
+      brand: form.get("brand") || form.get("slug") || "default",
+      reference: form.get("reference") || "",
+      emailCopy: form.get("email") || form.get("uploaderEmail") || "",
+      meta: {
+        locationQualifier: form.get("locationQualifier") || "",
+        lat: form.get("lat") || "",
+        lon: form.get("lon") || "",
+        locationCode: form.get("locationCode") || ""
       },
-      customMetadata
+      // backend-provided identifiers (preferred)
+      podfyId: form.get("podfyId") || "",
+      dateTime: form.get("dateTime") || "", // "yyyy-mm-dd at hh:mm"
+      // optional public preview URL (only if you expose it)
+      previewUrl: form.get("previewUrl") || ""
+    };
+    return { mode: "form", file, payload };
+  } else {
+    const json = await request.json();
+    return {
+      mode: "json",
+      file: null, // JSON mode expects you to POST file out-of-band; usually you'll use form-data.
+      payload: {
+        brand: json.brand || json.slug || "default",
+        reference: json.reference || "",
+        emailCopy: json.email || json.uploaderEmail || "",
+        meta: {
+          locationQualifier: json.locationQualifier || "",
+          lat: json.lat || "",
+          lon: json.lon || "",
+          locationCode: json.locationCode || ""
+        },
+        podfyId: json.podfyId || "",
+        dateTime: json.dateTime || "",
+        previewUrl: json.previewUrl || "",
+        // if JSON includes a raw base64 file (not recommended for big files), support it:
+        base64: json.base64 || "",
+        fileName: json.fileName || "upload.bin",
+        contentType: json.contentType || "application/octet-stream"
+      }
+    };
+  }
+}
+
+export const onRequestPost = async (context) => {
+  const { env, request } = context;
+  const { PODFY_BUCKET } = env;
+
+  try {
+    // 1) Parse input
+    const { mode, file, payload } = await parseRequest(request);
+    let { brand, reference, emailCopy, meta, podfyId, dateTime, previewUrl } = payload;
+    brand = (brand || "default").toLowerCase();
+
+    // 2) Generate identifiers if backend didn't pass them
+    const { ymd, hhmm } = nowParts();
+    if (!podfyId) podfyId = randomId(8);
+    if (!dateTime) {
+      // fallback to "yyyy-mm-dd at hh:mm" in UTC
+      dateTime = `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)} at ${hhmm.slice(0, 2)}:${hhmm.slice(2, 4)}`;
+    }
+
+    // 3) Prepare file buffers / names
+    let fileName = "upload.bin";
+    let contentType = "application/octet-stream";
+    let arrayBuffer = null;
+
+    if (mode === "form" && file) {
+      fileName = file.name || fileName;
+      contentType = getContentType(file);
+      arrayBuffer = await file.arrayBuffer();
+    } else if (mode === "json" && payload.base64) {
+      fileName = payload.fileName;
+      contentType = payload.contentType;
+      arrayBuffer = Uint8Array.from(atob(payload.base64), (c) => c.charCodeAt(0)).buffer;
+    } else if (mode === "json" && !payload.base64) {
+      return new Response(JSON.stringify({ ok: false, error: "No file provided. Use multipart/form-data with 'file'." }), {
+        status: 400,
+        headers: { "content-type": "application/json" }
+      });
+    }
+
+    const dot = fileName.lastIndexOf(".");
+    const ext = dot > -1 ? fileName.slice(dot + 1).toLowerCase() : "bin";
+    const base = dot > -1 ? fileName.slice(0, dot) : fileName;
+
+    // 4) Build R2 key and upload
+    const key = `uploads/${brand}/${ymd}/${hhmm}/${podfyId}_${base}.${ext}`;
+    const sizeBytes = arrayBuffer.byteLength;
+
+    await PODFY_BUCKET.put(key, arrayBuffer, {
+      httpMetadata: { contentType }
     });
 
-    // --- Mail notifications ---------------------------------------------------
-    const fromEmail = env.MAIL_FROM || "no-reply@podfy.app";
-    const subject   = `POD/CMR received — ${activeSlug}${reference ? ` — REF ${reference}` : ""}`;
+    // 5) Prepare email HTML
+    const t = resolveEmailTheme(brand, themes);
+    const imageIsInlinePreviewable = contentType.startsWith("image/");
+    const imagePreviewUrl = imageIsInlinePreviewable ? (previewUrl || "") : "";
 
-    // Compose a single readable location line for the notification
-    let locationLine = "Not available";
-    if (locationMeta) {
-      const q = locationMeta.locationQualifier;
-      if (q === "GPS") {
-        const accTxt = locationMeta.accuracyM ? ` (~${locationMeta.accuracyM}m)` : "";
-        locationLine = `GPS: ${locationMeta.lat},${locationMeta.lon}${accTxt}`;
-      } else if (q === "IP") {
-        const codeTxt = locationMeta.locationCode ? ` [${locationMeta.locationCode}]` : "";
-        locationLine = `IP: ${locationMeta.lat},${locationMeta.lon}${codeTxt}`;
+    const html = buildHtml({
+      brand,
+      brandName: t.brandName,
+      theme: { brandColor: t.brandColor, logo: t.logo },
+      fileName: `${base}.${ext}`,
+      podfyId,
+      dateTime, // shown as "POD upload"
+      meta: {
+        locationQualifier: meta?.locationQualifier || "",
+        lat: meta?.lat || "",
+        lon: meta?.lon || "",
+        locationCode: meta?.locationCode || ""
+      },
+      reference: reference || "",
+      imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app",
+      imagePreviewUrl
+    });
+
+    const subject =
+      `New POD upload [${brand}]` +
+      (reference ? ` — REF ${reference}` : "") +
+      `: ${base}.${ext}`;
+
+    // 6) Optional attachment (size guard)
+    let attachment = null;
+    try {
+      const maxAttachMb = asNumber(env.MAX_ATTACH_MB, 8);
+      if (sizeBytes <= maxAttachMb * 1024 * 1024) {
+        attachment = {
+          filename: `${base}.${ext}`,
+          type: contentType,
+          contentBase64: btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+        };
       }
+    } catch (e) {
+      console.error("Attachment prepare error:", e);
     }
 
-    const text =
-`A new POD/CMR was uploaded.
+    // 7) Recipients, From, send
+    const fromEmail = pickFromAddress(env, brand);
+    const toStaff = []
+      .concat(t.mailTo || [])
+      .concat(env.MAIL_TO || [])
+      .flatMap((s) => String(s).split(","))
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-Active slug (routing): ${activeSlug}  ${slugKnown ? "(known)" : "(UNKNOWN; mapped to default)"}
-Original slug (from URL): ${originalSlug || "noslug"}
-Original file: ${safeName} (${contentType})
-
-Stored: r2://${key}
-Podfy ID: ${podfyId}
-${reference ? `Reference: ${reference}\n` : ""}
-
-Uploader email copy requested: ${emailCopy ? "Yes" : "No"}
-Location: ${locationLine}
-`;
-
-    const send = (msg) =>
-      fetch("https://api.mailchannels.net/tx/v1/send", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(msg)
-      });
-
-    // Ops email
-    if (mailTo) {
-      await send({
-        personalizations: [{ to: [{ email: mailTo }] }],
-        from: { email: fromEmail, name: "PODFY" },
-        subject,
-        content: [{ type: "text/plain", value: text }]
-      });
+    // Fire staff mail
+    if (toStaff.length) {
+      context.waitUntil(
+        sendMail(env, { fromEmail, toList: toStaff, subject, html, attachment })
+      );
     }
 
-    // Copy to uploader (if provided)
+    // Optional uploader confirmation
     if (emailCopy) {
-      await send({
-        personalizations: [{ to: [{ email: emailCopy }] }],
-        from: { email: fromEmail, name: "PODFY" },
-        reply_to: mailTo ? [{ email: mailTo }] : undefined,
-        subject: "Copy of your uploaded POD/CMR",
-        content: [{ type: "text/plain", value: `Thanks. Your file has been received.\n${reference ? `Reference: ${reference}\n` : ""}Podfy ID: ${podfyId}` }]
-      });
+      const confirmSubject = `We received your file${fileName ? `: ${base}.${ext}` : ""}`;
+      context.waitUntil(
+        sendMail(env, { fromEmail, toList: [emailCopy], subject: confirmSubject, html, attachment })
+      );
     }
 
-    return new Response(JSON.stringify({ ok: true, key, name: `${base}.${ext}`, podfy_id: podfyId, reference }), {
-      status: 200,
+    // 8) Respond to client
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        slug: brand,
+        key,
+        podfyId,
+        dateTime,
+        size: sizeBytes,
+        contentType
+      }),
+      { headers: { "content-type": "application/json" } }
+    );
+  } catch (err) {
+    console.error("Upload handler error:", err);
+    return new Response(JSON.stringify({ ok: false, error: "Upload failed" }), {
+      status: 500,
       headers: { "content-type": "application/json" }
     });
-  } catch (err) {
-    return new Response("Upload failed", { status: 500 });
   }
 };
