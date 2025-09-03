@@ -139,14 +139,14 @@ export const onRequestPost = async ({ request, env }) => {
     const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
     const nameNoExt = dot > -1 ? safeBase.slice(0, dot) : safeBase;
 
-    // filename format: <YYYYMMDD>_<HHmm>_<PodfyID8>_<Slug>[__REF_<cleanRef>][_orig-<origNameNoExt>].ext
+    // filename format: <YYYYMMDD>_<HHmm>_<PodfyID8>_<Slug>[_<cleanRef>][<origNameNoExt>].ext
     const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
     const baseNameParts = [ymd, hhmm, podfyId, brand];
-    if (cleanRef) baseNameParts.push(`__REF_${cleanRef}`);
+    if (cleanRef) baseNameParts.push(`_${cleanRef}`);
     // keep a short hint of original name (optional, safe)
-    baseNameParts.push(`_orig-${nameNoExt.slice(0,40)}`);
+    baseNameParts.push(`${nameNoExt.slice(0,40)}`);
     const finalBase = baseNameParts.join("_");
-    const key = `uploads/${brand}/${finalBase}.${ext}`;
+    const key = `${brand}/${finalBase}.${ext}`;
 
     // Location metadata — restore both precise and IP-derived signals
     const cf = request.cf || {};
