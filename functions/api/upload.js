@@ -35,6 +35,21 @@ function parseFromNameAddr(str, fallbackDomain = "podfy.app") {
   return { name: "Podfy App", email: `noreply@${fallbackDomain}` };
 }
 
+// Format date and time based on uploader location
+function formatLocalDateTime(date = new Date(), timeZone = "UTC") {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false
+    }).formatToParts(date).map(p => [p.type, p.value])
+  );
+  return {
+    ymd: `${parts.year}${parts.month}${parts.day}`,      // for filename
+    hhmm: `${parts.hour}${parts.minute}`,                // for filename
+    display: `${parts.year}-${parts.month}-${parts.day} at ${parts.hour}:${parts.minute}` // “POD upload”
+  };
+}
+
 // optional: signing for image preview
 const enc = new TextEncoder();
 async function hmacSHA256(secret, message) {
@@ -112,10 +127,13 @@ export const onRequestPost = async ({ request, env }) => {
     const t = resolveEmailTheme(brand, themes);
     const mailToList = (t.mailTo ? [t.mailTo] : []).concat(env.MAIL_TO || []).flatMap(s => String(s).split(",")).map(s => s.trim()).filter(Boolean);
 
-    // Identifiers
-    const { ymd, hhmm } = nowParts();
-    if (!podfyId) podfyId = randomId(8);
-    if (!dateTime) dateTime = `${ymd.slice(0,4)}-${ymd.slice(4,6)}-${ymd.slice(6,8)} at ${hhmm.slice(0,2)}:${hhmm.slice(2,4)}`;
+
+// Identifiers (timezone aware)
+const tz = request.cf?.timezone || "UTC";
+const { ymd, hhmm, display } = formatLocalDateTime(new Date(), tz);
+
+if (!podfyId) podfyId = randomId(8);
+if (!dateTime) dateTime = display;   // "yyyy-mm-dd at hh:mm" in uploader's local tz
 
     // File content
     let fileName = "upload.bin";
