@@ -1,37 +1,55 @@
 // functions/_mail.js
 
-const escapeHtml = (s) =>
-  s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+// ---------- utils ----------
+const escapeHtml = (s = "") =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const fullUrl = (base, path) => {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;
-  if (path.startsWith("/")) return (base?.replace(/\/+$/,"") || "") + path;
-  return (base?.replace(/\/+$/,"") || "") + "/" + path;
+  const b = (base || "").replace(/\/+$/, "");
+  return path.startsWith("/") ? `${b}${path}` : `${b}/${path}`;
 };
 
-// Build the HTML email
+// ---------- theme resolver (uses themes.json shape) ----------
+export function resolveEmailTheme(slug, themes) {
+  const t = (themes && themes[slug]) || (themes && themes.default) || {};
+  const podfyDefaultColor = themes?.default?.header?.bg || "#D3D3D3";
+  const podfyDefaultLogo  = themes?.default?.logo       || "/logos/podfy.svg";
+
+  return {
+    slug,
+    brandName: t.brandName || themes?.default?.brandName || "Podfy",
+    brandColor: t.header?.bg || t.colors?.primary || podfyDefaultColor,
+    logo: t.logo || podfyDefaultLogo,
+    mailTo: t.mailTo || themes?.default?.mailTo || ""
+  };
+}
+
+// ---------- HTML builder ----------
 export function buildHtml({
-  brand,               // slug e.g. "dsv"
-  brandName,           // e.g. "DSV"
-  theme,               // { brandColor, logo } (logo should be root-relative like "/logos/dsvw.svg")
-  fileName,            // e.g. "20250831_1931_ABCDEFGH_dsv_REF123.png"
-  podfyId,             // 8-char token from backend
-  dateTime,            // "yyyy-mm-dd at hh:mm" from backend
+  brand,               // slug (e.g., "dsv")
+  brandName,           // display brand ("DSV") — resolved from themes
+  theme,               // { brandColor, logo }
+  fileName,            // "20250831_1931_ABCDEFGH_dsv_REF123.png"
+  podfyId,             // 8-char token
+  dateTime,            // "yyyy-mm-dd at hh:mm"
   meta,                // { locationQualifier, lat, lon, locationCode }
-  reference,           // optional: string
-  imageUrlBase,        // e.g. "https://podfy.app" (to expand root-relative logo/preview paths)
-  imagePreviewUrl,     // optional absolute or root-relative URL (only for images)
+  reference,           // optional string
+  imageUrlBase,        // e.g. env.PUBLIC_BASE_URL
+  imagePreviewUrl,     // optional image URL for inline preview
 }) {
-  const color = theme?.brandColor || "#D3D3D3";
-  const logoUrl = fullUrl(imageUrlBase || "", theme?.logo || "/logos/podfy.svg");
+  const color        = theme?.brandColor || "#D3D3D3";
+  const logoUrl      = fullUrl(imageUrlBase || "", theme?.logo || "/logos/podfy.svg");
   const podfyLogoUrl = fullUrl(imageUrlBase || "", "/logos/podfy.svg");
-  const hasImage = !!imagePreviewUrl;
-  const previewUrl = fullUrl(imageUrlBase || "", imagePreviewUrl || "");
+  const previewUrl   = fullUrl(imageUrlBase || "", imagePreviewUrl || "");
+  const hasImage     = !!imagePreviewUrl;
 
   const lat = meta?.lat || "";
   const lon = meta?.lon || "";
-  const maps = lat && lon ? `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">${lat}, ${lon}</a>` : "";
+  const maps = (lat && lon)
+    ? `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">${lat}, ${lon}</a>`
+    : "";
 
   const referenceHtml = reference
     ? `<p class="refline" style="margin:20px 0 20px 0">The reference of this shipment is <b>${escapeHtml(reference)}</b>.</p>`
@@ -60,7 +78,7 @@ p.dear { margin-bottom:20px; }
 table.meta { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
 table.meta td { padding:6px 8px; vertical-align:top; }
 table.meta td:first-child { width:200px; color:#374151; font-weight:400; } /* not bold */
-.footer { text-align:center; padding:16px 8px 6px; margin-top:20px; } /* tight above logo */
+.footer { text-align:center; padding:16px 8px 6px; margin-top:20px; }
 .footer .provided-by { font-size:10px; color:#9CA3AF; display:block; }
 .podfy-logo { height:18px; display:block; margin:6px auto 0; }
 .stealth-filename { font-size:10px; color:#fff; margin:6px auto 0; user-select:text; }
@@ -93,7 +111,7 @@ table.meta td:first-child { width:200px; color:#374151; font-weight:400; } /* no
     </div>
   </div>
   <div class="idbar">
-    <div class="left"><a href="mailto:${escapeHtml(process?.env?.REPLY_TO_EMAIL || "support@podfy.net")}?subject=${encodeURIComponent("Podfy Issue " + (podfyId||""))}">Report an issue</a></div>
+    <div class="left"><a href="mailto:${escapeHtml((typeof process !== "undefined" && process.env && process.env.REPLY_TO_EMAIL) || "support@podfy.net")}?subject=${encodeURIComponent("Podfy Issue " + (podfyId||""))}">Report an issue</a></div>
     <div class="center"><a href="https://podfy.net/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a></div>
     <div class="right">Podfy-id: ${escapeHtml(podfyId || "")}</div>
   </div>
@@ -101,19 +119,17 @@ table.meta td:first-child { width:200px; color:#374151; font-weight:400; } /* no
 </html>`;
 }
 
-// compute From
+// ---------- From address ----------
 export function pickFromAddress(env, slug) {
   const domain = env.MAIL_DOMAIN || "podfy.app";
   const safe = (slug || "default").toLowerCase().replace(/[^a-z0-9\-_.]/g, "-");
-  const dyn = `${safe}@${domain}`;
-  const fallback = `noreply@${domain}`;
-  return dyn || fallback;
+  return `${safe}@${domain}` || `noreply@${domain}`;
 }
 
-// send via MailChannels (optionally with attachment)
+// ---------- MailChannels sender ----------
 export async function sendMail(env, { fromEmail, toList, subject, html, text, attachment }) {
   const payload = {
-    personalizations: [{ to: toList.map(e => ({ email: e })) }],
+    personalizations: [{ to: toList.map((e) => ({ email: e })) }],
     from: { email: fromEmail, name: env.MAIL_FROM || "Podfy App" },
     reply_to: env.REPLY_TO_EMAIL ? [{ email: env.REPLY_TO_EMAIL }] : undefined,
     subject,
