@@ -1,9 +1,24 @@
 // functions/_mail.js
 
-// ---------- utils ----------
+/* ============================================================
+   Utilities
+   ============================================================ */
+
 const escapeHtml = (s = "") =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+// Convert ArrayBuffer to base64 in chunks (prevents stack overflow on big files)
+function toBase64(arrayBuffer) {
+  const CHUNK = 0x8000; // 32KB
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+// Ensure absolute URL if you pass root-relative paths
 const fullUrl = (base, path) => {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;
@@ -11,129 +26,163 @@ const fullUrl = (base, path) => {
   return path.startsWith("/") ? `${b}${path}` : `${b}/${path}`;
 };
 
-// Chunked base64 encoder to avoid call stack overflow on big files
-function toBase64(arrayBuffer) {
-  const CHUNK = 0x8000; // 32KB
-  const bytes = new Uint8Array(arrayBuffer);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    const slice = bytes.subarray(i, i + CHUNK);
-    binary += String.fromCharCode(...slice);
+// Some email clients dislike SVG logos. Prefer PNG.
+const pickLogoUrl = (imageBase, urlFromTheme) => {
+  const fallback = "/logos/podfy.png"; // ship a small PNG in /public/logos
+  if (!urlFromTheme) return fullUrl(imageBase, fallback);
+  if (/\.svg(\?.*)?$/i.test(urlFromTheme)) {
+    return fullUrl(imageBase, urlFromTheme.replace(/\.svg(\?.*)?$/i, ".png$1"));
   }
-  return btoa(binary);
-}
+  return fullUrl(imageBase, urlFromTheme);
+};
 
-// ---------- theme resolver (uses themes.json shape) ----------
+/* ============================================================
+   Theme resolver (themes.json shape)
+   ============================================================ */
+
 export function resolveEmailTheme(slug, themes) {
   const t = (themes && themes[slug]) || (themes && themes.default) || {};
   const podfyDefaultColor = themes?.default?.header?.bg || "#D3D3D3";
-  const podfyDefaultLogo  = themes?.default?.logo       || "/logos/podfy.svg";
+  const podfyDefaultLogo  = themes?.default?.logo       || "/logos/podfy.png";
 
   return {
     slug,
-    brandName: t.brandName || themes?.default?.brandName || "Podfy",
+    brandName: t.brandName || themes?.default?.brandName || "PODFY",
     brandColor: t.header?.bg || t.colors?.primary || podfyDefaultColor,
     logo: t.logo || podfyDefaultLogo,
     mailTo: t.mailTo || themes?.default?.mailTo || ""
   };
 }
 
-// ---------- HTML builder (unchanged) ----------
+/* ============================================================
+   HTML builder — tuned for Outlook/Gmail
+   - Inline styles everywhere
+   - Encoded maps link (`,` => %2C)
+   - PNG logos preferred (no inline image embedding for now)
+   ============================================================ */
+
 export function buildHtml({
-  brand, brandName, theme, fileName, podfyId, dateTime,
-  meta, reference, imageUrlBase, imagePreviewUrl,
+  brand,               // slug
+  brandName,           // resolved display name
+  theme,               // { brandColor, logo }
+  fileName,            // "20250904_0011_ABCDEFGH_default_ref_orig-name.jpg"
+  podfyId,             // 8-char
+  dateTime,            // "yyyy-mm-dd at hh:mm"
+  meta,                // { locationQualifier, lat, lon, locationCode }
+  reference,           // optional
+  imageUrlBase,        // e.g. env.PUBLIC_BASE_URL
 }) {
   const color        = theme?.brandColor || "#D3D3D3";
-  const logoUrl      = fullUrl(imageUrlBase || "", theme?.logo || "/logos/podfy.svg");
-  const podfyLogoUrl = fullUrl(imageUrlBase || "", "/logos/podfy.svg");
-  const previewUrl   = fullUrl(imageUrlBase || "", imagePreviewUrl || "");
-  const hasImage     = !!imagePreviewUrl;
+  const logoUrl      = pickLogoUrl(imageUrlBase, theme?.logo);
+  const podfyLogoUrl = fullUrl(imageUrlBase || "", "/logos/podfy.png");
 
   const lat = meta?.lat || "";
   const lon = meta?.lon || "";
-  const maps = (lat && lon)
-    ? `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">${lat}, ${lon}</a>`
+  const hasCoords = lat && lon;
+  const mapsHref = hasCoords
+    ? `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lon}`)}`
     : "";
 
   const referenceHtml = reference
-    ? `<p class="refline" style="margin:20px 0 20px 0">The reference of this shipment is <b>${escapeHtml(reference)}</b>.</p>`
+    ? `<p style="margin:20px 0 20px 0; line-height:1.5; color:#111827;">The reference of this shipment is <b>${escapeHtml(reference)}</b>.</p>`
     : "";
 
-  const imageBlock = hasImage
-    ? `<div class="preview" style="margin:10px 0 16px 0">
-         <img src="${previewUrl}" alt="Uploaded image preview" style="display:block;max-width:100%;height:auto;border-radius:8px">
-       </div>`
-    : "";
-
+  // Email body
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>POD Notification — ${escapeHtml(brandName || brand || "Podfy")}</title>
-<style>
-:root { --pad: 22px; }
-body { font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:#f5f5f5; margin:0; padding:20px; }
-.card { max-width:680px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.06); }
-.banner { background:${color}; padding:14px 18px; }
-.logo { height:28px; display:block; }
-.content { padding: var(--pad); }
-p { margin:0 0 10px; line-height:1.5; color:#111827; }
-p.dear { margin-bottom:20px; }
-table.meta { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
-table.meta td { padding:6px 8px; vertical-align:top; }
-table.meta td:first-child { width:200px; color:#374151; font-weight:400; }
-.footer { text-align:center; padding:16px 8px 6px; margin-top:20px; }
-.footer .provided-by { font-size:10px; color:#9CA3AF; display:block; }
-.podfy-logo { height:18px; display:block; margin:6px auto 0; }
-.stealth-filename { font-size:10px; color:#fff; margin:6px auto 0; user-select:text; }
-.idbar { max-width:680px; margin:8px auto 0; display:flex; justify-content:space-between; align-items:center; font-size:8px; color:#374151; padding:0 var(--pad); }
-.idbar a { color:inherit; text-decoration:underline; }
-.idbar .left  { text-align:left;  flex:1 1 0; margin-left: var(--pad); }
-.idbar .center{ text-align:center;flex:1 1 0; }
-.idbar .right { text-align:right; flex:1 1 0; margin-right:var(--pad); }
-</style>
+<meta charset="UTF-8">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POD Notification — ${escapeHtml(brandName || brand || "PODFY")}</title>
 </head>
-<body>
-  <div class="card">
-    <div class="banner"><img class="logo" src="${logoUrl}" alt="${escapeHtml(brandName || brand || "Podfy")} logo"></div>
-    <div class="content">
-      <p class="dear">Dear ${escapeHtml(brandName || brand || "Customer")},</p>
-      <p>We have received a new POD for your shipment as per attached.</p>
-      ${referenceHtml}
-      ${imageBlock}
-      <table class="meta">
-        <tr><td>POD upload</td><td>${escapeHtml(dateTime || "")}</td></tr>
-        <tr><td>Location qualifier</td><td>${escapeHtml(meta?.locationQualifier || "")}</td></tr>
-        <tr><td>Latitude, Longitude</td><td>${maps || `${escapeHtml(lat)}, ${escapeHtml(lon)}`}</td></tr>
-        <tr><td>Location code</td><td>${escapeHtml(meta?.locationCode || "")}</td></tr>
-      </table>
-      <div class="footer">
-        <div class="stealth-filename">${escapeHtml(fileName || "")}</div>
-        <span class="provided-by">This POD is provided by</span>
-        <a href="https://podfy.net" target="_blank" rel="noopener"><img class="podfy-logo" src="${podfyLogoUrl}" alt="Podfy"></a>
-      </div>
-    </div>
-  </div>
-  <div class="idbar">
-    <div class="left"><a href="mailto:${escapeHtml((typeof process !== "undefined" && process.env && process.env.REPLY_TO_EMAIL) || "support@podfy.net")}?subject=${encodeURIComponent("Podfy Issue " + (podfyId||""))}">Report an issue</a></div>
-    <div class="center"><a href="https://podfy.net/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a></div>
-    <div class="right">Podfy-id: ${escapeHtml(podfyId || "")}</div>
-  </div>
+<body style="margin:0; padding:20px; background:#f5f5f5; font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%; max-width:680px; margin:0 auto;">
+    <tr>
+      <td style="background:${color}; border-radius:12px 12px 0 0; padding:14px 18px;">
+        <img src="${logoUrl}" alt="${escapeHtml(brandName || brand || "PODFY")} logo" style="display:block; height:28px;">
+      </td>
+    </tr>
+
+    <tr>
+      <td style="background:#ffffff; border-radius:0 0 12px 12px; padding:22px;">
+        <p style="margin:0 0 20px 0; line-height:1.5; color:#111827;">Dear ${escapeHtml(brandName || brand || "Customer")},</p>
+
+        <p style="margin:0 0 20px 0; line-height:1.5; color:#111827;">We have received a new POD for your shipment as per attached.</p>
+
+        ${referenceHtml}
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; color:#374151;">
+          <tr>
+            <td style="padding:6px 8px; width:200px;">POD upload</td>
+            <td style="padding:6px 8px;">${escapeHtml(dateTime || "")}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; width:200px;">Location qualifier</td>
+            <td style="padding:6px 8px;">${escapeHtml(meta?.locationQualifier || "")}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; width:200px;">Latitude, Longitude</td>
+            <td style="padding:6px 8px;">
+              ${hasCoords
+                ? `<a href="${mapsHref}" target="_blank" rel="noopener" style="color:#1D4ED8; text-decoration:underline;">${escapeHtml(lat)}, ${escapeHtml(lon)}</a>`
+                : ""}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; width:200px;">Location code</td>
+            <td style="padding:6px 8px;">${escapeHtml(meta?.locationCode || "")}</td>
+          </tr>
+        </table>
+
+        <!-- footer inside card -->
+        <div style="text-align:center; padding:16px 8px 6px; margin-top:40px;">
+          <span style="font-size:10px; color:#9CA3AF; display:block; margin-bottom:10px;">This POD is provided by</span>
+          <a href="https://podfy.net" target="_blank" rel="noopener" style="display:inline-block;">
+            <img src="${podfyLogoUrl}" alt="Podfy" style="display:block; height:18px;">
+          </a>
+          <div style="margin-top:8px; font-size:10px; color:#ffffff; user-select:text;">${escapeHtml(fileName || "")}</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- bottom bar -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%; max-width:680px; margin:0 auto; font-size:8px; color:#374151;">
+    <tr>
+      <td style="padding:0 22px; text-align:left;">
+        <a href="mailto:${escapeHtml((typeof process !== "undefined" && process.env && process.env.REPLY_TO_EMAIL) || "support@podfy.net")}?subject=${encodeURIComponent("Podfy Issue " + (podfyId||""))}" style="color:#374151; text-decoration:underline;">Report an issue</a>
+      </td>
+      <td style="padding:0 22px; text-align:center;">
+        <a href="https://podfy.net/terms" target="_blank" rel="noopener" style="color:#374151; text-decoration:underline;">Terms &amp; Conditions</a>
+      </td>
+      <td style="padding:0 22px; text-align:right;">
+        Podfy-id: ${escapeHtml(podfyId || "")}
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 }
 
-// ---------- From address ----------
+/* ============================================================
+   From address (envelope)
+   ============================================================ */
+
 export function pickFromAddress(env, slug) {
   const domain = env.MAIL_DOMAIN || "podfy.app";
   const safe = (slug || "default").toLowerCase().replace(/[^a-z0-9\-_.]/g, "-");
   return `${safe}@${domain}` || `noreply@${domain}`;
 }
 
-// ---------- Transport: Resend first, MailChannels fallback ----------
+/* ============================================================
+   Transport: Resend first, MailChannels fallback
+   ============================================================ */
+
+// Resend
 async function sendViaResend(env, { fromEmail, toList, subject, html, attachment }) {
   const apiKey = env.RESEND_API_KEY;
-  if (!apiKey) return null; // indicate "not configured"
+  if (!apiKey) return null; // not configured, fall back
 
   try {
     console.log("Resend: preparing", { from: fromEmail, to: toList, subject, hasAttachment: !!attachment });
@@ -143,17 +192,18 @@ async function sendViaResend(env, { fromEmail, toList, subject, html, attachment
       to: toList,
       subject,
       html,
-      // Resend expects attachments as [{ filename, content (base64) }]
-      attachments: attachment ? [{ filename: attachment.filename, content: attachment.contentBase64 }] : undefined,
+      attachments: attachment
+        ? [{ filename: attachment.filename, content: (attachment.contentBase64 instanceof ArrayBuffer) ? toBase64(attachment.contentBase64) : attachment.contentBase64 }]
+        : undefined
     };
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "authorization": `Bearer ${apiKey}`,
-        "content-type": "application/json",
+        "content-type": "application/json"
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
     const body = await res.text();
@@ -169,8 +219,8 @@ async function sendViaResend(env, { fromEmail, toList, subject, html, attachment
   }
 }
 
+// MailChannels (requires API key + domain lockdown nowadays)
 async function sendViaMailchannels(env, { fromEmail, toList, subject, html, text, attachment }) {
-  // New MailChannels API typically requires an API key + lockdown.
   const headers = { "content-type": "application/json" };
   if (env.MAILCHANNELS_API_KEY) headers["X-Api-Key"] = env.MAILCHANNELS_API_KEY;
 
@@ -183,11 +233,15 @@ async function sendViaMailchannels(env, { fromEmail, toList, subject, html, text
       { type: "text/plain", value: text || html.replace(/<[^>]+>/g, " ").slice(0, 10000) },
       { type: "text/html", value: html }
     ],
-    attachments: attachment ? [{
-      filename: attachment.filename,
-      type: attachment.type || "application/octet-stream",
-      content: attachment.contentBase64
-    }] : undefined
+    attachments: attachment
+      ? [{
+          filename: attachment.filename,
+          type: attachment.type || "application/octet-stream",
+          content: (attachment.contentBase64 instanceof ArrayBuffer)
+            ? toBase64(attachment.contentBase64)
+            : attachment.contentBase64
+        }]
+      : undefined
   };
 
   let res, body;
@@ -211,17 +265,15 @@ async function sendViaMailchannels(env, { fromEmail, toList, subject, html, text
   return true;
 }
 
-// Public send function used by upload.js
+/* ============================================================
+   Public sender
+   ============================================================ */
+
 export async function sendMail(env, args) {
-  // Ensure attachment base64 is robust (if caller passed ArrayBuffer by mistake)
-  if (args.attachment && args.attachment.contentBase64 && args.attachment.contentBase64 instanceof ArrayBuffer) {
-    args.attachment.contentBase64 = toBase64(args.attachment.contentBase64);
-  }
-
-  // 1) Try Resend if configured
+  // 1) Try Resend if available
   const r = await sendViaResend(env, args);
-  if (r !== null) return r; // true/false
+  if (r !== null) return r;
 
-  // 2) Otherwise, try MailChannels (requires API key + lockdown now)
+  // 2) Otherwise try MailChannels
   return await sendViaMailchannels(env, args);
 }
