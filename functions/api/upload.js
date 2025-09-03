@@ -34,6 +34,17 @@ function formatLocalDateTime(date = new Date(), timeZone = "UTC") {
   };
 }
 
+// Safe base64 encoder (prevents "Maximum call stack size exceeded")
+function abToBase64(arrayBuffer) {
+  const CHUNK = 0x8000; // 32 KB
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
 // split `Name <email@domain>` or `email@domain` → { name, email }
 function parseFromNameAddr(str, fallbackDomain = "podfy.app") {
   if (!str) return { name: "Podfy App", email: `noreply@${fallbackDomain}` };
@@ -154,12 +165,10 @@ export const onRequestPost = async ({ request, env }) => {
     const nameNoExt = dot > -1 ? safeBase.slice(0, dot) : safeBase;
 
     // Build final filename
-    // Includes: date, time, podfyId, slug, (optional) reference (no prefix), short orig name hint
-    const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
-    const baseNameParts = [ymd, hhmm, podfyId, brand];
-    if (cleanRef) baseNameParts.push(cleanRef); // <-- include ref with NO prefix
-    baseNameParts.push(`orig-${nameNoExt.slice(0, 40)}`);
-    const finalBase = baseNameParts.join("_");
+const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
+const baseNameParts = [ymd, hhmm, podfyId, brand];
+if (cleanRef) baseNameParts.push(cleanRef); // keep ref if provided (no "REF" prefix)
+const finalBase = baseNameParts.join("_");
 
     // Flat key: <slug>/<filename>
     const key = `${brand}/${finalBase}.${ext}`;
@@ -247,22 +256,30 @@ export const onRequestPost = async ({ request, env }) => {
       imagePreviewUrl,
     });
 
-    const subject = `New POD upload [${brand}]${cleanRef ? ` — ${cleanRef}` : ""}: ${finalBase}.${ext}`;
+// Subject: POD | {Brand} (| {ref} if present) | {yyyy-mm-dd}
+const brandForSubject = t.brandName || brand;
+const yyyyMmDd = (dateTime || "").split(" at ")[0] || `${ymd.slice(0,4)}-${ymd.slice(4,6)}-${ymd.slice(6,8)}`;
+const subject = `POD | ${brandForSubject}${cleanRef ? ` | ${cleanRef}` : ""} | ${yyyyMmDd} by Podfy`;
 
-    // Attachment guard
-    let attachment = null;
-    try {
-      const maxMb = Number(env.MAX_ATTACH_MB || 8);
-      if (buffer.byteLength <= maxMb * 1024 * 1024) {
-        attachment = {
-          filename: `${finalBase}.${ext}`,
-          type: contentType,
-          contentBase64: btoa(String.fromCharCode(...new Uint8Array(buffer))),
-        };
-      }
-    } catch (e) {
-      console.error("Attachment prepare error:", e);
-    }
+// Attachment guard (use chunked base64 to avoid stack overflow)
+let attachment = null;
+try {
+  const maxMb = Number(env.MAX_ATTACH_MB || 8);
+  if (buffer.byteLength <= maxMb * 1024 * 1024) {
+    attachment = {
+      filename: `${finalBase}.${ext}`,
+      type: contentType,
+      contentBase64: abToBase64(buffer),  // ← chunked encoder
+    };
+  } else {
+    console.log("Attachment skipped (over MAX_ATTACH_MB)", {
+      sizeBytes: buffer.byteLength,
+      maxBytes: maxMb * 1024 * 1024
+    });
+  }
+} catch (e) {
+  console.error("Attachment prepare error:", e);
+}
 
     // From envelope + debug
     const fromEnvelope = pickFromAddress(env, brand);
