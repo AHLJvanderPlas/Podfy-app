@@ -11,6 +11,18 @@ const fullUrl = (base, path) => {
   return path.startsWith("/") ? `${b}${path}` : `${b}/${path}`;
 };
 
+// Chunked base64 encoder to avoid call stack overflow on big files
+function toBase64(arrayBuffer) {
+  const CHUNK = 0x8000; // 32KB
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    const slice = bytes.subarray(i, i + CHUNK);
+    binary += String.fromCharCode(...slice);
+  }
+  return btoa(binary);
+}
+
 // ---------- theme resolver (uses themes.json shape) ----------
 export function resolveEmailTheme(slug, themes) {
   const t = (themes && themes[slug]) || (themes && themes.default) || {};
@@ -26,18 +38,10 @@ export function resolveEmailTheme(slug, themes) {
   };
 }
 
-// ---------- HTML builder ----------
+// ---------- HTML builder (unchanged) ----------
 export function buildHtml({
-  brand,               // slug (e.g., "dsv")
-  brandName,           // display brand ("DSV") — resolved from themes
-  theme,               // { brandColor, logo }
-  fileName,            // "20250831_1931_ABCDEFGH_dsv_ref.png"
-  podfyId,             // 8-char token
-  dateTime,            // "yyyy-mm-dd at hh:mm"
-  meta,                // { locationQualifier, lat, lon, locationCode }
-  reference,           // optional string
-  imageUrlBase,        // e.g. env.PUBLIC_BASE_URL
-  imagePreviewUrl,     // optional image URL for inline preview
+  brand, brandName, theme, fileName, podfyId, dateTime,
+  meta, reference, imageUrlBase, imagePreviewUrl,
 }) {
   const color        = theme?.brandColor || "#D3D3D3";
   const logoUrl      = fullUrl(imageUrlBase || "", theme?.logo || "/logos/podfy.svg");
@@ -77,7 +81,7 @@ p { margin:0 0 10px; line-height:1.5; color:#111827; }
 p.dear { margin-bottom:20px; }
 table.meta { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
 table.meta td { padding:6px 8px; vertical-align:top; }
-table.meta td:first-child { width:200px; color:#374151; font-weight:400; } /* not bold */
+table.meta td:first-child { width:200px; color:#374151; font-weight:400; }
 .footer { text-align:center; padding:16px 8px 6px; margin-top:20px; }
 .footer .provided-by { font-size:10px; color:#9CA3AF; display:block; }
 .podfy-logo { height:18px; display:block; margin:6px auto 0; }
@@ -123,23 +127,52 @@ table.meta td:first-child { width:200px; color:#374151; font-weight:400; } /* no
 export function pickFromAddress(env, slug) {
   const domain = env.MAIL_DOMAIN || "podfy.app";
   const safe = (slug || "default").toLowerCase().replace(/[^a-z0-9\-_.]/g, "-");
-  // Envelope sender must be a raw email address (MailChannels requirement)
   return `${safe}@${domain}` || `noreply@${domain}`;
 }
 
-// ---------- MailChannels sender (with debugging + boolean) ----------
-export async function sendMail(env, { fromEmail, toList, subject, html, text, attachment }) {
-  // Avoid logging sensitive content; summarize payload for debugging
+// ---------- Transport: Resend first, MailChannels fallback ----------
+async function sendViaResend(env, { fromEmail, toList, subject, html, attachment }) {
+  const apiKey = env.RESEND_API_KEY;
+  if (!apiKey) return null; // indicate "not configured"
+
   try {
-    console.log("Mail: preparing", {
-      from: fromEmail,
+    console.log("Resend: preparing", { from: fromEmail, to: toList, subject, hasAttachment: !!attachment });
+
+    const payload = {
+      from: env.MAIL_FROM || `Podfy <${fromEmail}>`, // display name + envelope
       to: toList,
       subject,
-      hasAttachment: Boolean(attachment),
-      attachmentName: attachment?.filename || null,
-      attachmentBytes: attachment ? (attachment.contentBase64?.length || 0) : 0
+      html,
+      // Resend expects attachments as [{ filename, content (base64) }]
+      attachments: attachment ? [{ filename: attachment.filename, content: attachment.contentBase64 }] : undefined,
+    };
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "authorization": `Bearer ${apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
-  } catch {}
+
+    const body = await res.text();
+    if (!res.ok) {
+      console.error("Resend error", res.status, body);
+      return false;
+    }
+    console.log("Resend ok", res.status, body);
+    return true;
+  } catch (e) {
+    console.error("Resend fetch failed", String(e && e.stack) || String(e));
+    return false;
+  }
+}
+
+async function sendViaMailchannels(env, { fromEmail, toList, subject, html, text, attachment }) {
+  // New MailChannels API typically requires an API key + lockdown.
+  const headers = { "content-type": "application/json" };
+  if (env.MAILCHANNELS_API_KEY) headers["X-Api-Key"] = env.MAILCHANNELS_API_KEY;
 
   const payload = {
     personalizations: [{ to: toList.map((e) => ({ email: e })) }],
@@ -161,7 +194,7 @@ export async function sendMail(env, { fromEmail, toList, subject, html, text, at
   try {
     res = await fetch("https://api.mailchannels.net/tx/v1/send", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify(payload)
     });
     body = await res.text();
@@ -174,7 +207,21 @@ export async function sendMail(env, { fromEmail, toList, subject, html, text, at
     console.error("MailChannels error", res.status, body);
     return false;
   }
-
   console.log("MailChannels ok", res.status, body);
   return true;
+}
+
+// Public send function used by upload.js
+export async function sendMail(env, args) {
+  // Ensure attachment base64 is robust (if caller passed ArrayBuffer by mistake)
+  if (args.attachment && args.attachment.contentBase64 && args.attachment.contentBase64 instanceof ArrayBuffer) {
+    args.attachment.contentBase64 = toBase64(args.attachment.contentBase64);
+  }
+
+  // 1) Try Resend if configured
+  const r = await sendViaResend(env, args);
+  if (r !== null) return r; // true/false
+
+  // 2) Otherwise, try MailChannels (requires API key + lockdown now)
+  return await sendViaMailchannels(env, args);
 }
