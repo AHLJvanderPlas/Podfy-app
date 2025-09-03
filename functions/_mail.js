@@ -31,7 +31,7 @@ export function buildHtml({
   brand,               // slug (e.g., "dsv")
   brandName,           // display brand ("DSV") — resolved from themes
   theme,               // { brandColor, logo }
-  fileName,            // "20250831_1931_ABCDEFGH_dsv_REF123.png"
+  fileName,            // "20250831_1931_ABCDEFGH_dsv_ref.png"
   podfyId,             // 8-char token
   dateTime,            // "yyyy-mm-dd at hh:mm"
   meta,                // { locationQualifier, lat, lon, locationCode }
@@ -123,35 +123,58 @@ table.meta td:first-child { width:200px; color:#374151; font-weight:400; } /* no
 export function pickFromAddress(env, slug) {
   const domain = env.MAIL_DOMAIN || "podfy.app";
   const safe = (slug || "default").toLowerCase().replace(/[^a-z0-9\-_.]/g, "-");
+  // Envelope sender must be a raw email address (MailChannels requirement)
   return `${safe}@${domain}` || `noreply@${domain}`;
 }
 
-// ---------- MailChannels sender ----------
+// ---------- MailChannels sender (with debugging + boolean) ----------
 export async function sendMail(env, { fromEmail, toList, subject, html, text, attachment }) {
+  // Avoid logging sensitive content; summarize payload for debugging
+  try {
+    console.log("Mail: preparing", {
+      from: fromEmail,
+      to: toList,
+      subject,
+      hasAttachment: Boolean(attachment),
+      attachmentName: attachment?.filename || null,
+      attachmentBytes: attachment ? (attachment.contentBase64?.length || 0) : 0
+    });
+  } catch {}
+
   const payload = {
     personalizations: [{ to: toList.map((e) => ({ email: e })) }],
     from: { email: fromEmail, name: env.MAIL_FROM || "Podfy App" },
     reply_to: env.REPLY_TO_EMAIL ? [{ email: env.REPLY_TO_EMAIL }] : undefined,
     subject,
     content: [
-      { type: "text/plain", value: text || html.replace(/<[^>]+>/g, " ") },
+      { type: "text/plain", value: text || html.replace(/<[^>]+>/g, " ").slice(0, 10000) },
       { type: "text/html", value: html }
-    ]
-  };
-  if (attachment) {
-    payload.attachments = [{
+    ],
+    attachments: attachment ? [{
       filename: attachment.filename,
       type: attachment.type || "application/octet-stream",
       content: attachment.contentBase64
-    }];
+    }] : undefined
+  };
+
+  let res, body;
+  try {
+    res = await fetch("https://api.mailchannels.net/tx/v1/send", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    body = await res.text();
+  } catch (e) {
+    console.error("MailChannels fetch failed", String(e && e.stack) || String(e));
+    return false;
   }
-  const res = await fetch("https://api.mailchannels.net/tx/v1/send", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+
   if (!res.ok) {
-    const body = await res.text();
     console.error("MailChannels error", res.status, body);
+    return false;
   }
+
+  console.log("MailChannels ok", res.status, body);
+  return true;
 }
