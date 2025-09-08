@@ -210,6 +210,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
   background: var(--brand-primary);
   color: var(--brand-button-text);
   cursor: pointer;
+  --primary-text: currentColor;
 }
 .primary[disabled] { opacity: .5; cursor: not-allowed; }
 .primary-full { width: 100%; display: block; }
@@ -346,7 +347,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 }
 .progress-bar{
   height:100%; width:0%; border-radius:999px;
-  background: var(--brand-accent);
+  background: var(--brand-primary);
   transition:width .2s ease;
 }
 /* ===== Optional polish (safe to keep) ===== */
@@ -367,7 +368,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
   line-height:1;
   font-variant-numeric: tabular-nums;
   /* Match the Submit button's text color automatically */
-  color: var(--primary-text, var(--brand-text));
+  color: var(--primary-text, var(--brand-button-text));
 }
 
 /* Success / error states (optional) */
@@ -389,7 +390,3 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce){ .progress-bar { transition:none; }}
 
-/* Hook the Submit button's text color into a variable the bar can use
-   This maps whatever text color your .primary button has to --primary-text,
-   so .progress-label will always match it without hard-coding a color. */
-.primary { --primary-text: currentColor; }
