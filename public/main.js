@@ -629,7 +629,6 @@ cameraInput?.addEventListener('change', () => {
     }
 
     if (submitBtn) submitBtn.disabled = true;
-    statusEl && (statusEl.textContent = dict.uploading || 'Uploading…');
 
     const form = new FormData();
     form.append('file', f);
@@ -667,33 +666,33 @@ xhr.upload.addEventListener('progress', (e) => {
 
 xhr.addEventListener('load', () => {
   const ok = xhr.status >= 200 && xhr.status < 300;
+
   if (ok) {
-    // Success message inside the bar
+    // Success message INSIDE the progress bar; keep the bar visible
+    updateProgress(100);
     progressLabel && (progressLabel.textContent = 'Thanks. File received.');
     uploadProgress?.classList.remove('error');
     uploadProgress?.classList.add('success');
 
-    // Delay a moment so the user can read it, then clear UI
-    setTimeout(() => {
-      resetProgress();         // hides + clears the bar
-      hidePreview();           // hides the chip + shows buttons
-      selectedFile = null;
-      dropzone?.classList.remove('ready');
-      [fileInput, cameraInput].forEach(cancelTimersForInput);
-      if (fileInput) fileInput.value = '';
-      if (cameraInput) cameraInput.value = '';
-      if (submitBtn) submitBtn.disabled = true;
-    }, 12000);
+    // Clear the selection + show the buttons again
+    hidePreview();
+    selectedFile = null;
+    dropzone?.classList.remove('ready');
+    [fileInput, cameraInput].forEach(cancelTimersForInput);
+    if (fileInput) fileInput.value = '';
+    if (cameraInput) cameraInput.value = '';
+    if (submitBtn) submitBtn.disabled = true;
 
-    // (Optional) clear any old status text if you still use statusEl elsewhere
+    // Optional: clear any old status area
     statusEl && (statusEl.textContent = '');
   } else {
-    // Error message inside the bar
     progressLabel && (progressLabel.textContent = 'Upload failed. Please try again.');
     uploadProgress?.classList.remove('success');
     uploadProgress?.classList.add('error');
     submitBtn && (submitBtn.disabled = false);
   }
+});
+
 });
 
 xhr.addEventListener('error', () => {
@@ -703,7 +702,11 @@ xhr.addEventListener('error', () => {
   submitBtn && (submitBtn.disabled = false);
 });
 
-    xhr.send(form);
+updateProgress(0);
+uploadProgress?.removeAttribute('hidden');
+progressLabel && (progressLabel.textContent = 'Starting… 0%');
+xhr.send(form);
+
   });
 
 } catch (err) {
