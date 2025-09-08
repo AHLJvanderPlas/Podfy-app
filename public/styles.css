@@ -348,7 +348,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
   height:100%; width:0%; border-radius:999px;
   background: var(--brand-accent);
   transition:width .2s ease;
-
+}
 /* ===== Optional polish (safe to keep) ===== */
 
 /* Better accessibility for the remove “×” button */
@@ -377,7 +377,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* Make the progress bar span the hero width and sit centered */
 .dz-hero .progress{
   width: 80%;
-  max-width: 320px;      /* adjust to taste */
+  max-width: 420px;      /* adjust to taste */
   margin: 12px auto;     /* center horizontally */
   height: 24px;          /* slightly taller looks better */
 }
