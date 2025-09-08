@@ -49,32 +49,48 @@
     <!-- H1 voor pagina (SEO/a11y); tekst wordt door i18n gezet -->
     <h1 id="heading" data-i18n="heading">Upload CMR / POD</h1>
 
-    <!-- ===== HERO / DROPZONE ===== -->
-    <section class="dz-wrap">
-      <div id="dropzone" class="dropzone dz-hero" tabindex="0" aria-label="Upload area" data-i18n-aria-label="uploadAreaLabel">
-        <!-- Decoratieve achtergrond-icoon -->
-        <div class="dz-icon-mask" aria-hidden="true"></div>
+<!-- ===== HERO / DROPZONE ===== -->
+  <section class="dz-wrap">
+    <div id="dropzone" class="dropzone dz-hero" tabindex="0" aria-label="Upload area" data-i18n-aria-label="uploadAreaLabel">
+      <!-- Decoratieve achtergrond-icoon -->
+      <div class="dz-icon-mask" aria-hidden="true"></div>
 
-        <!-- Titel in de hero; kan gelijk zijn aan h1, maar wordt apart geüpdatet -->
-        <h2 class="dz-title" data-i18n="heading">Upload CMR / POD</h2>
+      <!-- Titel in de hero; kan gelijk zijn aan h1, maar wordt apart geüpdatet -->
+      <h2 class="dz-title" data-i18n="heading">Upload CMR / POD</h2>
 
-        <p class="dz-sub" data-i18n="dzText">Drag & drop your document/photo here</p>
-        <p class="dz-constraints" id="acceptText" data-i18n="acceptText">
-          Accepted: PDF, JPG, PNG, HEIC · Max 25 MB
-        </p>
-        <div class="dz-actions">
-          <!-- Verborgen inputs -->
-          <input id="fileInput"  type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" style="display:none" />
-          <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" />
+      <p class="dz-sub" data-i18n="dzText">Drag & drop your document/photo here</p>
+      <p class="dz-constraints" id="acceptText" data-i18n="acceptText">
+        Accepted: PDF, JPG, PNG, HEIC · Max 25 MB
+      </p>
 
-          <!-- Zichtbare knoppen -->
-          <button type="button" class="btn" id="chooseBtn" data-i18n="chooseFile">Choose file</button>
-          <button type="button" class="btn" id="cameraBtn" data-i18n="takePhoto">Take photo</button>
-        </div>
-
-
+      <!-- Selected-file chip + remove -->
+      <div id="filePreview" class="file-preview" hidden>
+        <svg class="file-ic" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6" />
+        </svg>
+        <span id="fileName" class="file-name"></span>
+        <button id="removeFileBtn" type="button" class="linklike"
+          aria-label="Remove attached file" data-i18n-aria-label="removeFile">×</button>
       </div>
-    </section>
+
+      <!-- Upload progress bar -->
+      <div id="uploadProgress" class="progress" role="progressbar"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+        <div id="progressBar" class="progress-bar"></div>
+        <span id="progressLabel" class="progress-label">0%</span>
+      </div>
+
+      <div class="dz-actions">
+        <!-- Verborgen inputs -->
+        <input id="fileInput"  type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" style="display:none" />
+        <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" />
+
+        <!-- Zichtbare knoppen -->
+        <button type="button" class="btn" id="chooseBtn" data-i18n="chooseFile">Choose file</button>
+        <button type="button" class="btn" id="cameraBtn" data-i18n="takePhoto">Take photo</button>
+      </div>
+    </div>
+  </section>
 
     <!-- Options row: LOCATION FIRST, then SHARE COPY -->
     <div class="options-row">
