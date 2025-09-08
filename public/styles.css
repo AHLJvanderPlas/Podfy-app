@@ -390,3 +390,18 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce){ .progress-bar { transition:none; }}
 
+/* Prevent iOS auto-zoom on focus */
+@media (max-width: 480px) {
+  input[type="email"],
+  input[type="text"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px;     /* key line – iOS won’t zoom */
+    line-height: 1.2;    /* keep height tidy */
+  }
+}
+html { -webkit-text-size-adjust: 100%; }  /* avoid unexpected text scaling */
+
