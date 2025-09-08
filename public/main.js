@@ -25,6 +25,14 @@
   const submitBtn   = qs('#submitBtn');
   const statusEl    = qs('#status');
 
+// New UI bits
+const filePreview   = qs('#filePreview');
+const fileNameEl    = qs('#fileName');
+const removeFileBtn = qs('#removeFileBtn');
+const uploadProgress = qs('#uploadProgress');
+const progressBar    = qs('#progressBar');
+const progressLabel  = qs('#progressLabel');
+
   // Email
   const copyCheck   = qs('#copyCheck');
   const emailWrap   = qs('#emailWrap');
@@ -56,6 +64,39 @@
   let currentLang = 'en';
   let selectedFile = null;
 
+   // ---------- helpers on upload file name ----------
+function showPreview(f){
+  if (!f) return;
+  if (fileNameEl) {
+    const mb = (f.size/1048576);
+    fileNameEl.textContent = `${f.name} ${isFinite(mb)?`(${mb.toFixed(1)} MB)`:''}`;
+  }
+  filePreview?.removeAttribute('hidden');
+  // hide helper text while a file is chosen
+  qs('.dz-sub')?.classList.add('hidden');
+  qs('.dz-constraints')?.classList.add('hidden');
+}
+function hidePreview(){
+  filePreview?.setAttribute('hidden','');
+  qs('.dz-sub')?.classList.remove('hidden');
+  qs('.dz-constraints')?.classList.remove('hidden');
+}
+function resetProgress(){
+  if (!uploadProgress) return;
+  uploadProgress.setAttribute('hidden','');
+  progressBar.style.width = '0%';
+  uploadProgress.setAttribute('aria-valuenow','0');
+  progressLabel && (progressLabel.textContent = '0%');
+}
+function updateProgress(pct){
+  if (!uploadProgress) return;
+  uploadProgress.removeAttribute('hidden');
+  progressBar.style.width = pct+'%';
+  uploadProgress.setAttribute('aria-valuenow', String(pct));
+  progressLabel && (progressLabel.textContent = pct+'%');
+}
+
+   
   // ---------- Language helpers ----------
   function normalizeLangCode(code) {
     if (!code) return '';
@@ -494,12 +535,15 @@
         dz.classList.remove('dragover');
         const files = e.dataTransfer && e.dataTransfer.files;
         const f = files && files[0];
-        if (f) {
-          selectedFile = f;
-          dz.classList.add('ready');
-          if (submitBtn) submitBtn.disabled = false;
-          if (statusEl) statusEl.textContent = '';
-        }
+if (f) {
+  selectedFile = f;
+  dz.classList.add('ready');
+  if (submitBtn) submitBtn.disabled = false;
+  if (statusEl) statusEl.textContent = '';
+  showPreview(f);
+  resetProgress();
+}
+
       });
 
       // Block click + keyboard activation on the dropzone itself
