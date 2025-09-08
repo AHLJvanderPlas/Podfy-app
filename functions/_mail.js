@@ -148,7 +148,7 @@ export function buildHtml({
   </table>
 
   <!-- bottom bar -->
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%; max-width:680px; margin:0 auto; font-size:8px; color:#374151;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%; max-width:680px; margin:0 auto; font-size:10px; color:#374151;">
     <tr>
       <td style="padding:0 22px; text-align:left;">
         <a href="mailto:${escapeHtml((typeof process !== "undefined" && process.env && process.env.REPLY_TO_EMAIL) || "support@podfy.net")}?subject=${encodeURIComponent("Podfy Issue " + (podfyId||""))}" style="color:#374151; text-decoration:underline;">Report an issue</a>
