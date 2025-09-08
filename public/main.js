@@ -611,6 +611,11 @@ cameraInput?.addEventListener('change', () => {
 
       if (selectedFile) await submitFile(selectedFile);
     });
+   hidePreview();        // hide chip, show helper text + buttons
+    resetProgress();      // hide progress bar and set it to 0
+    dropzone?.classList.remove('ready');
+    submitBtn && (submitBtn.disabled = true);
+    statusEl && (statusEl.textContent = '');
   }
 
   // ---------- Upload ----------
