@@ -372,5 +372,29 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* Always honor the HTML `hidden` attribute, even if other rules set display */
 [hidden] { display: none !important; }
 
+/* Make the progress bar span the hero width and sit centered */
+.dz-hero .progress{
+  width: 100%;
+  max-width: 520px;      /* adjust to taste */
+  margin: 12px auto;     /* center horizontally */
+  height: 12px;          /* slightly taller looks better */
+}
 
+/* Center the label inside the bar and prevent wrapping */
+.progress-label{
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 14px;       /* match helper/body text */
+  line-height: 1;        /* avoid clipping */
+  color: var(--brand-text);
+}
+
+/* (Optional) success/error color states if not added yet */
+.progress.success .progress-bar { background: var(--brand-accent); }
+.progress.error   .progress-bar { background: var(--danger, #e11d48); }
+
+/* Ensure hidden elements really hide (if not already present) */
+[hidden]{ display:none !important; }
 
