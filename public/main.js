@@ -650,63 +650,65 @@ cameraInput?.addEventListener('change', () => {
     }
 
 try {
-  updateProgress(0);
-
+  // Show initial bar state and perform the whole upload inside a Promise
   await new Promise((resolve) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/upload');
 
-xhr.upload.addEventListener('progress', (e) => {
-  if (!e.lengthComputable) return;
-  const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
-  updateProgress(pct);
-  // Show the text INSIDE the progress bar instead of statusEl
-  progressLabel && (progressLabel.textContent = `Uploading… ${pct}%`);
-});
+    // Initialize the bar text/visibility BEFORE sending
+    updateProgress(0);
+    uploadProgress?.removeAttribute('hidden');
+    progressLabel && (progressLabel.textContent = 'Starting… 0%');
 
-xhr.addEventListener('load', () => {
-  const ok = xhr.status >= 200 && xhr.status < 300;
+    // Byte progress → write INSIDE the progress bar (not statusEl)
+    xhr.upload.addEventListener('progress', (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
+      updateProgress(pct);
+      progressLabel && (progressLabel.textContent = `Uploading… ${pct}%`);
+    });
 
-  if (ok) {
-    // Success message INSIDE the progress bar; keep the bar visible
-    updateProgress(100);
-    progressLabel && (progressLabel.textContent = 'Thanks. File received.');
-    uploadProgress?.classList.remove('error');
-    uploadProgress?.classList.add('success');
+    // Server responded
+    xhr.addEventListener('load', () => {
+      const ok = xhr.status >= 200 && xhr.status < 300;
 
-    // Clear the selection + show the buttons again
-    hidePreview();
-    selectedFile = null;
-    dropzone?.classList.remove('ready');
-    [fileInput, cameraInput].forEach(cancelTimersForInput);
-    if (fileInput) fileInput.value = '';
-    if (cameraInput) cameraInput.value = '';
-    if (submitBtn) submitBtn.disabled = true;
+      if (ok) {
+        // Success message in the bar; keep it visible
+        updateProgress(100);
+        progressLabel && (progressLabel.textContent = 'Thanks. File received.');
+        uploadProgress?.classList.remove('error');
+        uploadProgress?.classList.add('success');
 
-    // Optional: clear any old status area
-    statusEl && (statusEl.textContent = '');
-  } else {
-    progressLabel && (progressLabel.textContent = 'Upload failed. Please try again.');
-    uploadProgress?.classList.remove('success');
-    uploadProgress?.classList.add('error');
-    submitBtn && (submitBtn.disabled = false);
-  }
-});
+        // Clear selection + show buttons again
+        hidePreview();
+        selectedFile = null;
+        dropzone?.classList.remove('ready');
+        [fileInput, cameraInput].forEach(cancelTimersForInput);
+        if (fileInput) fileInput.value = '';
+        if (cameraInput) cameraInput.value = '';
+        if (submitBtn) submitBtn.disabled = true;
 
-});
+        // Optional: clear any old status area
+        statusEl && (statusEl.textContent = '');
+      } else {
+        progressLabel && (progressLabel.textContent = 'Upload failed. Please try again.');
+        uploadProgress?.classList.remove('success');
+        uploadProgress?.classList.add('error');
+        submitBtn && (submitBtn.disabled = false);
+      }
+      resolve(); // <-- important: resolve the Promise
+    });
 
-xhr.addEventListener('error', () => {
-  progressLabel && (progressLabel.textContent = 'Network error. Please try again.');
-  uploadProgress?.classList.remove('success');
-  uploadProgress?.classList.add('error');
-  submitBtn && (submitBtn.disabled = false);
-});
+    // Network error
+    xhr.addEventListener('error', () => {
+      progressLabel && (progressLabel.textContent = 'Network error. Please try again.');
+      uploadProgress?.classList.remove('success');
+      uploadProgress?.classList.add('error');
+      submitBtn && (submitBtn.disabled = false);
+      resolve(); // <-- important: resolve the Promise
+    });
 
-updateProgress(0);
-uploadProgress?.removeAttribute('hidden');
-progressLabel && (progressLabel.textContent = 'Starting… 0%');
-xhr.send(form);
-
+    xhr.send(form);
   });
 
 } catch (err) {
@@ -714,6 +716,7 @@ xhr.send(form);
   statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
   submitBtn && (submitBtn.disabled = false);
 }
+
   }
 
   // ---------- Init ----------
