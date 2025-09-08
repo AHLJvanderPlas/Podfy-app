@@ -66,26 +66,32 @@ const progressLabel  = qs('#progressLabel');
 
    // ---------- helpers on upload file name ----------
 function showPreview(f){
-  if (!f) return;
+  if (!f || !f.name) return;
+
+  // set name + size
   if (fileNameEl) {
     const mb = (f.size/1048576);
     fileNameEl.textContent = `${f.name} ${isFinite(mb)?`(${mb.toFixed(1)} MB)`:''}`;
   }
+
+  // show chip, hide helper texts & action buttons
   filePreview?.removeAttribute('hidden');
-  // hide helper text while a file is chosen
   qs('.dz-sub')?.classList.add('hidden');
   qs('.dz-constraints')?.classList.add('hidden');
+  qs('.dz-actions')?.setAttribute('hidden','');   // NEW: hide buttons when a file is chosen
 }
 function hidePreview(){
+  // hide chip, show helper texts & action buttons, clear filename
   filePreview?.setAttribute('hidden','');
   qs('.dz-sub')?.classList.remove('hidden');
   qs('.dz-constraints')?.classList.remove('hidden');
+  qs('.dz-actions')?.removeAttribute('hidden');   // NEW: show buttons again
+  if (fileNameEl) fileNameEl.textContent = '';    // NEW: clear leftover text
 }
 function resetProgress(){
-  if (!uploadProgress) return;
-  uploadProgress.setAttribute('hidden','');
-  progressBar.style.width = '0%';
-  uploadProgress.setAttribute('aria-valuenow','0');
+  uploadProgress?.setAttribute('hidden','');
+  progressBar && (progressBar.style.width = '0%');
+  uploadProgress?.setAttribute('aria-valuenow','0');
   progressLabel && (progressLabel.textContent = '0%');
 }
 function updateProgress(pct){
