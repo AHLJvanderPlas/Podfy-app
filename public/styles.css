@@ -369,4 +369,8 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 .progress-bar{ background: var(--brand-accent); }
 .progress-label{ color: var(--text, #111); }
 
+/* Always honor the HTML `hidden` attribute, even if other rules set display */
+[hidden] { display: none !important; }
+
+
 
