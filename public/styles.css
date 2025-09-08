@@ -321,3 +321,31 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 .row { display: flex; gap: 16px; align-items: center; margin: 16px 0; }
 .help { color: var(--brand-muted); }
 #fileInput { display: none; } /* keep hidden via CSS (not the hidden attribute) */
+
+/* ===== FILE PREVIEW (chip) + PROGRESS BAR ===== */
+.file-preview{
+  display:flex; align-items:center; gap:.5rem;
+  margin:.75rem 0; padding:.5rem .75rem;
+  border:1px solid var(--brand-border); border-radius:.5rem;
+  background:#fff;
+}
+.file-ic{ width:18px; height:18px; opacity:.6; }
+.file-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.linklike{ background:none; border:0; color:var(--brand-accent); cursor:pointer; font-weight:600; }
+
+.progress{
+  position:relative; height:10px; background:#eef2f7;
+  border-radius:999px; margin:.75rem 0;
+}
+.progress-bar{
+  height:100%; width:0%; border-radius:999px;
+  background:var(--brand-accent); transition:width .2s ease;
+}
+.progress-label{
+  position:absolute; top:50%; right:.5rem; transform:translateY(-50%);
+  font-size:.75rem; color:#111;
+}
+
+/* Small utility so we can hide helper text when a file is chosen */
+.hidden{ display:none !important; }
+
