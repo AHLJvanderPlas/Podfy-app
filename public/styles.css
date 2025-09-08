@@ -337,6 +337,33 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 .linklike:hover { text-decoration: underline; }
 .linklike:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
 
+/* Prevent the file chip from overflowing on phones */
+.dz-hero .file-preview{
+  width: 100%;
+  max-width: 90vw;            /* never wider than the viewport */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  overflow: hidden;           /* clip any stubborn overflow */
+}
+
+/* Let the filename shrink inside the flex row */
+.file-name{
+  min-width: 0;               /* KEY: allows flex item to shrink */
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keep the icon and × from stretching the row */
+.file-ic, #removeFileBtn{ flex: 0 0 auto; }
+
+/* Optional: a slightly wider cap on larger phones/tablets */
+@media (min-width: 480px){
+  .dz-hero .file-preview{ max-width: 520px; }
+}
+
 /* --- Progress bar --- */
 .progress{
   position:relative;
