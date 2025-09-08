@@ -554,24 +554,41 @@ if (f) {
     }
 
     // On file picker/camera selection: select file, don’t upload
-    fileInput?.addEventListener('change', () => {
-      const f = fileInput.files && fileInput.files[0];
-      if (f) {
-        selectedFile = f;
-        dropzone?.classList.add('ready');
-        if (submitBtn) submitBtn.disabled = false;
-        if (statusEl) statusEl.textContent = '';
-      }
-    });
-    cameraInput?.addEventListener('change', () => {
-      const f = cameraInput.files && cameraInput.files[0];
-      if (f) {
-        selectedFile = f;
-        dropzone?.classList.add('ready');
-        if (submitBtn) submitBtn.disabled = false;
-        if (statusEl) statusEl.textContent = '';
-      }
-    });
+fileInput?.addEventListener('change', () => {
+  const f = fileInput.files && fileInput.files[0];
+  if (f) {
+    selectedFile = f;
+    showPreview(f);      // NEW
+    resetProgress();     // NEW
+    dropzone?.classList.add('ready');
+    if (submitBtn) submitBtn.disabled = false;
+    if (statusEl) statusEl.textContent = '';
+  }
+});
+
+cameraInput?.addEventListener('change', () => {
+  const f = cameraInput.files && cameraInput.files[0];
+  if (f) {
+    selectedFile = f;
+    showPreview(f);      // NEW
+    resetProgress();     // NEW
+    dropzone?.classList.add('ready');
+    if (submitBtn) submitBtn.disabled = false;
+    if (statusEl) statusEl.textContent = '';
+  }
+});
+
+     removeFileBtn?.addEventListener('click', () => {
+  selectedFile = null;
+  dropzone?.classList.remove('ready');
+  hidePreview();
+  resetProgress();
+  if (fileInput) fileInput.value = '';
+  if (cameraInput) cameraInput.value = '';
+  if (submitBtn) submitBtn.disabled = true;
+  statusEl && (statusEl.textContent = '');
+});
+
 
     // Submit click → upload selected file
     submitBtn?.addEventListener('click', async (e) => {
