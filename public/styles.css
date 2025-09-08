@@ -323,31 +323,31 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 #fileInput { display: none; } /* keep hidden via CSS (not the hidden attribute) */
 
 /* ===== FILE PREVIEW (chip) + PROGRESS BAR ===== */
+/* --- File chip --- */
 .file-preview{
   display:flex; align-items:center; gap:.5rem;
   margin:.75rem 0; padding:.5rem .75rem;
   border:1px solid var(--brand-border); border-radius:.5rem;
-  background:#fff;
+  background: var(--surface, #fff);
 }
 .file-ic{ width:18px; height:18px; opacity:.6; }
 .file-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .linklike{ background:none; border:0; color:var(--brand-accent); cursor:pointer; font-weight:600; }
+.linklike:hover { text-decoration: underline; }
+.linklike:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
 
+/* --- Progress bar --- */
 .progress{
-  position:relative; height:10px; background:#eef2f7;
-  border-radius:999px; margin:.75rem 0;
+  position:relative;
+  height:24px;                     /* 2× thicker */
+  background: var(--muted-bg, #eef2f7);
+  border-radius:999px;
+  margin:.75rem 0;
 }
 .progress-bar{
   height:100%; width:0%; border-radius:999px;
-  background:var(--brand-accent); transition:width .2s ease;
-}
-.progress-label{
-  position:absolute; top:50%; right:.5rem; transform:translateY(-50%);
-  font-size:.75rem; color:#111;
-}
-
-/* Small utility so we can hide helper text when a file is chosen */
-.hidden{ display:none !important; }
+  background: var(--brand-accent);
+  transition:width .2s ease;
 
 /* ===== Optional polish (safe to keep) ===== */
 
@@ -358,43 +358,38 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* Easier-to-read percent (monospaced numerals) */
 .progress-label { font-variant-numeric: tabular-nums; }
 
-/* Respect reduced-motion preferences */
-@media (prefers-reduced-motion: reduce){
-  .progress-bar { transition: none; }
-}
-
-/* Optional: if you use CSS vars for theming, these make colors adapt automatically */
-.file-preview{ background: var(--surface, #fff); border-color: var(--brand-border); }
-.progress{ background: var(--muted-bg, #eef2f7); }
-.progress-bar{ background: var(--brand-accent); }
-.progress-label{ color: var(--text, #111); }
-
-/* Always honor the HTML `hidden` attribute, even if other rules set display */
-[hidden] { display: none !important; }
-
-/* Make the progress bar span the hero width and sit centered */
-.dz-hero .progress{
-  width: 100%;
-  max-width: 520px;      /* adjust to taste */
-  margin: 12px auto;     /* center horizontally */
-  height: 12px;          /* slightly taller looks better */
-}
-
-/* Center the label inside the bar and prevent wrapping */
+/* Put the status text inside the bar, centered, single line */
 .progress-label{
-  left: 50%;
-  right: auto;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-  font-size: 14px;       /* match helper/body text */
-  line-height: 1;        /* avoid clipping */
-  color: var(--brand-text);
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  white-space:nowrap;
+  font-size:14px;
+  line-height:1;
+  font-variant-numeric: tabular-nums;
+  /* Match the Submit button's text color automatically */
+  color: var(--primary-text, var(--brand-text));
 }
 
-/* (Optional) success/error color states if not added yet */
+/* Success / error states (optional) */
 .progress.success .progress-bar { background: var(--brand-accent); }
 .progress.error   .progress-bar { background: var(--danger, #e11d48); }
 
-/* Ensure hidden elements really hide (if not already present) */
+/* Make the progress bar span the hero width and sit centered */
+.dz-hero .progress{
+  width: 80%;
+  max-width: 320px;      /* adjust to taste */
+  margin: 12px auto;     /* center horizontally */
+  height: 24px;          /* slightly taller looks better */
+}
+
+/* Helpers */
+.hidden{ display:none !important; }
 [hidden]{ display:none !important; }
 
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce){ .progress-bar { transition:none; }}
+
+/* Hook the Submit button's text color into a variable the bar can use
+   This maps whatever text color your .primary button has to --primary-text,
+   so .progress-label will always match it without hard-coding a color. */
+.primary { --primary-text: currentColor; }
