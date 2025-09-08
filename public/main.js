@@ -640,55 +640,58 @@ cameraInput?.addEventListener('change', () => {
     }
 
 try {
-  // Show initial progress UI
   updateProgress(0);
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/upload');
+  await new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload');
 
-  // Byte-level upload progress
-  xhr.upload.addEventListener('progress', (e) => {
-    if (!e.lengthComputable) return;
-    const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
-    updateProgress(pct);
-    const dict = langStrings[currentLang] || langStrings['en'] || {};
-    statusEl && (statusEl.textContent =
-      (dict.uploadingPct || 'Uploading… {percent}%').replace('{percent}', pct));
-  });
-
-  // Server responded
-  xhr.addEventListener('load', () => {
-    const ok = xhr.status >= 200 && xhr.status < 300;
-    if (ok) {
+    xhr.upload.addEventListener('progress', (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
+      updateProgress(pct);
       const dict = langStrings[currentLang] || langStrings['en'] || {};
-      statusEl && (statusEl.textContent = dict.success || 'Thanks. File received.');
+      statusEl && (statusEl.textContent =
+        (dict.uploadingPct || 'Uploading… {percent}%').replace('{percent}', pct));
+    });
 
-      // Reset UI after success
-      resetProgress();
-      hidePreview();
-      selectedFile = null;
-      dropzone?.classList.remove('ready');
-      [fileInput, cameraInput].forEach(cancelTimersForInput);
-      if (fileInput) fileInput.value = '';
-      if (cameraInput) cameraInput.value = '';
-      if (submitBtn) submitBtn.disabled = true;
-    } else {
-      statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
+    xhr.addEventListener('load', () => {
+      const ok = xhr.status >= 200 && xhr.status < 300;
+      if (ok) {
+        const dict = langStrings[currentLang] || langStrings['en'] || {};
+        statusEl && (statusEl.textContent = dict.success || 'Thanks. File received.');
+
+        // Reset UI after success
+        resetProgress();
+        hidePreview();
+        selectedFile = null;
+        dropzone?.classList.remove('ready');
+        [fileInput, cameraInput].forEach(cancelTimersForInput);
+        if (fileInput) fileInput.value = '';
+        if (cameraInput) cameraInput.value = '';
+        if (submitBtn) submitBtn.disabled = true;
+      } else {
+        statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
+        submitBtn && (submitBtn.disabled = false);
+      }
+      resolve();
+    });
+
+    xhr.addEventListener('error', () => {
+      statusEl && (statusEl.textContent = 'Network error. Please try again.');
       submitBtn && (submitBtn.disabled = false);
-    }
+      resolve();
+    });
+
+    xhr.send(form);
   });
 
-  xhr.addEventListener('error', () => {
-    statusEl && (statusEl.textContent = 'Network error. Please try again.');
-    submitBtn && (submitBtn.disabled = false);
-  });
-
-  xhr.send(form);
 } catch (err) {
   console.error(err);
-  if (statusEl) statusEl.textContent = 'Upload failed. Please try again.';
-  if (submitBtn) submitBtn.disabled = false;
+  statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
+  submitBtn && (submitBtn.disabled = false);
 }
+
 
   }
 
