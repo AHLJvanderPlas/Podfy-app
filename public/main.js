@@ -660,10 +660,7 @@ try {
       if (ok) {
         const dict = langStrings[currentLang] || langStrings['en'] || {};
         statusEl && (statusEl.textContent = dict.success || 'Thanks. File received.');
-
-        // Reset UI after success
-        resetProgress();
-        hidePreview();
+        resetProgress(); hidePreview();
         selectedFile = null;
         dropzone?.classList.remove('ready');
         [fileInput, cameraInput].forEach(cancelTimersForInput);
@@ -691,8 +688,6 @@ try {
   statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
   submitBtn && (submitBtn.disabled = false);
 }
-
-
   }
 
   // ---------- Init ----------
