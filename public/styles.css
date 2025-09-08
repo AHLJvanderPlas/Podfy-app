@@ -349,3 +349,24 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* Small utility so we can hide helper text when a file is chosen */
 .hidden{ display:none !important; }
 
+/* ===== Optional polish (safe to keep) ===== */
+
+/* Better accessibility for the remove “×” button */
+.linklike:hover { text-decoration: underline; }
+.linklike:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* Easier-to-read percent (monospaced numerals) */
+.progress-label { font-variant-numeric: tabular-nums; }
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce){
+  .progress-bar { transition: none; }
+}
+
+/* Optional: if you use CSS vars for theming, these make colors adapt automatically */
+.file-preview{ background: var(--surface, #fff); border-color: var(--brand-border); }
+.progress{ background: var(--muted-bg, #eef2f7); }
+.progress-bar{ background: var(--brand-accent); }
+.progress-label{ color: var(--text, #111); }
+
+
