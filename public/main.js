@@ -639,28 +639,57 @@ cameraInput?.addEventListener('change', () => {
       if (locStatus.dataset.ts)  form.append('loc_ts',  locStatus.dataset.ts);
     }
 
-    try {
-      const resp = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!resp.ok) throw new Error('Upload failed');
-      await resp.json();
+try {
+  // Show initial progress UI
+  updateProgress(0);
 
-      if (statusEl) statusEl.textContent = dict.success || 'Thanks. File received.';
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/upload');
 
-      // reset UI
+  // Byte-level upload progress
+  xhr.upload.addEventListener('progress', (e) => {
+    if (!e.lengthComputable) return;
+    const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
+    updateProgress(pct);
+    const dict = langStrings[currentLang] || langStrings['en'] || {};
+    statusEl && (statusEl.textContent =
+      (dict.uploadingPct || 'Uploading… {percent}%').replace('{percent}', pct));
+  });
+
+  // Server responded
+  xhr.addEventListener('load', () => {
+    const ok = xhr.status >= 200 && xhr.status < 300;
+    if (ok) {
+      const dict = langStrings[currentLang] || langStrings['en'] || {};
+      statusEl && (statusEl.textContent = dict.success || 'Thanks. File received.');
+
+      // Reset UI after success
+      resetProgress();
+      hidePreview();
       selectedFile = null;
       dropzone?.classList.remove('ready');
-
-      // cancel any pending picker fallback timers so dialogs don't re-open
       [fileInput, cameraInput].forEach(cancelTimersForInput);
-
       if (fileInput) fileInput.value = '';
       if (cameraInput) cameraInput.value = '';
       if (submitBtn) submitBtn.disabled = true;
-    } catch (err) {
-      console.error(err);
-      if (statusEl) statusEl.textContent = 'Upload failed. Please try again.';
-      if (submitBtn) submitBtn.disabled = false;
+    } else {
+      statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
+      submitBtn && (submitBtn.disabled = false);
     }
+  });
+
+  xhr.addEventListener('error', () => {
+    statusEl && (statusEl.textContent = 'Network error. Please try again.');
+    submitBtn && (submitBtn.disabled = false);
+  });
+
+  xhr.send(form);
+} catch (err) {
+  console.error(err);
+  if (statusEl) statusEl.textContent = 'Upload failed. Please try again.';
+  if (submitBtn) submitBtn.disabled = false;
+}
+
   }
 
   // ---------- Init ----------
