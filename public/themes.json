@@ -32,6 +32,40 @@
     "status": "Pilot"
   },
 
+"ceva": {
+  "brandName": "CEVA Logistics",
+  "logo": "/logos/ceva.svg",
+  "mailTo": "pod+ceva@podfy.app",
+  "colors": {
+    "primary": "#9E0032",
+    "accent": "#231F20",
+    "text": "#0B1220",
+    "muted": "#6B7280",
+    "border": "#E5E7EB",
+    "buttonText": "#FFFFFF"
+  },
+  "header": { "bg": "#FFFFFF" },
+  "favicon": "/logos/ceva.svg",
+  "status": "Demo"
+},
+
+  "vmt": {
+  "brandName": "Van Merode Transport",
+  "logo": "/logos/vmt.svg",
+  "mailTo": "pod+vmt@podfy.app",
+  "colors": {
+    "primary": "#C9251D",
+    "accent": "#A01D17",
+    "text": "#0B1220",
+    "muted": "#6B7280",
+    "border": "#E5E7EB",
+    "buttonText": "#FFFFFF"
+  },
+  "header": { "bg": "#FFFFFF" },
+  "favicon": "/logos/vmt.svg",
+  "status": "Demo"
+},
+  
   "dhl": {
     "brandName": "DHL",
     "logo": "/logos/dhl.svg",
