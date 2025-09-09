@@ -130,39 +130,6 @@ export function buildHtml({
 
 async function sendViaResend(env, { fromEmail, toList, subject, html, attachmentsAll }) {
   const apiKey = env.RESEND_API_KEY;
-  if (!apiKey) return null;
-
-  const payload = {
-    from: env.MAIL_FROM || `Podfy <${fromEmail}>`,
-    to: toList,
-    subject,
-    html,
-    attachments: attachmentsAll?.map(a => ({
-      filename: a.filename,
-      content: a.contentBase64,
-      contentId: a.cid || undefined,
-      disposition: a.disposition || (a.cid ? "inline" : "attachment"),
-    })),
-  };
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const body = await res.text();
-    if (!res.ok) { console.error("Resend error", res.status, body); return false; }
-    console.log("Resend ok", res.status);
-    return true;
-  } catch (e) {
-    console.error("Resend fetch failed", String(e));
-    return false;
-  }
-}
-
-async function sendViaResend(env, { fromEmail, toList, subject, html, attachmentsAll }) {
-  const apiKey = env.RESEND_API_KEY;
   if (!apiKey) return null; // signal to fallback to MailChannels
 
   // Resend expects 'cid' for inline images; it ignores 'contentId'/'disposition'.
@@ -202,7 +169,41 @@ async function sendViaResend(env, { fromEmail, toList, subject, html, attachment
     return false;
   }
 }
+async function sendViaMailchannels(env, { fromEmail, toList, subject, html, attachmentsAll }) {
+  const payload = {
+    personalizations: [{ to: toList.map(email => ({ email })) }],
+    from: { email: fromEmail, name: env.MAIL_FROM || "Podfy" },
+    subject,
+    content: [{ type: "text/html", value: html }],
+    ...(attachmentsAll?.length ? {
+      attachments: attachmentsAll.map(a => ({
+        filename: a.filename,
+        type: a.type || "application/octet-stream",
+        content: a.contentBase64,                    // base64
+        content_id: a.cid || undefined,              // <-- MailChannels wants 'content_id'
+        content_disposition: a.cid ? "inline" : "attachment",
+      }))
+    } : {}),
+  };
 
+  try {
+    const res = await fetch("https://api.mailchannels.net/tx/v1/send", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("MailChannels error", res.status, body);
+      return false;
+    }
+    console.log("MailChannels ok");
+    return true;
+  } catch (e) {
+    console.error("MailChannels fetch failed", String(e));
+    return false;
+  }
+}
 /* ===========================
    Public sendMail + pickFromAddress
    =========================== */
@@ -215,8 +216,8 @@ export async function sendMail(env, args) {
   let inlineCids = null;
   let inlineLogoAttachments = [];
   try {
-    const bannerCid = `${(brand || "default")}-banner@podfy`;
-    const footerCid = `podfy-footer@podfy`;
+    const bannerCid = `${(brand || "default")}-podfy`;
+    const footerCid = `podfy-footer`;
     const bannerUrl = `${base}/logo/${encodeURIComponent(brand || "default")}.png`;
     const footerUrl = `${base}/logo/default.png`;
 
