@@ -125,10 +125,34 @@ export const onRequestPost = async ({ request, env }) => {
   try {
     const { mode, file, fields } = await parseRequest(request);
     let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
-    brand = (brand || "default").toLowerCase().replace(/[^a-z0-9-]/g, "");
+// --- Brand resolution (form -> Referer -> URL), then validate against themes.json
+function firstPathSegment(u) {
+  try {
+    const parts = new URL(u).pathname.split("/").filter(Boolean);
+    if (!parts.length) return "";
+    const skip = new Set(["api","logo","media","_assets","_static","_worker"]);
+    return skip.has(parts[0].toLowerCase()) ? "" : parts[0].toLowerCase();
+  } catch { return ""; }
+}
+function normalizeBrand(slug, themesObj) {
+  const s = (slug || "").toLowerCase().replace(/[^a-z0-9-_.]/g, "-");
+  return s && Object.prototype.hasOwnProperty.call(themesObj, s) ? s : "default";
+}
 
-    // Theme & routing from themes.json
-    const t = resolveEmailTheme(brand, themes);
+let resolvedBrand = (brand || fields.slug || "").toLowerCase();
+if (!resolvedBrand) {
+  const ref = request.headers.get("referer") || "";
+  resolvedBrand = firstPathSegment(ref) || firstPathSegment(request.url) || "";
+}
+brand = normalizeBrand(resolvedBrand, themes);
+console.log("resolved brand:", brand, {
+  posted: fields.brand || fields.slug || "",
+  referer: request.headers.get("referer") || "",
+  url: request.url
+});
+
+// Theme & routing from themes.json (now that brand is final)
+const t = resolveEmailTheme(brand, themes);
     const mailToList = (t.mailTo ? [t.mailTo] : [])
       .concat(env.MAIL_TO || [])
       .flatMap((s) => String(s).split(","))
