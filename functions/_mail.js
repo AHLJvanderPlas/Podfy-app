@@ -95,12 +95,12 @@ export function buildHtml({
               }</td></tr>
           <tr><td style="padding:6px 8px; width:200px;">Location code</td><td style="padding:6px 8px;">${escapeHtml(meta?.locationCode || "")}</td></tr>
         </table>
-        <div style="text-align:center; padding:16px 8px 6px; margin-top:40px;">
+        <div style="text-align:center; padding:16px 8px 6px; margin-top:20px;">
+        <div style=" font-size:10px; color:#ffffff; user-select:text;">${escapeHtml(fileName || "")}</div>
           <span style="font-size:10px; color:#9CA3AF; display:block; margin-bottom:10px;">This POD is provided by</span>
           <a href="https://podfy.net" target="_blank" rel="noopener" style="display:inline-block;">
             <img src="${footerSrc}" alt="Podfy" style="display:block; height:18px;">
           </a>
-          <div style="margin-top:8px; font-size:10px; color:#ffffff; user-select:text;">${escapeHtml(fileName || "")}</div>
         </div>
       </td>
     </tr>
