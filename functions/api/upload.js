@@ -211,27 +211,36 @@ const finalBase = baseNameParts.join("_");
       return prefix ? `${iso2}${prefix}` : iso2;
     };
 
-    let locationMeta = {};
-    if (lat && lon) {
-      locationMeta = {
-        locationQualifier: "GPS",
-        lat: String(lat),
-        lon: String(lon),
-        ...(accuracy ? { accuracyM: String(accuracy) } : {}),
-        ...(locTs ? { locationTimestamp: String(locTs) } : {}),
-      };
-    } else if (ipLat && ipLon) {
-      locationMeta = {
-        locationQualifier: "IP",
-        lat: String(ipLat),
-        lon: String(ipLon),
-        ipCountry: ipCountryISO2 || "",
-        ipPostal: ipPostal || "",
-        locationCode: buildLocationCode(ipCountryISO2, ipPostal),
-      };
-    } else {
-      locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
-    }
+// 1) Build locationMeta (your existing code)
+let locationMeta = {};
+if (lat && lon) {
+  locationMeta = {
+    locationQualifier: "GPS",
+    lat: String(lat),
+    lon: String(lon),
+    ...(accuracy ? { accuracyM: String(accuracy) } : {}),
+    ...(locTs ? { locationTimestamp: String(locTs) } : {}),
+  };
+} else if (ipLat && ipLon) {
+  locationMeta = {
+    locationQualifier: "IP",
+    lat: String(ipLat),
+    lon: String(ipLon),
+    ipCountry: ipCountryISO2 || "",
+    ipPostal: ipPostal || "",
+    locationCode: buildLocationCode(ipCountryISO2, ipPostal),
+  };
+} else {
+  locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
+}
+
+// 2) NOW define the meta object used by emails (right after the block above)
+const meta = {
+  locationQualifier: locationMeta.locationQualifier || "",
+  lat: locationMeta.lat || "",
+  lon: locationMeta.lon || "",
+  locationCode: locationMeta.locationCode || "",
+};
 
     // Store in R2
     await PODFY_BUCKET.put(key, buffer, {
@@ -261,24 +270,19 @@ const finalBase = baseNameParts.join("_");
       imagePreviewUrl = previewUrl; // if provided externally
     }
 
-    // Build HTML email
-    const html = buildHtml({
-      brand,
-      brandName: t.brandName,
-      theme: { brandColor: t.brandColor, logo: t.logo },
-      fileName: `${finalBase}.${ext}`,
-      podfyId,
-      dateTime, // shown as "POD upload"
-      meta: {
-        locationQualifier: locationMeta.locationQualifier || "",
-        lat: locationMeta.lat || "",
-        lon: locationMeta.lon || "",
-        locationCode: locationMeta.locationCode || "",
-      },
-      reference: cleanRef || "",
-      imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app",
-      imagePreviewUrl,
-    });
+// Build HTML email (preview only; sendMail will rebuild with CID logos)
+const html = buildHtml({
+  brand,
+  brandName: t.brandName,
+  theme: { brandColor: t.brandColor, logo: t.logo },
+  fileName: `${finalBase}.${ext}`,
+  podfyId,
+  dateTime,                 // "POD upload"
+  meta,                     // <-- use the const built from locationMeta
+  reference: cleanRef || "",
+  imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app",
+  imagePreviewUrl,
+});
 
 // Subject: POD | {Brand} (| {ref} if present) | {yyyy-mm-dd}
 const brandForSubject = t.brandName || brand;
@@ -310,44 +314,53 @@ try {
     const { name: fromName, email: fromEmail } = parseFromNameAddr(env.MAIL_FROM, env.MAIL_DOMAIN || "podfy.app");
     console.log("email from envelope:", fromEnvelope, "| display name:", fromName, "| display email:", fromEmail);
 
-    // Send to staff (with debug)
-    let okStaff = false;
-if (mailToList.length) {
-  okStaff = await sendMail(env, {
-    fromEmail: fromEnvelope,
-    toList: mailToList,
-    subject,
-    html, // _mail.js will rebuild HTML to use CID logos; keeping this is fine
-    brand,                                        // <-- add
-    imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app", // <-- add
-    meta,
-    reference,
-    podfyId,
-    dateTime,
-    attachment,
-  });
-  console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
-    } else {
-      console.log("no staff recipients resolved");
-    }
+const common = {
+  brand,
+  brandName: t.brandName,
+  theme: { brandColor: t.brandColor, logo: t.logo },
+  fileName: `${finalBase}.${ext}`,
+  podfyId,
+  dateTime,
+  meta,
+  reference: cleanRef || "",
+  imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app",
+  attachment,
+};
 
-    // Optional copy to uploader (with debug)
-    let okUser = false;
-if (emailCopy) {
-  okUser = await sendMail(env, {
-    fromEmail: fromEnvelope,
-    toList: [emailCopy],
-    subject: `We received your file: ${finalBase}.${ext}`, // keep or use 'subject'
-    html,
-    brand,                                        // <-- add
-    imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app", // <-- add
-      meta,
-    reference,
-    podfyId,
-    dateTime,
-    attachment,
-  });
-  console.log("user mail sent?", okUser, { to: emailCopy, from: fromEnvelope });
+// staff
+let okStaff = false;
+try {
+  if (mailToList.length) {
+    okStaff = await sendMail(env, {
+      fromEmail: fromEnvelope,
+      toList: mailToList,
+      subject,
+      html,
+      ...common,
+    });
+    console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
+  } else {
+    console.log("no staff recipients resolved");
+  }
+} catch (e) {
+  console.error("email send (staff) failed (non-fatal):", e);
+}
+
+// user copy
+let okUser = false;
+try {
+  if (emailCopy) {
+    okUser = await sendMail(env, {
+      fromEmail: fromEnvelope,
+      toList: [emailCopy],
+      subject: `We received your file: ${finalBase}.${ext}`,
+      html,
+      ...common,
+    });
+    console.log("user mail sent?", okUser, { to: emailCopy, from: fromEnvelope });
+  }
+} catch (e) {
+  console.error("email send (user) failed (non-fatal):", e);
 }
 
     return new Response(
