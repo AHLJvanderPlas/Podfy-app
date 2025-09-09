@@ -16,7 +16,18 @@ function toBase64(ab) {
   }
   return btoa(binary);
 }
+// Pick brand theme from themes.json
+export function resolveEmailTheme(slug, themes) {
+  const t = (themes && themes[slug]) || (themes && themes.default) || {};
 
+  const brandName  = t.brandName || themes?.default?.brandName || "PODFY";
+  const brandColor = t.header?.bg || t.colors?.primary || themes?.default?.header?.bg || "#D3D3D3";
+  const logo       = t.logo || themes?.default?.logo || "/logos/podfy.png";
+  const mailTo     = t.mailTo || themes?.default?.mailTo || "";
+  const favicon    = t.favicon || themes?.default?.favicon || "/logos/podfy-favicon.png";
+
+  return { slug, brandName, brandColor, logo, mailTo, favicon };
+}
 async function fetchBase64(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`logo fetch failed: ${r.status} ${url}`);
