@@ -632,8 +632,13 @@ cameraInput?.addEventListener('change', () => {
 
     const form = new FormData();
     form.append('file', f);
-    form.append('slug_original', rawSlug || 'default');
-    form.append('slug_known', themes[rawSlug] ? '1' : '0');
+      // Always post the brand slug explicitly
+      form.append('brand', rawSlug || 'default');
+
+      // Keep extra fields if you still want them
+      form.append('slug_original', rawSlug || 'default');
+      form.append('slug_known', themes[rawSlug] ? '1' : '0');
+
     if (refFromPath) form.append('reference', refFromPath);
 
     // Email (only if valid)
