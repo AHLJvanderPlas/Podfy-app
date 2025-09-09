@@ -133,16 +133,14 @@ async function sendViaResend(env, { fromEmail, toList, subject, html, attachment
   if (!apiKey) return null; // signal to fallback to MailChannels
 
   // Resend expects 'cid' for inline images; it ignores 'contentId'/'disposition'.
-  const attachments = attachmentsAll?.map(a => ({
-    filename: a.filename,
-    content: a.contentBase64,                    // base64 string (no data: prefix)
-    contentType: a.type || "application/octet-stream",
-    // IMPORTANT for inline logos:
-    // If the HTML references <img src="cid:some-id">, put that exact id here:
-    cid: a.cid || undefined
-    // Do not add 'disposition' here; Resend ignores it.
-  }));
-
+const attachments = attachmentsAll?.map(a => ({
+  filename: a.filename,
+  content: a.contentBase64,                           // base64 string, no data: prefix
+  contentType: a.type || "application/octet-stream",
+  content_id: a.cid || undefined                      // <-- THIS is what Resend uses
+  // Do NOT send `disposition` here; Resend doesn’t need/use it.
+}));
+   
   const payload = {
     from: env.MAIL_FROM || `Podfy <${fromEmail}>`,
     to: toList,
@@ -216,8 +214,9 @@ export async function sendMail(env, args) {
   let inlineCids = null;
   let inlineLogoAttachments = [];
   try {
-    const bannerCid = `${(brand || "default")}-podfy`;
-    const footerCid = `podfy-footer`;
+   const bannerCid = `banner-${(brand || "default")}-podfy`;
+   const footerCid = `podfy-footer`;
+// (Under 128 chars, only safe ASCII.)
     const bannerUrl = `${base}/logo/${encodeURIComponent(brand || "default")}.png`;
     const footerUrl = `${base}/logo/default.png`;
 
