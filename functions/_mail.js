@@ -7,7 +7,6 @@
 const escapeHtml = (s = "") =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-// chunked base64 (prevents stack overflow on large ArrayBuffers)
 function toBase64(ab) {
   const CHUNK = 0x8000;
   const bytes = new Uint8Array(ab);
@@ -30,31 +29,25 @@ async function fetchBase64(url) {
    =========================== */
 
 export function buildHtml({
-  brand,               // slug
-  brandName,           // string
-  theme,               // { brandColor }
+  brand,
+  brandName,
+  theme,
   fileName,
   podfyId,
   dateTime,
-  meta,                // { locationQualifier, lat, lon, locationCode }
-  reference,           // optional
-  imageUrlBase,        // base URL for links
-  inlineCids,          // { bannerCid, footerCid }
+  meta,
+  reference,
+  imageUrlBase,
+  inlineCids, // { bannerCid, footerCid }
 }) {
   const color = theme?.brandColor || "#D3D3D3";
-
-  // Use CID sources when provided; fall back to remote PNGs
-  const base = (imageUrlBase || "https://podfy.app").replace(/\/+$/,"");
-  const bannerSrc = inlineCids?.bannerCid ? `cid:${inlineCids.bannerCid}`
-                                          : `${base}/logo/${encodeURIComponent(brand || "default")}.png`;
-  const footerSrc = inlineCids?.footerCid ? `cid:${inlineCids.footerCid}`
-                                          : `${base}/logo/default.png`;
+  const base = (imageUrlBase || "https://podfy.app").replace(/\/+$/, "");
+  const bannerSrc = inlineCids?.bannerCid ? `cid:${inlineCids.bannerCid}` : `${base}/logo/${encodeURIComponent(brand || "default")}.png`;
+  const footerSrc = inlineCids?.footerCid ? `cid:${inlineCids.footerCid}` : `${base}/logo/default.png`;
 
   const lat = meta?.lat || "";
   const lon = meta?.lon || "";
-  const mapsHref = (lat && lon)
-    ? `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lon}`)}`
-    : "";
+  const mapsHref = (lat && lon) ? `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lon}`)}` : "";
 
   const referenceHtml = reference
     ? `<p style="margin:20px 0 20px 0; line-height:1.5; color:#111827;">The reference of this shipment is <b>${escapeHtml(reference)}</b>.</p>`
@@ -118,7 +111,7 @@ export function buildHtml({
 }
 
 /* ===========================
-   Transports (Resend first, MailChannels fallback)
+   Transports
    =========================== */
 
 async function sendViaResend(env, { fromEmail, toList, subject, html, attachmentsAll }) {
@@ -132,8 +125,8 @@ async function sendViaResend(env, { fromEmail, toList, subject, html, attachment
     html,
     attachments: attachmentsAll?.map(a => ({
       filename: a.filename,
-      content: a.contentBase64,                   // base64 string
-      contentId: a.cid || undefined,              // inline Content-ID
+      content: a.contentBase64,
+      contentId: a.cid || undefined,
       disposition: a.disposition || (a.cid ? "inline" : "attachment"),
     })),
   };
@@ -192,7 +185,7 @@ async function sendViaMailchannels(env, { fromEmail, toList, subject, html, text
 }
 
 /* ===========================
-   Public sendMail: prepare inline logos (CID) and merge attachments
+   Public sendMail + pickFromAddress
    =========================== */
 
 export async function sendMail(env, args) {
@@ -205,7 +198,6 @@ export async function sendMail(env, args) {
   try {
     const bannerCid = `${(brand || "default")}-banner@podfy`;
     const footerCid = `podfy-footer@podfy`;
-
     const bannerUrl = `${base}/logo/${encodeURIComponent(brand || "default")}.png`;
     const footerUrl = `${base}/logo/default.png`;
 
@@ -217,20 +209,29 @@ export async function sendMail(env, args) {
     ];
     inlineCids = { bannerCid, footerCid };
   } catch (e) {
-    console.log("Inline logo fetch failed; will fall back to remote src:", String(e));
+    console.log("Inline logo fetch failed; falling back to remote src:", String(e));
   }
 
-  // Rebuild HTML so logos use cid: when available
+  // Build final HTML (logos use cid: when available)
   const htmlFinal = buildHtml({ ...args, inlineCids });
 
-  // Merge: inline logos + original file attachment
+  // Merge inline logos + original attachment
   const attachmentsAll = [
     ...inlineLogoAttachments,
     ...(args.attachment ? [args.attachment] : []),
   ];
 
-  // Send via Resend, fallback MailChannels
+  // Resend -> MailChannels
   const ok = await sendViaResend(env, { ...args, html: htmlFinal, attachmentsAll });
   if (ok !== null) return ok;
   return await sendViaMailchannels(env, { ...args, html: htmlFinal, attachmentsAll });
+}
+
+// keep this exported – upload.js still imports it
+export function pickFromAddress(env, slug) {
+  const domain = env.MAIL_DOMAIN || "podfy.app";
+  const safe = (slug || "default").toLowerCase().replace(/[^a-z0-9\-_.]/g, "-");
+  const dyn = `${safe}@${domain}`;
+  const fallback = `noreply@${domain}`;
+  return dyn || fallback;
 }
