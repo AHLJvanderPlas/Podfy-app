@@ -105,19 +105,19 @@ export function buildHtml({
       </td>
     </tr>
   </table>
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center"
-         style="width:100%; max-width:640px; margin:0 auto; font-size:12px; line-height:1.4; color:#374151;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%; max-width:640px; margin:0 auto; font-size:12px; line-height:1.4; color:#374151;">
     <tr>
       <td style="padding:4px 2px; text-align:left;">
         <a href="mailto:${escapeHtml((typeof process !== "undefined" && process.env && process.env.REPLY_TO_EMAIL) || "support@podfy.net")}?subject=${encodeURIComponent("Podfy Issue " + (podfyId||""))}" style="color:#374151; text-decoration:underline;">Report an issue</a>
       </td>
       <td style="padding:4px 2px; text-align:center;">
-       Podfy-id: ${escapeHtml(podfyId || "")}
-    <td style="padding:4px 2px; text-align:right;">
-      <a href="https://podfy.net/terms" target="_blank" rel="noopener" style="color:#374151; text-decoration:underline;">
-        Terms &amp; Conditions
-      </a>
-    </td>
+        Podfy-id: ${escapeHtml(podfyId || "")}
+      </td>
+      <td style="padding:4px 2px; text-align:right;">
+        <a href="https://podfy.net/terms" target="_blank" rel="noopener" style="color:#374151; text-decoration:underline;">
+          Terms &amp; Conditions
+        </a>
+      </td>
     </tr>
   </table>
 </body>
