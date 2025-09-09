@@ -14,22 +14,7 @@
     "favicon":        "/logos/podfy-favicon.svg",
     "status":         "Implemented"
   },
-{
-  "podfy": {
-    "brandName":      "PODFY",
-    "logo":           "/logos/podfy.svg",
-    "mailTo":         "ahlj.vd.plas@gmail.com",
-    "colors": {
-      "primary":      "#000000",
-      "accent":       "#1F2937",
-      "text":         "#0B1220",
-      "muted":        "#6B7280",
-      "border":       "#E5E7EB",
-      "buttonText":   "#FFFFFF"},
-    "header": { "bg": "#D3D3D3" },
-    "favicon":        "/logos/podfy-favicon.svg",
-    "status":         "Implemented"
-  },
+
   "dsv": {
     "brandName": "DSV",
     "logo": "/logos/dsv.svg",
