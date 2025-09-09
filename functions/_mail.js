@@ -161,39 +161,44 @@ async function sendViaResend(env, { fromEmail, toList, subject, html, attachment
   }
 }
 
-async function sendViaMailchannels(env, { fromEmail, toList, subject, html, text, attachmentsAll }) {
-  const headers = { "content-type": "application/json" };
-  if (env.MAILCHANNELS_API_KEY) headers["X-Api-Key"] = env.MAILCHANNELS_API_KEY;
+async function sendViaResend(env, { fromEmail, toList, subject, html, attachmentsAll }) {
+  const apiKey = env.RESEND_API_KEY;
+  if (!apiKey) return null; // signal to fallback to MailChannels
+
+  // Resend expects 'cid' for inline images; it ignores 'contentId'/'disposition'.
+  const attachments = attachmentsAll?.map(a => ({
+    filename: a.filename,
+    content: a.contentBase64,                    // base64 string (no data: prefix)
+    contentType: a.type || "application/octet-stream",
+    // IMPORTANT for inline logos:
+    // If the HTML references <img src="cid:some-id">, put that exact id here:
+    cid: a.cid || undefined
+    // Do not add 'disposition' here; Resend ignores it.
+  }));
 
   const payload = {
-    personalizations: [{ to: toList.map((e) => ({ email: e })) }],
-    from: { email: fromEmail, name: env.MAIL_FROM || "Podfy App" },
+    from: env.MAIL_FROM || `Podfy <${fromEmail}>`,
+    to: toList,
     subject,
-    content: [
-      { type: "text/plain", value: text || html.replace(/<[^>]+>/g, " ").slice(0, 10000) },
-      { type: "text/html", value: html }
-    ],
-    attachments: attachmentsAll?.map(a => ({
-      filename: a.filename,
-      type: a.type || "application/octet-stream",
-      content: a.contentBase64,
-      content_id: a.cid || undefined,
-      content_disposition: a.disposition || (a.cid ? "inline" : "attachment"),
-    })),
+    html,
+    ...(attachments?.length ? { attachments } : {}),
   };
 
   try {
-    const res = await fetch("https://api.mailchannels.net/tx/v1/send", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers,
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
       body: JSON.stringify(payload),
     });
     const body = await res.text();
-    if (!res.ok) { console.error("MailChannels error", res.status, body); return false; }
-    console.log("MailChannels ok", res.status);
+    if (!res.ok) {
+      console.error("Resend error", res.status, body);
+      return false;
+    }
+    console.log("Resend ok", res.status);
     return true;
   } catch (e) {
-    console.error("MailChannels fetch failed", String(e));
+    console.error("Resend fetch failed", String(e));
     return false;
   }
 }
