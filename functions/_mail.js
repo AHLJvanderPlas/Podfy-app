@@ -54,7 +54,7 @@ export function buildHtml({
   const color = theme?.brandColor || "#D3D3D3";
   const base = (imageUrlBase || "https://podfy.app").replace(/\/+$/, "");
   const bannerSrc = inlineCids?.bannerCid ? `cid:${inlineCids.bannerCid}` : `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
-  const footerSrc = inlineCids?.footerCid ? `cid:${inlineCids.footerCid}` : `${base}/logos/default.png`;
+  const footerSrc = inlineCids?.footerCid ? `cid:${inlineCids.footerCid}` : `${base}/logos/podfy.png`;
 
   const lat = meta?.lat || "";
   const lon = meta?.lon || "";
@@ -135,16 +135,14 @@ async function sendViaResend(env, { fromEmail, toList, subject, html, attachment
   // Resend expects 'cid' for inline images; it ignores 'contentId'/'disposition'.
 const attachments = attachmentsAll?.map(a => ({
   filename: a.filename,
-  content: a.contentBase64,                           // base64 string, no data: prefix
+  content: a.contentBase64,
   contentType: a.type || "application/octet-stream",
-  content_id: a.cid || undefined                      // <-- THIS is what Resend uses
-  // Do NOT send `disposition` here; Resend doesn’t need/use it.
+  content_id: a.cid || undefined,           // <-- Resend requires this field name
 }));
 
-   // Attachment issue logging
-   console.log("resend attachments", attachments?.map(x => ({
-     fn: x.filename, cid: x.content_id, type: x.contentType, size: x.content?.length || 0
-   })));
+console.log("resend attachments", attachments?.map(x => ({
+  fn: x.filename, cid: x.content_id, type: x.contentType, size: x.content?.length || 0
+})));
    
   const payload = {
     from: env.MAIL_FROM || `Podfy <${fromEmail}>`,
@@ -216,32 +214,46 @@ export async function sendMail(env, args) {
   const base = (imageUrlBase || env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/,"");
 
   // Prepare inline logos (CID)
-  let inlineCids = null;
-  let inlineLogoAttachments = [];
-  try {
-   const bannerCid = `banner-${(brand || "default")}-podfy`;
-   const footerCid = `podfy-footer`;
-// (Under 128 chars, only safe ASCII.)
-    const bannerUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
-    const footerUrl = `${base}/logos/default.png`;
-    const [bannerB64, footerB64] = await Promise.all([fetchBase64(bannerUrl), fetchBase64(footerUrl)]);
+// --- Inline brand + footer logos via CID (Resend needs content_id) ---
+let inlineCids = null;
+let inlineLogoAttachments = [];
+try {
+  const bannerCid = `banner-${(brand || "default")}-podfy`;
+  const footerCid = `podfy-footer`;
 
-   //log banner-footer issues to logfile
-     console.log("logo urls", { bannerUrl, footerUrl });
-     const [bannerB64, footerB64] = await Promise.all([fetchBase64(bannerUrl), fetchBase64(footerUrl)]);
-     console.log("logo fetched (bytes)", {
-        banner: bannerB64 ? bannerB64.length : 0,
-        footer: footerB64 ? footerB64.length : 0
-     });
-     
-    inlineLogoAttachments = [
-      { filename: `${brand || "default"}-banner.png`, type: "image/png", contentBase64: bannerB64, cid: bannerCid, disposition: "inline" },
-      { filename: "podfy-footer.png",               type: "image/png", contentBase64: footerB64, cid: footerCid, disposition: "inline" },
-    ];
-    inlineCids = { bannerCid, footerCid };
-  } catch (e) {
-    console.log("Inline logo fetch failed; falling back to remote src:", String(e));
-  }
+  const bannerUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
+  const footerUrl = `${base}/logos/podfy.png`; // or /logos/podfy-footer.png
+
+  console.log("logo urls", { bannerUrl, footerUrl });
+
+  const [bannerB64, footerB64] = await Promise.all([
+    fetchBase64(bannerUrl),
+    fetchBase64(footerUrl),
+  ]);
+
+  console.log("logo fetched (bytes)", {
+    banner: bannerB64 ? bannerB64.length : 0,
+    footer: footerB64 ? footerB64.length : 0,
+  });
+
+  inlineLogoAttachments = [
+    { filename: `${brand || "default"}-banner.png`, type: "image/png", contentBase64: bannerB64, cid: bannerCid },
+    { filename: "podfy-footer.png",               type: "image/png", contentBase64: footerB64, cid: footerCid },
+  ];
+  inlineCids = { bannerCid, footerCid };
+} catch (e) {
+  console.log("Inline logo fetch failed; using remote src", String(e));
+}
+
+console.log("inline logos ready", inlineLogoAttachments.map(a => ({
+  fn: a.filename, cid: a.cid, type: a.type, size: (a.contentBase64 || "").length
+})));
+
+// Now build the HTML with CIDs (this makes <img src="cid:...">)
+const htmlFinal = buildHtml({
+  ...argsYouAlreadyPass,
+  inlineCids,
+});
    //log inline-logo issues to logfile
    console.log("inline logos ready", inlineLogoAttachments.map(a => ({
      fn: a.filename, cid: a.cid, type: a.type, size: a.contentBase64.length
