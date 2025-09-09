@@ -113,9 +113,11 @@ export function buildHtml({
       </td>
       <td style="padding:4px 2px; text-align:center;">
        Podfy-id: ${escapeHtml(podfyId || "")}
-      </td>
-      <td style="padding:4px 2px; text-align:right;"> <a href="https://podfy.net/terms" target="_blank" rel="noopener" style="color:#374151; text-decoration:underline;">Terms &amp; Conditions
-      </td>
+    <td style="padding:4px 2px; text-align:right;">
+      <a href="https://podfy.net/terms" target="_blank" rel="noopener" style="color:#374151; text-decoration:underline;">
+        Terms &amp; Conditions
+      </a>
+    </td>
     </tr>
   </table>
 </body>
