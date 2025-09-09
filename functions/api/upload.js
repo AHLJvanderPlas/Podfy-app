@@ -323,7 +323,6 @@ if (mailToList.length) {
     attachment,
   });
   console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
-}
     } else {
       console.log("no staff recipients resolved");
     }
