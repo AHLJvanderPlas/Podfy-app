@@ -1,0 +1,12 @@
+{
+  "name": "podfy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:logos": "node scripts/generate-logos.mjs",
+    "build": "npm run build:logos && wrangler publish"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.0"
+  }
+}
