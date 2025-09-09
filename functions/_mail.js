@@ -211,64 +211,54 @@ async function sendViaMailchannels(env, { fromEmail, toList, subject, html, atta
 
 export async function sendMail(env, args) {
   const { brand, imageUrlBase } = args;
-  const base = (imageUrlBase || env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/,"");
+  const base = (imageUrlBase || env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/, "");
 
-  // Prepare inline logos (CID)
-// --- Inline brand + footer logos via CID (Resend needs content_id) ---
-let inlineCids = null;
-let inlineLogoAttachments = [];
-try {
-  const bannerCid = `banner-${(brand || "default")}-podfy`;
-  const footerCid = `podfy-footer`;
+  // --- Inline brand + footer logos via CID (works for Resend & MailChannels) ---
+  let inlineCids = null;
+  let inlineLogoAttachments = [];
+  try {
+    const bannerCid = `banner-${(brand || "default")}-podfy`;
+    const footerCid = `podfy-footer`;
 
-  const bannerUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
-  const footerUrl = `${base}/logos/podfy.png`; // or /logos/podfy-footer.png
+    const bannerUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
+    const footerUrl = `${base}/logos/podfy.png`;
 
-  console.log("logo urls", { bannerUrl, footerUrl });
+    console.log("logo urls", { bannerUrl, footerUrl });
 
-  const [bannerB64, footerB64] = await Promise.all([
-    fetchBase64(bannerUrl),
-    fetchBase64(footerUrl),
-  ]);
+    const [bannerB64, footerB64] = await Promise.all([
+      fetchBase64(bannerUrl),
+      fetchBase64(footerUrl),
+    ]);
 
-  console.log("logo fetched (bytes)", {
-    banner: bannerB64 ? bannerB64.length : 0,
-    footer: footerB64 ? footerB64.length : 0,
-  });
+    console.log("logo fetched (bytes)", {
+      banner: bannerB64 ? bannerB64.length : 0,
+      footer: footerB64 ? footerB64.length : 0,
+    });
 
-  inlineLogoAttachments = [
-    { filename: `${brand || "default"}-banner.png`, type: "image/png", contentBase64: bannerB64, cid: bannerCid },
-    { filename: "podfy-footer.png",               type: "image/png", contentBase64: footerB64, cid: footerCid },
-  ];
-  inlineCids = { bannerCid, footerCid };
-} catch (e) {
-  console.log("Inline logo fetch failed; using remote src", String(e));
-}
+    inlineLogoAttachments = [
+      { filename: `${brand || "default"}-banner.png`, type: "image/png", contentBase64: bannerB64, cid: bannerCid },
+      { filename: "podfy-footer.png",               type: "image/png", contentBase64: footerB64, cid: footerCid },
+    ];
+    inlineCids = { bannerCid, footerCid };
+  } catch (e) {
+    console.log("Inline logo fetch failed; using remote src", String(e));
+  }
 
-console.log("inline logos ready", inlineLogoAttachments.map(a => ({
-  fn: a.filename, cid: a.cid, type: a.type, size: (a.contentBase64 || "").length
-})));
+  // One concise log (kept)
+  console.log("inline logos ready", inlineLogoAttachments.map(a => ({
+    fn: a.filename, cid: a.cid, type: a.type, size: (a.contentBase64 || "").length
+  })));
 
-// Now build the HTML with CIDs (this makes <img src="cid:...">)
-const htmlFinal = buildHtml({
-  ...argsYouAlreadyPass,
-  inlineCids,
-});
-   //log inline-logo issues to logfile
-   console.log("inline logos ready", inlineLogoAttachments.map(a => ({
-     fn: a.filename, cid: a.cid, type: a.type, size: a.contentBase64.length
-   })));
-   
-  // Build final HTML (logos use cid: when available)
+  // Build final HTML (logos use cid:... when available)
   const htmlFinal = buildHtml({ ...args, inlineCids });
 
-  // Merge inline logos + original attachment
+  // Merge inline logos + original user attachment
   const attachmentsAll = [
     ...inlineLogoAttachments,
     ...(args.attachment ? [args.attachment] : []),
   ];
 
-  // Resend -> MailChannels
+  // Try Resend first; if RESEND_API_KEY is missing, fall back to MailChannels
   const ok = await sendViaResend(env, { ...args, html: htmlFinal, attachmentsAll });
   if (ok !== null) return ok;
   return await sendViaMailchannels(env, { ...args, html: htmlFinal, attachmentsAll });
