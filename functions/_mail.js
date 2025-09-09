@@ -28,12 +28,11 @@ const fullUrl = (base, path) => {
 
 // Some email clients dislike SVG logos. Prefer PNG.
 const pickLogoUrl = (imageBase, urlFromTheme) => {
-  const fallback = "/logos/podfy.png"; // ship a small PNG in /public/logos
-  if (!urlFromTheme) return fullUrl(imageBase, fallback);
-  if (/\.svg(\?.*)?$/i.test(urlFromTheme)) {
-    return fullUrl(imageBase, urlFromTheme.replace(/\.svg(\?.*)?$/i, ".png$1"));
-  }
-  return fullUrl(imageBase, urlFromTheme);
+  const fallback = "/logos/podfy.png";
+  let u = urlFromTheme || fallback;
+  if (!/\.(svg|png|jpg|jpeg)(\?.*)?$/i.test(u)) u = `${u}.png`;        // NEW: add .png if no ext
+  if (/\.svg(\?.*)?$/i.test(u)) u = u.replace(/\.svg(\?.*)?$/i, ".png$1");
+  return fullUrl(imageBase, u);
 };
 
 /* ============================================================
@@ -100,7 +99,9 @@ export function buildHtml({
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%; max-width:680px; margin:0 auto;">
     <tr>
       <td style="background:${color}; border-radius:12px 12px 0 0; padding:14px 18px;">
-        <img src="${logoUrl}" alt="${escapeHtml(brandName || brand || "PODFY")} logo" style="display:block; height:28px;">
+        <img
+           src="${logoUrl}" alt="${escapeHtml(brandName || brand || "PODFY")} logo" width="147"
+           style="display:block;border:0;outline:0;text-decoration:none;width:147px;height:auto;-ms-interpolation-mode:bicubic;">
       </td>
     </tr>
 
@@ -139,7 +140,8 @@ export function buildHtml({
         <div style="text-align:center; padding:16px 8px 6px; margin-top:40px;">
           <span style="font-size:10px; color:#9CA3AF; display:block; margin-bottom:10px;">This POD is provided by</span>
           <a href="https://podfy.net" target="_blank" rel="noopener" style="display:inline-block;">
-            <img src="${podfyLogoUrl}" alt="Podfy" style="display:block; height:18px;">
+            <img src="${podfyLogoUrl}" alt="Podfy" width="72"
+              style="display:block;border:0;outline:0;text-decoration:none;width:72px;height:auto;-ms-interpolation-mode:bicubic;">
           </a>
           <div style="margin-top:8px; font-size:10px; color:#ffffff; user-select:text;">${escapeHtml(fileName || "")}</div>
         </div>
