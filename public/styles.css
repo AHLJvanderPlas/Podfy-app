@@ -399,7 +399,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 }
 
 /* Success / error states (optional) */
-.progress.success .progress-bar { background: var(--brand-accent); }
+.progress.success .progress-bar { background: var(--brand-primary); }
 .progress.error   .progress-bar { background: var(--danger, #e11d48); }
 
 /* Make the progress bar span the hero width and sit centered */
