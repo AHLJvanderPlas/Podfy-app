@@ -320,6 +320,10 @@ if (mailToList.length) {
     html, // _mail.js will rebuild HTML to use CID logos; keeping this is fine
     brand,                                        // <-- add
     imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app", // <-- add
+    meta,
+    reference,
+    podfyId,
+    dateTime,
     attachment,
   });
   console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
@@ -337,6 +341,10 @@ if (emailCopy) {
     html,
     brand,                                        // <-- add
     imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app", // <-- add
+      meta,
+    reference,
+    podfyId,
+    dateTime,
     attachment,
   });
   console.log("user mail sent?", okUser, { to: emailCopy, from: fromEnvelope });
