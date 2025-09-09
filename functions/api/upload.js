@@ -312,31 +312,36 @@ try {
 
     // Send to staff (with debug)
     let okStaff = false;
-    if (mailToList.length) {
-      okStaff = await sendMail(env, {
-        fromEmail: fromEnvelope,
-        toList: mailToList,
-        subject,
-        html,
-        attachment,
-      });
-      console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
+if (mailToList.length) {
+  okStaff = await sendMail(env, {
+    fromEmail: fromEnvelope,
+    toList: mailToList,
+    subject,
+    html, // _mail.js will rebuild HTML to use CID logos; keeping this is fine
+    brand,                                        // <-- add
+    imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app", // <-- add
+    attachment,
+  });
+  console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
+}
     } else {
       console.log("no staff recipients resolved");
     }
 
     // Optional copy to uploader (with debug)
     let okUser = false;
-    if (emailCopy) {
-      okUser = await sendMail(env, {
-        fromEmail: fromEnvelope,
-        toList: [emailCopy],
-        subject: `We received your file: ${finalBase}.${ext}`,
-        html,
-        attachment,
-      });
-      console.log("user mail sent?", okUser, { to: emailCopy, from: fromEnvelope });
-    }
+if (emailCopy) {
+  okUser = await sendMail(env, {
+    fromEmail: fromEnvelope,
+    toList: [emailCopy],
+    subject: `We received your file: ${finalBase}.${ext}`, // keep or use 'subject'
+    html,
+    brand,                                        // <-- add
+    imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app", // <-- add
+    attachment,
+  });
+  console.log("user mail sent?", okUser, { to: emailCopy, from: fromEnvelope });
+}
 
     return new Response(
       JSON.stringify({
