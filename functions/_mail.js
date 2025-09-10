@@ -74,11 +74,18 @@ export function buildHtml({
 </head>
 <body style="margin:0; padding:20px; background:#f5f5f5; font-family:-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%; max-width:680px; margin:0 auto;">
-    <tr>
-      <td style="background:${color}; border-radius:12px 12px 0 0; padding:14px 18px;">
-        <img src="${bannerSrc}" alt="${escapeHtml(brandName || brand || "Podfy")} logo" style="display:block; height:28px;">
-      </td>
-    </tr>
+<tr>
+  <td bgcolor="${color}" style=" padding:0; line-height:0; mso-line-height-rule:exactly; font-size:0; border-radius:12px 12px 0 0;"  >
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+      <tr>
+        <td style="padding:14px 18px;">
+          <img src="${bannerSrc}" alt="${escapeHtml(brandName || brand || 'Podfy')} logo" width="200" height="28" display:block;
+              width:200px; height:28px; border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; "/>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
     <tr>
       <td style="background:#ffffff; border-radius:0 0 12px 12px; padding:22px;">
         <p style="margin:0 0 20px 0; line-height:1.5; color:#111827;">Dear ${escapeHtml(brandName || brand || "Customer")},</p>
