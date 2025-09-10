@@ -88,16 +88,14 @@ export function buildHtml({
           <tr><td style="padding:6px 8px; width:200px;">POD upload</td><td style="padding:6px 8px;">${escapeHtml(dateTime || "")}</td></tr>
           <tr><td style="padding:6px 8px; width:200px;">Location qualifier</td><td style="padding:6px 8px;">${escapeHtml(meta?.locationQualifier || "")}</td></tr>
           <tr><td style="padding:6px 8px; width:200px;">Latitude, Longitude</td>
-              <td style="padding:6px 8px;">${
-                mapsHref
-                  ? `<a href="${mapsHref}" target="_blank" rel="noopener" style="color:#1D4ED8; text-decoration:underline;">${escapeHtml(lat)}, ${escapeHtml(lon)}</a>`
-                  : ""
-              }</td></tr>
+              <td style="padding:6px 8px;">${mapsHref? `<a href="${mapsHref}" target="_blank" rel="noopener" style="color:#1D4ED8; text-decoration:underline;">${escapeHtml(lat)}, ${escapeHtml(lon)}</a>`: ""}
+              </td>
+              </tr>
           <tr><td style="padding:6px 8px; width:200px;">Location code</td><td style="padding:6px 8px;">${escapeHtml(meta?.locationCode || "")}</td></tr>
         </table>
         <div style="text-align:center; padding:16px 8px 6px; margin-top:10px;">
         <div style=" font-size:10px; color:#ffffff; user-select:text;">${escapeHtml(fileName || "")}</div>
-          <span style="font-size:10px; color:#9CA3AF; display:block; margin-bottom:10px;">This POD is provided by</span>
+          <span style="font-size:10px; color:#9CA3AF; display:block; margin-bottom:10px;">This POD is provided by</span></br>
           <a href="https://podfy.net" target="_blank" rel="noopener" style="display:inline-block;">
             <img src="${footerSrc}" alt="Podfy" style="display:block; height:36px;">
           </a>
