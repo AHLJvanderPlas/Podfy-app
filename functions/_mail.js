@@ -106,7 +106,7 @@ export function buildHtml({
         <div style=" font-size:10px; color:#ffffff; user-select:text;">${escapeHtml(fileName || "")}</div>
           <span style="font-size:10px; color:#9CA3AF; display:block; margin-bottom:10px;">This POD is provided by</span>
           <a href="https://podfy.net" target="_blank" rel="noopener" style="display:inline-block;">
-            <img src="${footerSrc}" alt="Podfy" style="display:block; height:36px;">
+            <img src="${footerSrc}" alt="Podfy" width="72" height="18" style="display:block;width:72px;height:18px;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"/>
           </a>
         </div>
       </td>
