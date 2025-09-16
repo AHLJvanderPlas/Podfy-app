@@ -592,27 +592,54 @@ if (f) {
     // On file picker/camera selection: select file, don’t upload
 fileInput?.addEventListener('change', () => {
   const f = fileInput.files && fileInput.files[0];
-  if (f) {
-    selectedFile = f;
-    showPreview(f);      // NEW
-    resetProgress();     // NEW
-    dropzone?.classList.add('ready');
-    if (submitBtn) submitBtn.disabled = false;
-    if (statusEl) statusEl.textContent = '';
+  if (f) return;
+
+  // NEW: validate first
+  const v = validateClientFile(f); // uses MAX_BYTES/ALLOWED_* you added
+  if (!v.ok) {
+    statusEl && (statusEl.textContent = v.msg);
+    dropzone?.classList.remove('ready');   // <-- not ready on invalid
+    hidePreview();
+    resetProgress();
+    submitBtn && (submitBtn.disabled = true);
+    fileInput.value = '';                  // clear bad selection
+    return;                                // IMPORTANT: stop here
   }
+
+  // Accept only if valid
+  selectedFile = f;
+  showPreview(f);
+  resetProgress();
+  dropzone?.classList.add('ready');        // <-- ready on valid
+  submitBtn && (submitBtn.disabled = false);
+  statusEl && (statusEl.textContent = '');
 });
 
 cameraInput?.addEventListener('change', () => {
   const f = cameraInput.files && cameraInput.files[0];
-  if (f) {
-    selectedFile = f;
-    showPreview(f);      // NEW
-    resetProgress();     // NEW
-    dropzone?.classList.add('ready');
-    if (submitBtn) submitBtn.disabled = false;
-    if (statusEl) statusEl.textContent = '';
+  if (!f) return;
+
+  // NEW: validate first
+  const v = validateClientFile(f); // uses MAX_BYTES/ALLOWED_* you added
+  if (!v.ok) {
+    statusEl && (statusEl.textContent = v.msg);
+    dropzone?.classList.remove('ready');   // <-- not ready on invalid
+    hidePreview();
+    resetProgress();
+    submitBtn && (submitBtn.disabled = true);
+    cameraInput.value = '';                // clear bad selection
+    return;                                // IMPORTANT: stop here
   }
+
+  // Accept only if valid
+  selectedFile = f;
+  showPreview(f);
+  resetProgress();
+  dropzone?.classList.add('ready');        // <-- ready on valid
+  submitBtn && (submitBtn.disabled = false);
+  statusEl && (statusEl.textContent = '');
 });
+
 
      removeFileBtn?.addEventListener('click', () => {
   selectedFile = null;
