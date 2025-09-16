@@ -5,6 +5,36 @@ import { resolveEmailTheme, buildHtml, pickFromAddress, sendMail } from "../_mai
 
 /* ------------------------------ helpers ------------------------------ */
 
+// --- Config ---
+const MAX_BYTES = 25 * 1024 * 1024;
+const ALLOWED_MIME = new Set([
+  'application/pdf',
+  'image/jpeg', 'image/png',
+  'image/heic', 'image/heif',
+  'image/webp',
+]);
+const ALLOWED_EXT  = new Set(['pdf','jpg','jpeg','png','heic','heif','webp']);
+
+// --- Tiny signature sniffer (magic bytes) ---
+function sniffKind(bytes) {
+  const b = new Uint8Array(bytes);
+  const h = (i, n) => [...b.slice(i, i+n)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  // %PDF
+  if (h(0,4) === '25504446') return 'pdf';
+  // JPEG: FF D8 FF
+  if (h(0,3) === 'ffd8ff') return 'jpg';
+  // PNG: 89 50 4E 47
+  if (h(0,4) === '89504e47') return 'png';
+  // WEBP: "RIFF" .... "WEBP"
+  if (h(0,4) === '52494646' && new TextDecoder().decode(b.slice(8,12)) === 'WEBP') return 'webp';
+  // HEIF/HEIC family: "ftyp" with compatible brands
+  if (h(4,4) === '66747970') {
+    const brand = new TextDecoder().decode(b.slice(8,12)).toLowerCase();
+    if (['heic','heif','mif1','hevc','hevx','heis','hevm'].includes(brand)) return 'heic';
+  }
+  return 'unknown';
+}
+
 // random 8-char Podfy ID (Crockford alphabet: no I/L/O/U)
 const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const randomId = (len = 8) =>
