@@ -153,11 +153,15 @@ async function parseRequest(request) {
 
 /* ------------------------------ handler ------------------------------ */
 
-const { mode, file, fields } = await parseRequest(request);
-let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
+export const onRequestPost = async ({ request, env }) => {
+  const { PODFY_BUCKET } = env;
 
-// --- Bot checks (honeypot + form age + origin) -----------------------
-{
+  try {
+    const { mode, file, fields } = await parseRequest(request);
+    let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
+
+  // --- Bot checks (honeypot + form age + origin) -----------------------
+    {
   // Honeypot: reject if filled
   const hp = (fields.honeypot || "").toString().trim();
   if (hp) {
@@ -177,13 +181,7 @@ let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime,
     return new Response(JSON.stringify({ ok:false, error:"Bad origin" }), { status: 403 });
   }
 }
-
-export const onRequestPost = async ({ request, env }) => {
-  const { PODFY_BUCKET } = env;
-
-  try {
-    const { mode, file, fields } = await parseRequest(request);
-    let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
+    
 // --- Brand resolution (form -> Referer -> URL), then validate against themes.json
 function firstPathSegment(u) {
   try {
