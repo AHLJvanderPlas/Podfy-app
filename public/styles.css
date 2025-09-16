@@ -414,6 +414,9 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 .hidden{ display:none !important; }
 [hidden]{ display:none !important; }
 
+/* Honeypot field: hide visually, keep in DOM for bots */
+.hp{ position:absolute !important; left:-9999px !important; width:1px; height:1px; overflow:hidden; }
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce){ .progress-bar { transition:none; }}
 
