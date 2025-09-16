@@ -121,6 +121,8 @@ async function parseRequest(request) {
 
         // if you already expose a preview URL, you may provide it
         previewUrl: (form.get("previewUrl") || "").toString(),
+        honeypot: (form.get("company_website") || "").toString(),   // NEW
+        issuedAt: (form.get("form_issued_at") || "").toString(),    // NEW
       },
     };
   }
@@ -140,6 +142,8 @@ async function parseRequest(request) {
       podfyId: (json.podfyId || ""),
       dateTime: (json.dateTime || ""),
       previewUrl: (json.previewUrl || ""),
+      honeypot: (json.company_website || ""), // NEW (for tests only)
+      issuedAt: (json.form_issued_at || ""),  // NEW (for tests only)
       base64: (json.base64 || ""), // optional for tests only
       fileName: (json.fileName || "upload.bin"),
       contentType: (json.contentType || "application/octet-stream"),
@@ -148,6 +152,31 @@ async function parseRequest(request) {
 }
 
 /* ------------------------------ handler ------------------------------ */
+
+const { mode, file, fields } = await parseRequest(request);
+let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
+
+// --- Bot checks (honeypot + form age + origin) -----------------------
+{
+  // Honeypot: reject if filled
+  const hp = (fields.honeypot || "").toString().trim();
+  if (hp) {
+    return new Response(JSON.stringify({ ok:false, error:"Rejected" }), { status: 400 });
+  }
+
+  // Form must be at least 2s old
+  const t0 = parseInt((fields.issuedAt || "0").toString(), 10);
+  if (!t0 || Date.now() - t0 < 2000) {
+    return new Response(JSON.stringify({ ok:false, error:"Too fast" }), { status: 400 });
+  }
+
+  // Origin must match our public base URL
+  const origin = request.headers.get("origin") || "";
+  const allowedOrigin = (env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/,"");
+  if (!origin || !origin.startsWith(allowedOrigin)) {
+    return new Response(JSON.stringify({ ok:false, error:"Bad origin" }), { status: 403 });
+  }
+}
 
 export const onRequestPost = async ({ request, env }) => {
   const { PODFY_BUCKET } = env;
@@ -211,6 +240,30 @@ const t = resolveEmailTheme(brand, themes);
       contentType = fields.contentType;
       buffer = Uint8Array.from(atob(fields.base64), (c) => c.charCodeAt(0)).buffer;
     }
+
+    // --- Authoritative validation (size + kind + allow-list) ------------
+{
+  if (!buffer || buffer.byteLength === 0) {
+    return new Response(JSON.stringify({ ok:false, error:"Empty file" }), { status: 400 });
+  }
+
+  if (buffer.byteLength > MAX_BYTES) {
+    return new Response(JSON.stringify({ ok:false, error:"File too large (max 25 MB)" }), { status: 413 });
+  }
+
+  const head = buffer.slice(0, 32);
+  const kind = sniffKind(head);  // 'pdf' | 'jpg' | 'png' | 'webp' | 'heic' | 'unknown'
+
+  const safeName = (fileName || "upload").toLowerCase();
+  const extFromName = safeName.includes(".") ? safeName.split(".").pop() : "";
+  const mimeOk = ALLOWED_MIME.has(contentType);
+  const extOk  = ALLOWED_EXT.has(extFromName);
+
+  // must be a known signature and either mime or ext is allow-listed
+  if (kind === "unknown" || !(mimeOk || extOk)) {
+    return new Response(JSON.stringify({ ok:false, error:"Unsupported or suspicious file" }), { status: 415 });
+  }
+}
 
     // Sanitize name pieces
     const safeBase = (fileName.replace(/[^A-Za-z0-9_.-]/g, "_") || "upload");
