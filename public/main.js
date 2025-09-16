@@ -791,6 +791,13 @@ try {
 
   // ---------- Init ----------
   (async function init() {
+
+  // NEW: set bot-check timestamp as early as possible
+  const issuedAtInput = document.getElementById('form_issued_at');
+    if (issuedAtInput && !issuedAtInput.value) {
+      issuedAtInput.value = String(Date.now());
+    }
+     
     await loadI18n();
     await loadTheme();
     buildLangMenu();
