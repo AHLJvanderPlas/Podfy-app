@@ -31,7 +31,7 @@
       <div class="lang">
         <button id="translateBtn" class="lang-trigger" aria-haspopup="menu" aria-expanded="false">
           <!-- Globe icon -->
-          <img class="lang-ic" src="/icons/Language-01.svg" alt="" aria-hidden="true">
+          <img class="lang-ic" src="/logos/Language-01.svg" alt="" aria-hidden="true">
           <span id="currentLangLabel">English</span>
           <svg class="lang-caret" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
@@ -80,9 +80,16 @@
         <span id="progressLabel" class="progress-label">0%</span>
       </div>
 
+<!-- Honeypot + form-age (bot protection) -->
+<label class="hp" aria-hidden="true">
+  Company Website
+  <input type="text" name="company_website" tabindex="-1" autocomplete="off">
+</label>
+<input type="hidden" name="form_issued_at" id="form_issued_at">
+      
       <div class="dz-actions">
         <!-- Verborgen inputs -->
-        <input id="fileInput"  type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" style="display:none" />
+        <input id="fileInput"  type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp" style="display:none" />
         <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" />
 
         <!-- Zichtbare knoppen -->
