@@ -25,13 +25,13 @@
   const submitBtn   = qs('#submitBtn');
   const statusEl    = qs('#status');
 
-// New UI bits
-const filePreview   = qs('#filePreview');
-const fileNameEl    = qs('#fileName');
-const removeFileBtn = qs('#removeFileBtn');
-const uploadProgress = qs('#uploadProgress');
-const progressBar    = qs('#progressBar');
-const progressLabel  = qs('#progressLabel');
+  // New UI bits
+  const filePreview   = qs('#filePreview');
+  const fileNameEl    = qs('#fileName');
+  const removeFileBtn = qs('#removeFileBtn');
+  const uploadProgress = qs('#uploadProgress');
+  const progressBar    = qs('#progressBar');
+  const progressLabel  = qs('#progressLabel');
 
   // Email
   const copyCheck   = qs('#copyCheck');
@@ -47,6 +47,12 @@ const progressLabel  = qs('#progressLabel');
   const langMenu    = qs('#langMenu');
   const langLabel   = qs('#currentLangLabel');
 
+  // File constraint checker
+  const MAX_BYTES = 25 * 1024 * 1024;
+  const ALLOWED_EXT = ['pdf','jpg','jpeg','png','heic','heif','webp']; // add 'avif' if you support it
+  const ALLOWED_MIME = ['application/pdf','image/jpeg','image/png','image/heic','image/heif','image/webp'];
+  const extOf = (n='') => (n.includes('.') ? n.split('.').pop().toLowerCase() : '');
+   
   const heading     = qs('#heading');
 
   // ---------- Path: slug + optional reference ----------
@@ -67,19 +73,17 @@ const progressLabel  = qs('#progressLabel');
    // ---------- helpers on upload file name ----------
 function showPreview(f){
   if (!f || !f.name) return;
-
   // set name + size
   if (fileNameEl) {
     const mb = (f.size/1048576);
-    fileNameEl.textContent = `${f.name} ${isFinite(mb)?`(${mb.toFixed(1)} MB)`:''}`;
-  }
-
+    fileNameEl.textContent = `${f.name} ${isFinite(mb)?`(${mb.toFixed(1)} MB)`:''}`;}
   // show chip, hide helper texts & action buttons
   filePreview?.removeAttribute('hidden');
   qs('.dz-sub')?.classList.add('hidden');
   qs('.dz-constraints')?.classList.add('hidden');
   qs('.dz-actions')?.setAttribute('hidden','');   // NEW: hide buttons when a file is chosen
 }
+   
 function hidePreview(){
   // hide chip, show helper texts & action buttons, clear filename
   filePreview?.setAttribute('hidden','');
@@ -88,12 +92,14 @@ function hidePreview(){
   qs('.dz-actions')?.removeAttribute('hidden');   // NEW: show buttons again
   if (fileNameEl) fileNameEl.textContent = '';    // NEW: clear leftover text
 }
+   
 function resetProgress(){
   uploadProgress?.setAttribute('hidden','');
   progressBar && (progressBar.style.width = '0%');
   uploadProgress?.setAttribute('aria-valuenow','0');
   progressLabel && (progressLabel.textContent = '0%');
 }
+   
 function updateProgress(pct){
   if (!uploadProgress) return;
   uploadProgress.removeAttribute('hidden');
@@ -102,31 +108,38 @@ function updateProgress(pct){
   progressLabel && (progressLabel.textContent = pct+'%');
 }
 
+// ---------- File Validation helpers ----------
+function validateClientFile(f){
+  const okType = ALLOWED_MIME.includes(f.type) || ALLOWED_EXT.includes(extOf(f.name));
+  if (!okType) return { ok:false, msg:`Unsupported file type.` };
+  if (f.size > MAX_BYTES) return { ok:false, msg:`File too large (max 25 MB).` };
+  return { ok:true };
+}
    
   // ---------- Language helpers ----------
-  function normalizeLangCode(code) {
-    if (!code) return '';
-    let c = code.toLowerCase().replace('_','-');
-    if (c === 'ro-md') return 'ro_MD';
-    if (c === 'ckb' || c === 'ku-iq') return 'ckb';
-    if (c.startsWith('pt-')) return 'pt';
-    return c.split('-')[0];
-  }
-  function pickInitialLang(available) {
-    const urlLang = new URLSearchParams(location.search).get('lang');
-    if (urlLang) {
-      const k = normalizeLangCode(urlLang);
-      if (available[k]) return k;
-    }
-    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
-    const k = normalizeLangCode(nav);
+function normalizeLangCode(code) {
+  if (!code) return '';
+  let c = code.toLowerCase().replace('_','-');
+  if (c === 'ro-md') return 'ro_MD';
+  if (c === 'ckb' || c === 'ku-iq') return 'ckb';
+  if (c.startsWith('pt-')) return 'pt';
+  return c.split('-')[0];
+}
+
+function pickInitialLang(available) {
+  const urlLang = new URLSearchParams(location.search).get('lang');
+  if (urlLang) {
+    const k = normalizeLangCode(urlLang);
     if (available[k]) return k;
-    return 'en';
   }
+  const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  const k = normalizeLangCode(nav);
+  if (available[k]) return k; return 'en';
+}
 
   // ---------- Unknown slug banner ----------
-  function renderUnknownSlugBanner(slugValue) {
-    if (!banner) return;
+function renderUnknownSlugBanner(slugValue) {
+  if (!banner) return;
     const dict = langStrings[currentLang] || langStrings['en'] || {};
     const msgTmpl   = dict.unknownSlug || 'Unknown reference “{slug}”. Please verify the URL or use the general uploader.';
     const linkLabel = dict.learnAboutPodfy || 'Learn about Podfy';
@@ -541,14 +554,31 @@ function updateProgress(pct){
         dz.classList.remove('dragover');
         const files = e.dataTransfer && e.dataTransfer.files;
         const f = files && files[0];
+
 if (f) {
+  // NEW: validate before accepting
+  const v = validateClientFile(f);   // uses MAX_BYTES/ALLOWED_* you added
+  if (!v.ok) {
+    // reject + reset UI
+    statusEl && (statusEl.textContent = v.msg);
+    dz.classList.remove('ready');
+    hidePreview();
+    resetProgress();
+    if (submitBtn) submitBtn.disabled = true;
+    if (fileInput)  fileInput.value  = '';
+    if (cameraInput) cameraInput.value = '';
+    return;                          // IMPORTANT: do not proceed
+  }
+
+  // Accept file only if valid
   selectedFile = f;
   dz.classList.add('ready');
   if (submitBtn) submitBtn.disabled = false;
-  if (statusEl) statusEl.textContent = '';
+  statusEl && (statusEl.textContent = '');
   showPreview(f);
   resetProgress();
 }
+
 
       });
 
