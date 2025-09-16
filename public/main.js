@@ -592,7 +592,7 @@ if (f) {
     // On file picker/camera selection: select file, don’t upload
 fileInput?.addEventListener('change', () => {
   const f = fileInput.files && fileInput.files[0];
-  if (f) return;
+  if (!f) return;
 
   // NEW: validate first
   const v = validateClientFile(f); // uses MAX_BYTES/ALLOWED_* you added
@@ -688,6 +688,14 @@ cameraInput?.addEventListener('change', () => {
     if (submitBtn) submitBtn.disabled = true;
 
     const form = new FormData();
+     // --- Bot-defense fields sent with the upload ---
+      const issuedInput = document.getElementById('form_issued_at');
+      // server expects both fields:
+      //  - form_issued_at: timestamp when the form was shown
+      //  - company_website: honeypot (must be empty)
+      form.append('form_issued_at', issuedInput?.value || String(Date.now()));
+      form.append('company_website', '');
+
     form.append('file', f);
       // Always post the brand slug explicitly
       form.append('brand', rawSlug || 'default');
