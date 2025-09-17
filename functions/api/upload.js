@@ -260,6 +260,49 @@ const t = resolveEmailTheme(brand, themes);
   }
 } catch { /* ignore EXIF failures, continue */ }
 
+// --- Choose location source: GPS (browser) → IMG (EXIF) → IP (CF) ---
+let locationSource = 'NONE';
+
+// Normalize incoming browser GPS
+let numLat = (typeof lat === 'number') ? lat : parseFloat(lat);
+let numLon = (typeof lon === 'number') ? lon : parseFloat(lon);
+
+if (Number.isFinite(numLat) && Number.isFinite(numLon)) {
+  locationSource = 'GPS';
+} else if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
+  numLat = exifLat;
+  numLon = exifLon;
+  locationSource = 'IMG';
+} else {
+  // CF city-level coordinates (rough)
+  const cfLat = parseFloat(request.cf?.latitude);
+  const cfLon = parseFloat(request.cf?.longitude);
+  if (Number.isFinite(cfLat) && Number.isFinite(cfLon)) {
+    numLat = cfLat;
+    numLon = cfLon;
+    locationSource = 'IP';
+  }
+}
+
+// Backfill accuracy: EXIF has none; IP is coarse
+let numAcc = (typeof accuracy === 'number') ? accuracy : parseFloat(accuracy);
+if (!Number.isFinite(numAcc)) {
+  if (locationSource === 'IP') numAcc = 50000; // ~50 km heuristic
+  else numAcc = null;
+}
+
+// Backfill date/time from EXIF if not provided earlier
+if (!dateTime && exifDateIso) {
+  dateTime = exifDateIso;
+}
+
+// Write normalized values back for downstream code
+if (Number.isFinite(numLat) && Number.isFinite(numLon)) {
+  lat = numLat;
+  lon = numLon;
+}
+accuracy = Number.isFinite(numAcc) ? numAcc : null;
+    
     // --- Authoritative validation (size + kind + allow-list) ------------
 {
   if (!buffer || buffer.byteLength === 0) {
@@ -299,43 +342,40 @@ const finalBase = baseNameParts.join("_");
     // Flat key: <slug>/<filename>
     const key = `${brand}/${finalBase}.${ext}`;
 
-    // Location metadata: prefer precise (GPS), else CF IP geo
-    const cf = request.cf || {};
-    const ipLat = cf.latitude;
-    const ipLon = cf.longitude;
-    const ipPostal = (cf.postalCode || "").toString();
-    const ipCountryISO2 = (cf.country || "").toString().toUpperCase();
+// Location metadata (now respects locationSource = GPS | IMG | IP)
+const cf = request.cf || {};
+const ipPostal = (cf.postalCode || "").toString();
+const ipCountryISO2 = (cf.country || "").toString().toUpperCase();
 
-    const buildLocationCode = (iso2, postal) => {
-      if (!iso2) return "";
-      const digits = (postal || "").replace(/\D+/g, "");
-      const prefix = digits.slice(0, 2);
-      return prefix ? `${iso2}${prefix}` : iso2;
-    };
+const buildLocationCode = (iso2, postal) => {
+  if (!iso2) return "";
+  const digits = (postal || "").replace(/\D+/g, "");
+  const prefix = digits.slice(0, 2);
+  return prefix ? `${iso2}${prefix}` : iso2;
+};
 
-// 1) Build locationMeta (your existing code)
-let locationMeta = {};
-if (lat && lon) {
+let locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
+
+if (Number.isFinite(lat) && Number.isFinite(lon)) {
+  // lat/lon were set by the chooser block (GPS or IMG)
   locationMeta = {
-    locationQualifier: "GPS",
+    locationQualifier: locationSource,  // "GPS" or "IMG"
     lat: String(lat),
     lon: String(lon),
     ...(accuracy ? { accuracyM: String(accuracy) } : {}),
     ...(locTs ? { locationTimestamp: String(locTs) } : {}),
   };
-} else if (ipLat && ipLon) {
+} else if (Number.isFinite(parseFloat(cf.latitude)) && Number.isFinite(parseFloat(cf.longitude))) {
   locationMeta = {
     locationQualifier: "IP",
-    lat: String(ipLat),
-    lon: String(ipLon),
+    lat: String(cf.latitude),
+    lon: String(cf.longitude),
     ipCountry: ipCountryISO2 || "",
     ipPostal: ipPostal || "",
     locationCode: buildLocationCode(ipCountryISO2, ipPostal),
   };
-} else {
-  locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
 }
-
+    
 // 2) NOW define the meta object used by emails (right after the block above)
 const meta = {
   locationQualifier: locationMeta.locationQualifier || "",
