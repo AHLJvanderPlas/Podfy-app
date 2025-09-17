@@ -4,5 +4,6 @@
   "type": "module",
   "dependencies": {
     "pdf-lib": "^1.17.1"
+    "exifr": "^7.1.3"
   }
 }
