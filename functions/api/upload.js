@@ -2,6 +2,7 @@
 
 import themes from "../../public/themes.json" assert { type: "json" };
 import { resolveEmailTheme, buildHtml, pickFromAddress, sendMail } from "../_mail.js";
+import * as exifr from 'exifr';
 
 /* ------------------------------ helpers ------------------------------ */
 
@@ -238,6 +239,26 @@ const t = resolveEmailTheme(brand, themes);
       contentType = fields.contentType;
       buffer = Uint8Array.from(atob(fields.base64), (c) => c.charCodeAt(0)).buffer;
     }
+
+    // --- Try EXIF GPS if browser GPS is missing ---
+    let exifLat = null, exifLon = null, exifDateIso = null;
+      try {
+        const isImage =
+          contentType.startsWith('image/') &&
+          (contentType.includes('jpeg') || contentType.includes('png') || contentType.includes('webp') || contentType.includes('heic') || contentType.includes('heif'));
+      if (isImage && (!lat || !lon)) {
+        const exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
+      if (exif && typeof exif.latitude === 'number' && typeof exif.longitude === 'number') {
+          exifLat = exif.latitude;
+          exifLon = exif.longitude;
+      }
+        
+    // Optional: if no dateTime yet, prefer EXIF original timestamp
+    if (!dateTime && exif?.DateTimeOriginal instanceof Date) {
+      exifDateIso = exif.DateTimeOriginal.toISOString();
+    }
+  }
+} catch { /* ignore EXIF failures, continue */ }
 
     // --- Authoritative validation (size + kind + allow-list) ------------
 {
