@@ -6,6 +6,10 @@
     "build:logos": "node scripts/generate-logos.mjs",
     "build": "npm run build:logos && wrangler publish"
   },
+  "dependencies": {
+    "exifr": "^7.1.3",
+    "pdf-lib": "^1.17.1"
+  },
   "devDependencies": {
     "sharp": "^0.33.0"
   }
