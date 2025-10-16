@@ -50,6 +50,23 @@
   "status": "Demo"
 },
 
+"avt": {
+  "brandName": "Arvato",
+  "logo": "/logos/avt.svg",
+  "mailTo": "pod+avt@podfy.app",
+  "colors": {
+    "primary": "#0979B8",
+    "accent": "#231F20",
+    "text": "#0B1220",
+    "muted": "#6B7280",
+    "border": "#E5E7EB",
+    "buttonText": "#FFFFFF"
+  },
+  "header": { "bg": "#FFFFFF" },
+  "favicon": "/logos/avt.svg",
+  "status": "Demo"
+},
+
   "vmt": {
   "brandName": "Van Merode Transport",
   "logo": "/logos/vmt.svg",
