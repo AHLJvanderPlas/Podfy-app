@@ -33,6 +33,23 @@
     "status": "Pilot"
   },
 
+    "dsv-wnl": {
+    "brandName": "DSV",
+    "logo": "/logos/dsv.svg",
+    "mailTo": "NL.SHA.freightforwarding@nl.dsv.com",
+    "colors": {
+      "primary": "#002664",
+      "accent": "#002664",
+      "text": "#0B1220",
+      "muted": "#4B5563",
+      "border": "#E6EAF0",
+      "buttonText": "#FFFFFF"
+    },
+    "header": { "bg": "#002664" },
+    "favicon": "/logos/podfy-favicon.svg",
+    "status": "Pilot"
+  },
+
 "ceva": {
   "brandName": "CEVA Logistics",
   "logo": "/logos/ceva.svg",
