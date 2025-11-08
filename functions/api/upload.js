@@ -481,6 +481,17 @@ export const onRequestPost = async ({ request, env }) => {
       const file_checksum = await sha256Hex(buffer);
       const subscription_code = normalizeSubscriptionCode(fields.subscription_code || fields.subscription || themes[brand]?.subscriptionCode || null);
 
+      try {
+        const row = await env.DB.prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='transactions';"
+        ).first();
+        if (!row) {
+          console.error("D1 preflight: 'transactions' table NOT found in this DB binding");
+        }
+      } catch (e) {
+        console.error("D1 preflight check failed:", e?.message || e);
+      }
+       
       await upsertTransaction(env.DB, {
         podfy_id: podfyId,
         slug: brand,
