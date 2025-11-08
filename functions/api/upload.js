@@ -250,10 +250,14 @@ export const onRequestPost = async ({ request, env }) => {
     return new Response(JSON.stringify({ ok:false, error:"Too fast" }), { status: 400 });
   }
 
-  // Origin must match our public base URL
+  // Origin must match our site (works for prod AND preview)
   const origin = request.headers.get("origin") || "";
-  const allowedOrigin = (env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/,"");
-  if (!origin || !origin.startsWith(allowedOrigin)) {
+  const selfOrigin = new URL(request.url).origin;                // e.g. https://aab6b85b.podfy-app.pages.dev
+  const cfgOrigin = (env.PUBLIC_BASE_URL || "").replace(/\/+$/, "");
+  const allowed = new Set([selfOrigin]);                         // always allow current host
+  if (cfgOrigin) allowed.add(cfgOrigin);                         // also allow configured prod url
+
+  if (!origin || !allowed.has(origin)) {
     return new Response(JSON.stringify({ ok:false, error:"Bad origin" }), { status: 403 });
   }
 }
