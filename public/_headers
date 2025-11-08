@@ -1,22 +1,27 @@
 /*
-  # Cache & security headers for all pages
+  # === Global cache & security headers (applies to all responses) ===
   Cache-Control: no-store
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(self), camera=(), microphone=()
   X-Frame-Options: DENY
   Cross-Origin-Opener-Policy: same-origin
-  Cross-Origin-Resource-Policy: same-origin
+  # Allow loading brand logos hosted on podfy.app
+  Cross-Origin-Resource-Policy: cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://podfy.app; frame-ancestors 'none'
+  # CSP tightened to explicitly allow podfy.app images and calls
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https://podfy.app; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://podfy.app; frame-ancestors 'none'
+*/
 
-/public/themes.json
+/* NOTE: Paths below are URL paths at runtime (no "/public" prefix). */
+
+/themes.json
   Cache-Control: no-store
   Access-Control-Allow-Origin: https://podfy.net
   Access-Control-Allow-Methods: GET, OPTIONS
   Access-Control-Allow-Headers: Content-Type
 
-/public/i18n.json
+/i18n.json
   Cache-Control: no-store
 
 /assets/*
@@ -24,3 +29,4 @@
 
 /logos/*
   Cache-Control: public, max-age=31536000, immutable
+

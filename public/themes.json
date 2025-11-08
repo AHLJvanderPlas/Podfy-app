@@ -33,10 +33,10 @@
     "status": "Pilot"
   },
 
-    "wnl": {
+    "dsvw": {
     "brandName": "DSV",
     "logo": "/logos/dsv.svg",
-    "mailTo": "alex.vanderplas@nl.dsv.com",
+    "mailTo": "NL.SHA.freightforwarding@nl.dsv.com",
     "colors": {
       "primary": "#002664",
       "accent": "#002664",
@@ -70,7 +70,7 @@
 "avt": {
   "brandName": "Arvato",
   "logo": "/logos/avt.svg",
-  "mailTo": "pod+avt@podfy.app",
+  "mailTo": "Vera.meulblok@arvato.com",
   "colors": {
     "primary": "#0979B8",
     "accent": "#231F20",
