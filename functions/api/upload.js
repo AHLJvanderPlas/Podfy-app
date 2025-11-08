@@ -63,6 +63,7 @@ async function upsertTransaction(DB, row) {
     );
   `;
 
+  // Pre-serialize JSON for TEXT fields
   const meta_json_text = row.meta_json ? JSON.stringify(row.meta_json) : null;
   const location_raw_json_text = row.location_raw_json ? JSON.stringify(row.location_raw_json) : null;
 
