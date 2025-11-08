@@ -410,6 +410,35 @@ export const onRequestPost = async ({ request, env }) => {
     if (Number.isFinite(numLat) && Number.isFinite(numLon)) { lat = numLat; lon = numLon; }
     accuracy = Number.isFinite(numAcc) ? numAcc : null;
 
+   // Presented “method tag” (what the user sees)
+const methodTag =
+  locationSource === "IMG" ? "IMG" :
+  locationSource === "GPS" ? "GPS" :
+  locationSource === "IP"  ? "IP"  : "UNKNOWN";
+
+// Canonical source (for DB consistency)
+const presented_source =
+  locationSource === "IMG" ? "exif" :
+  locationSource === "GPS" ? "gps"  :
+  locationSource === "IP"  ? "ip"   : "unknown";
+
+// Shareable map URL for the chosen coordinates
+const mapUrl = (Number.isFinite(lat) && Number.isFinite(lon)) ? buildMapUrl(lat, lon) : "";
+
+// Ensure the raw JSON contains everything we know
+// (You already build `locationMeta`; we just guarantee it carries our final values)
+locationMeta = {
+  ...locationMeta,
+  finalLat: Number.isFinite(lat) ? String(lat) : "",
+  finalLon: Number.isFinite(lon) ? String(lon) : "",
+  finalAccuracyM: Number.isFinite(numAcc) ? String(numAcc) : "",
+  methodTag,
+  presentedSource: presented_source,
+  ipCountry: locationMeta.ipCountry || (request.cf?.country || ""),
+  ipPostal: locationMeta.ipPostal || (request.cf?.postalCode || ""),
+};
+
+     
     /* --- File validations -------------------------------------------------------- */
     if (!buffer || buffer.byteLength === 0) {
       return new Response(JSON.stringify({ ok:false, error:"Empty file" }), { status: 400 });
@@ -519,9 +548,9 @@ export const onRequestPost = async ({ request, env }) => {
         upload_date: local_date,
         upload_time: local_time,
         reference: cleanRef || null,
-        presented_loc_url: pictureUrl,
-        presented_label: null,
-        presented_source,
+        presented_loc_url: mapUrl,     // ← link to map for (lat, lon)
+        presented_label: methodTag,    // ← “IMG” | “GPS” | “IP” | “UNKNOWN”
+        presented_source,              // ← “exif” | “gps” | “ip” | “unknown”
         picture_url: pictureUrl,
         original_filename: fileName || null,
         uploaded_file_type: contentType || null,
