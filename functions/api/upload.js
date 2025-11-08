@@ -487,6 +487,51 @@ const meta = {
       imagePreviewUrl = previewUrl; // if provided externally
     }
 
+// ----- D1: record upload in transactions table -----
+try {
+  const { upload_date, upload_time } = utcParts(new Date());
+
+  const basePublic = (env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/, "");
+  const fallbackUrl = `${basePublic}/media/${encodePath(key)}`;
+  const pictureUrl = imagePreviewUrl || fallbackUrl;
+
+  const presented_source = mapPresentedSource(locationMeta?.locationQualifier);
+  const file_checksum = await sha256Hex(buffer);
+
+  await upsertTransaction(env.DB, {
+    podfy_id: podfyId,
+    slug: brand,
+    upload_date,
+    upload_time,
+    reference: cleanRef || null,
+    presented_loc_url: pictureUrl,
+    presented_label: null,
+    presented_source,
+    picture_url: pictureUrl,
+    original_filename: fileName || null,
+    uploaded_file_type: contentType || null,
+    file_size_bytes: buffer.byteLength,
+    storage_bucket: env.PODFY_BUCKET_NAME || "podfy",
+    storage_key: key,
+    driver_copy_sent: 0,
+    process_status: "received",
+    invoice_group_id: upload_date.slice(0, 7),
+    subscription_code: null,
+    uploader_user_id: null,
+    user_agent: request.headers.get("user-agent") || null,
+    app_version: env.APP_VERSION || null,
+    meta_json: { via: "upload", tz, dateTime },
+    file_checksum,
+    delivery_issue_code: null,
+    delivery_issue_notes: null,
+    location_raw_json: locationMeta,
+  });
+
+  console.log("D1 upsert OK:", podfyId);
+} catch (e) {
+  console.error("D1 upsert failed (non-fatal):", e);
+}
+    
 // ----- D1: record transaction (idempotent by podfy_id) -----
 try {
   // 1) UTC date/time for the row
