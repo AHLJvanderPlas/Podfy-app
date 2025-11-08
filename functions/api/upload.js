@@ -1,13 +1,13 @@
 // functions/api/upload.js
 // -----------------------------------------------------------------------------
-// PODFY Upload API (cleaned & ordered)
-// Responsibilities:
-// - Validate and accept a file (multipart form or JSON test)
-// - Extract basic EXIF & location info
-// - Store to R2 with safe key & metadata
-// - Insert a transaction row in D1 (idempotent by podfy_id)
-// - Send staff + user (driver) emails
-// - Persist driver-copy identity and finalize process_status
+// PODFY Upload API (clean & ordered)
+// - Accepts file uploads (multipart or JSON test)
+// - Extracts minimal EXIF/location
+// - Stores the object in R2
+// - Upserts a D1 "transactions" row (idempotent on podfy_id)
+// - Sends staff + user (driver) emails
+// - Persists driver-copy identity & finalizes process_status
+// - Uses uploader local time for upload_date/time (tz → fields.tz | CF | UTC)
 // -----------------------------------------------------------------------------
 
 import themes from "../../public/themes.json" assert { type: "json" };
@@ -15,25 +15,22 @@ import { resolveEmailTheme, buildHtml, pickFromAddress, sendMail } from "../_mai
 import * as exifr from "exifr";
 
 /* =============================================================================
-   Helpers
+   Helpers (each helper has a short, plain-English explanation)
 ============================================================================= */
 
-// --- Time helpers ------------------------------------------------------------
-
-// Local date/time strings (YYYY-MM-DD / HH:MM:SS) in a given IANA timezone
+// Returns local date/time strings (YYYY-MM-DD / HH:MM:SS) in a given IANA tz.
+// Use this to populate upload_date/upload_time in the user's local time.
 function localParts(d = new Date(), timeZone = "UTC") {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone, year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
   });
   const parts = Object.fromEntries(fmt.formatToParts(d).map(p => [p.type, p.value]));
-  return {
-    local_date: `${parts.year}-${parts.month}-${parts.day}`,
-    local_time: `${parts.hour}:${parts.minute}:${parts.second}`,
-  };
+  return { local_date: `${parts.year}-${parts.month}-${parts.day}`, local_time: `${parts.hour}:${parts.minute}:${parts.second}` };
 }
 
-// For filenames and emails: yyyymmdd, hhmm, and a display string
+// Formats date/time for filenames/subjects and returns friendly pieces.
+// Purely cosmetic—does not affect database timekeeping.
 function formatLocalDateTime(date = new Date(), timeZone = "UTC") {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-CA", {
@@ -41,53 +38,40 @@ function formatLocalDateTime(date = new Date(), timeZone = "UTC") {
       hour: "2-digit", minute: "2-digit", hour12: false,
     }).formatToParts(date).map(p => [p.type, p.value])
   );
-  return {
-    ymd: `${parts.year}${parts.month}${parts.day}`,
-    hhmm: `${parts.hour}${parts.minute}`,
-    display: `${parts.year}-${parts.month}-${parts.day} at ${parts.hour}:${parts.minute}`,
-  };
+  return { ymd: `${parts.year}${parts.month}${parts.day}`, hhmm: `${parts.hour}${parts.minute}`, display: `${parts.year}-${parts.month}-${parts.day} at ${parts.hour}:${parts.minute}` };
 }
 
-// UTC parts (rarely used now but kept for completeness)
+// Returns UTC upload_date/upload_time; kept for completeness/testing.
 function utcParts(d = new Date()) {
   const pad = (n) => String(n).padStart(2, "0");
-  return {
-    upload_date: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`,
-    upload_time: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`,
-  };
+  return { upload_date: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`, upload_time: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}` };
 }
 
-// --- Crypto helpers ----------------------------------------------------------
-
+// Computes a SHA-256 hex of ArrayBuffer data (used for file checksum).
 const enc = new TextEncoder();
-
 async function sha256Hex(buffer) {
   try {
     const hash = await crypto.subtle.digest("SHA-256", buffer);
     return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
-async function sha256HexText(str) {
-  return sha256Hex(enc.encode(str));
-}
+// Computes a SHA-256 hex of a text string (used for hashing email addresses).
+async function sha256HexText(str) { return sha256Hex(enc.encode(str)); }
 
-// Optional HMAC for signed preview URLs
+// Creates an HMAC-SHA256 hex signature (used to sign preview URLs, if enabled).
 async function hmacSHA256(secret, message) {
   const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
   return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// --- Email helpers -----------------------------------------------------------
-
+// Returns the domain part of an email address (example.com from a@b).
 function emailDomain(addr) {
-  const m = String(addr || "").toLowerCase().match(/^[^@]+@([^@]+)$/);
-  return m ? m[1] : null;
+  const m = String(addr || "").toLowerCase().match(/^[^@]+@([^@]+)$/); return m ? m[1] : null;
 }
 
+// Parses "Name <email@domain>" into {name,email}; falls back to noreply@domain.
 function parseFromNameAddr(str, fallbackDomain = "podfy.app") {
   if (!str) return { name: "Podfy App", email: `noreply@${fallbackDomain}` };
   const m = String(str).match(/^\s*(.+?)\s*<\s*([^>]+)\s*>\s*$/);
@@ -96,8 +80,7 @@ function parseFromNameAddr(str, fallbackDomain = "podfy.app") {
   return { name: "Podfy App", email: `noreply@${fallbackDomain}` };
 }
 
-// --- DB helpers --------------------------------------------------------------
-
+// Maps a short qualifier to a canonical source string (for DB consistency).
 function mapPresentedSource(qualifier) {
   switch (String(qualifier || "").toUpperCase()) {
     case "GPS": return "gps";
@@ -108,13 +91,13 @@ function mapPresentedSource(qualifier) {
   }
 }
 
+// Builds a user-friendly map link for given coordinates (Google Maps universal).
 function buildMapUrl(lat, lon) {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "";
-  // You can swap this for OSM if preferred:
-  // return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`;
   return `https://www.google.com/maps?q=${lat},${lon}`;
 }
 
+// Normalizes subscription plan to a 2-letter code; returns null if unknown.
 function normalizeSubscriptionCode(s) {
   if (!s) return null;
   const x = String(s).trim().toUpperCase();
@@ -123,6 +106,7 @@ function normalizeSubscriptionCode(s) {
   return map[x] || null;
 }
 
+// Upserts a single transactions row; preserves original created_at if it exists.
 async function upsertTransaction(DB, row) {
   const sql = `
     INSERT OR REPLACE INTO transactions (
@@ -146,8 +130,7 @@ async function upsertTransaction(DB, row) {
   `;
   const meta_json_text = row.meta_json != null ? JSON.stringify(row.meta_json) : null;
   const location_raw_json_text = row.location_raw_json != null ? JSON.stringify(row.location_raw_json) : null;
-
-  const stmt = DB.prepare(sql).bind(
+  await DB.prepare(sql).bind(
     row.podfy_id, row.slug, row.upload_date, row.upload_time,
     row.podfy_id,
     row.reference, row.presented_loc_url, row.presented_label, row.presented_source,
@@ -155,58 +138,58 @@ async function upsertTransaction(DB, row) {
     row.storage_bucket, row.storage_key, row.driver_copy_sent, row.process_status,
     row.invoice_group_id, row.subscription_code, row.uploader_user_id, row.user_agent, row.app_version, meta_json_text,
     row.file_checksum, row.delivery_issue_code, row.delivery_issue_notes, location_raw_json_text
-  );
-  await stmt.run();
+  ).run();
   return true;
 }
 
-// --- File helpers ------------------------------------------------------------
-
-const MAX_BYTES = 25 * 1024 * 1024;
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "image/jpeg", "image/png",
-  "image/heic", "image/heif",
-  "image/webp",
-]);
-const ALLOWED_EXT  = new Set(["pdf","jpg","jpeg","png","heic","heif","webp"]);
-
+// Returns a quick file-kind guess from header bytes; blocks unknown/suspicious.
 function sniffKind(bytes) {
   const b = new Uint8Array(bytes);
   const h = (i, n) => [...b.slice(i, i+n)].map(x=>x.toString(16).padStart(2,"0")).join("");
-  if (h(0,4) === "25504446") return "pdf";                 // %PDF
-  if (h(0,3) === "ffd8ff") return "jpg";                   // JPEG
-  if (h(0,4) === "89504e47") return "png";                 // PNG
+  if (h(0,4) === "25504446") return "pdf";                       // %PDF
+  if (h(0,3) === "ffd8ff") return "jpg";                         // JPEG
+  if (h(0,4) === "89504e47") return "png";                       // PNG
   if (h(0,4) === "52494646" && new TextDecoder().decode(b.slice(8,12)) === "WEBP") return "webp";
-  if (h(4,4) === "66747970") {                             // ftyp (HEIF family)
+  if (h(4,4) === "66747970") {                                   // ftyp (HEIF family)
     const brand = new TextDecoder().decode(b.slice(8,12)).toLowerCase();
     if (["heic","heif","mif1","hevc","hevx","heis","hevm"].includes(brand)) return "heic";
   }
   return "unknown";
 }
 
+// URL-encodes every path segment safely (prevents broken URLs).
 const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
 
+// Converts an ArrayBuffer to base64 (used to inline small attachments in email).
 function abToBase64(arrayBuffer) {
-  const CHUNK = 0x8000; // 32KB
+  const CHUNK = 0x8000;
   const bytes = new Uint8Array(arrayBuffer);
   let binary = "";
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
+  for (let i = 0; i < bytes.length; i += CHUNK) binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
   return btoa(binary);
 }
 
-// Compact Crockford ID for business key if none provided
+// Generates a short, URL-safe business id if none provided.
 const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-const randomId = (len = 8) =>
-  Array.from(crypto.getRandomValues(new Uint8Array(len)))
-    .map((b) => crockford[b % crockford.length])
-    .join("");
+const randomId = (len = 8) => Array.from(crypto.getRandomValues(new Uint8Array(len))).map((b) => crockford[b % crockford.length]).join("");
+
+// Updates process_status to a terminal or intermediate state (best-effort).
+async function setProcessStatus(DB, podfyId, status) {
+  try {
+    await DB.prepare(`UPDATE transactions SET process_status = ? WHERE podfy_id = ?`).bind(status, podfyId).run();
+  } catch (e) {
+    // Last-resort: log only; never throw from status update
+    console.error("process_status update failed:", status, podfyId, e);
+  }
+}
 
 /* =============================================================================
-   Request parsing
+   Request parsing (accepts multipart form-data or JSON test payloads)
 ============================================================================= */
+
+const MAX_BYTES = 25 * 1024 * 1024;
+const ALLOWED_MIME = new Set(["application/pdf","image/jpeg","image/png","image/heic","image/heif","image/webp"]);
+const ALLOWED_EXT  = new Set(["pdf","jpg","jpeg","png","heic","heif","webp"]);
 
 async function parseRequest(request) {
   const ct = request.headers.get("content-type") || "";
@@ -214,7 +197,6 @@ async function parseRequest(request) {
     const form = await request.formData();
     const file = form.get("file") || form.get("upload");
     if (!file) throw new Error("Missing file");
-
     return {
       mode: "form",
       file,
@@ -229,20 +211,17 @@ async function parseRequest(request) {
         podfyId: (form.get("podfyId") || "").toString(),
         dateTime: (form.get("dateTime") || "").toString(),
         previewUrl: (form.get("previewUrl") || "").toString(),
-        // anti-bot
-        honeypot: (form.get("company_website") || "").toString(),
-        issuedAt: (form.get("form_issued_at") || "").toString(),
-        // optional new fields (accepted if present; ignored if absent)
-        tz: (form.get("tz") || "").toString(),
-        issue: (form.get("issue") || "").toString(),
-        issue_code: (form.get("issue_code") || "").toString(),
-        issue_notes: (form.get("issue_notes") || "").toString(),
+        honeypot: (form.get("company_website") || "").toString(),          // bot trap
+        issuedAt: (form.get("form_issued_at") || "").toString(),           // anti-rapid submit
+        tz: (form.get("tz") || "").toString(),                             // optional uploader tz
+        issue: (form.get("issue") || "").toString(),                       // driver issue checkbox
+        issue_code: (form.get("issue_code") || "").toString(),             // optional code
+        issue_notes: (form.get("issue_notes") || "").toString(),           // optional notes
         subscription_code: (form.get("subscription_code") || form.get("subscription") || "").toString(),
       },
     };
   }
-
-  // JSON test mode
+  // JSON test mode (no file stream; base64 content is accepted)
   const json = await request.json();
   return {
     mode: "json",
@@ -279,31 +258,26 @@ export const onRequestPost = async ({ request, env }) => {
   const { PODFY_BUCKET } = env;
 
   try {
-    // Parse
+    // Parse request
     const { mode, file, fields } = await parseRequest(request);
     let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
 
     /* --- Bot & origin protection ------------------------------------------------ */
     {
-      // Honeypot: reject if filled
+      // 1) Honeypot: if bots filled this hidden field, reject early.
       const hp = (fields.honeypot || "").toString().trim();
       if (hp) return new Response(JSON.stringify({ ok:false, error:"Rejected" }), { status: 400 });
 
-      // Form must be at least 2s old
+      // 2) Form must be at least 2s old (reduces scripted bursts).
       const t0 = parseInt((fields.issuedAt || "0").toString(), 10);
-      if (!t0 || Date.now() - t0 < 2000) {
-        return new Response(JSON.stringify({ ok:false, error:"Too fast" }), { status: 400 });
-      }
+      if (!t0 || Date.now() - t0 < 2000) return new Response(JSON.stringify({ ok:false, error:"Too fast" }), { status: 400 });
 
-      // Origin allow-list: current host and configured prod URL
+      // 3) Origin allowlist: allow current host and configured prod URL.
       const origin = request.headers.get("origin") || "";
       const selfOrigin = new URL(request.url).origin;
       const cfgOrigin = (env.PUBLIC_BASE_URL || "").replace(/\/+$/, "");
-      const allowed = new Set([selfOrigin]);
-      if (cfgOrigin) allowed.add(cfgOrigin);
-      if (!origin || !allowed.has(origin)) {
-        return new Response(JSON.stringify({ ok:false, error:"Bad origin" }), { status: 403 });
-      }
+      const allowed = new Set([selfOrigin]); if (cfgOrigin) allowed.add(cfgOrigin);
+      if (!origin || !allowed.has(origin)) return new Response(JSON.stringify({ ok:false, error:"Bad origin" }), { status: 403 });
     }
 
     /* --- Brand resolution -------------------------------------------------------- */
@@ -319,33 +293,28 @@ export const onRequestPost = async ({ request, env }) => {
       const s = (slug || "").toLowerCase().replace(/[^a-z0-9-_.]/g, "-");
       return s && Object.prototype.hasOwnProperty.call(themesObj, s) ? s : "default";
     };
-
     let resolvedBrand = (brand || fields.slug || "").toLowerCase();
     if (!resolvedBrand) {
       const ref = request.headers.get("referer") || "";
       resolvedBrand = firstPathSegment(ref) || firstPathSegment(request.url) || "";
     }
     brand = normalizeBrand(resolvedBrand, themes);
-    console.log("resolved brand:", brand, {
-      posted: fields.brand || fields.slug || "",
-      referer: request.headers.get("referer") || "",
-      url: request.url
-    });
+    console.log("resolved brand:", brand, { posted: fields.brand || fields.slug || "", referer: request.headers.get("referer") || "", url: request.url });
 
-    const t = resolveEmailTheme(brand, themes);
-    const mailToList = (t.mailTo ? [t.mailTo] : [])
+    const theme = resolveEmailTheme(brand, themes);
+    const mailToList = (theme.mailTo ? [theme.mailTo] : [])
       .concat(env.MAIL_TO || [])
       .flatMap((s) => String(s).split(","))
       .map((s) => s.trim())
       .filter(Boolean);
 
-    /* --- Time, IDs, and request-time tz ----------------------------------------- */
+    /* --- Time & IDs -------------------------------------------------------------- */
     const tzForNames = request.cf?.timezone || "UTC";
     const { ymd, hhmm, display } = formatLocalDateTime(new Date(), tzForNames);
     if (!podfyId) podfyId = randomId(8);
     if (!dateTime) dateTime = display;
 
-    /* --- Driver issue (backend accepts now; UI can come later) ------------------- */
+    /* --- Driver issue flags from form (UI may come later) ------------------------ */
     const driverIssue =
       String(fields.issue || "").toLowerCase() === "1" ||
       String(fields.issue || "").toLowerCase() === "true" ||
@@ -368,30 +337,24 @@ export const onRequestPost = async ({ request, env }) => {
       buffer = Uint8Array.from(atob(fields.base64), (c) => c.charCodeAt(0)).buffer;
     }
 
-    /* --- Optional EXIF extraction for GPS & date -------------------------------- */
+    /* --- Optional EXIF extraction (GPS & timestamp) ------------------------------ */
     let exifLat = null, exifLon = null, exifDateIso = null;
     try {
       const isImage =
         contentType.startsWith("image/") &&
         (contentType.includes("jpeg") || contentType.includes("png") || contentType.includes("webp") || contentType.includes("heic") || contentType.includes("heif"));
-
       let exif;
       if (isImage && (!lat || !lon)) {
         exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
-        if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") {
-          exifLat = exif.latitude; exifLon = exif.longitude;
-        }
+        if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") { exifLat = exif.latitude; exifLon = exif.longitude; }
       }
-      if (!dateTime && exif?.DateTimeOriginal instanceof Date) {
-        exifDateIso = exif.DateTimeOriginal.toISOString();
-      }
+      if (!dateTime && exif?.DateTimeOriginal instanceof Date) exifDateIso = exif.DateTimeOriginal.toISOString();
     } catch { /* ignore EXIF failures */ }
 
-    /* --- Location selection (GPS → IMG → IP) ------------------------------------ */
+    /* --- Location selection (prefer GPS → EXIF IMG → IP) ------------------------- */
     let locationSource = "NONE";
     let numLat = (typeof lat === "number") ? lat : parseFloat(lat);
     let numLon = (typeof lon === "number") ? lon : parseFloat(lon);
-
     if (Number.isFinite(numLat) && Number.isFinite(numLon)) {
       locationSource = "GPS";
     } else if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
@@ -399,75 +362,23 @@ export const onRequestPost = async ({ request, env }) => {
     } else {
       const cfLat = parseFloat(request.cf?.latitude);
       const cfLon = parseFloat(request.cf?.longitude);
-      if (Number.isFinite(cfLat) && Number.isFinite(cfLon)) {
-        numLat = cfLat; numLon = cfLon; locationSource = "IP";
-      }
+      if (Number.isFinite(cfLat) && Number.isFinite(cfLon)) { numLat = cfLat; numLon = cfLon; locationSource = "IP"; }
     }
-
     let numAcc = (typeof accuracy === "number") ? accuracy : parseFloat(accuracy);
     if (!Number.isFinite(numAcc)) numAcc = (locationSource === "IP") ? 50000 : null;
     if (!dateTime && exifDateIso) dateTime = exifDateIso;
     if (Number.isFinite(numLat) && Number.isFinite(numLon)) { lat = numLat; lon = numLon; }
     accuracy = Number.isFinite(numAcc) ? numAcc : null;
 
-   // Presented “method tag” (what the user sees)
-const methodTag =
-  locationSource === "IMG" ? "IMG" :
-  locationSource === "GPS" ? "GPS" :
-  locationSource === "IP"  ? "IP"  : "UNKNOWN";
+    // Map-friendly label/source/url for the chosen coordinates (user facing + DB)
+    const methodTag =
+      locationSource === "IMG" ? "IMG" :
+      locationSource === "GPS" ? "GPS" :
+      locationSource === "IP"  ? "IP"  : "UNKNOWN";
+    const presented_source = mapPresentedSource(locationSource);
+    const mapUrl = (Number.isFinite(lat) && Number.isFinite(lon)) ? buildMapUrl(lat, lon) : "";
 
-// Canonical source (for DB consistency)
-const presented_source =
-  locationSource === "IMG" ? "exif" :
-  locationSource === "GPS" ? "gps"  :
-  locationSource === "IP"  ? "ip"   : "unknown";
-
-// Shareable map URL for the chosen coordinates
-const mapUrl = (Number.isFinite(lat) && Number.isFinite(lon)) ? buildMapUrl(lat, lon) : "";
-
-// Ensure the raw JSON contains everything we know
-// (You already build `locationMeta`; we just guarantee it carries our final values)
-locationMeta = {
-  ...locationMeta,
-  finalLat: Number.isFinite(lat) ? String(lat) : "",
-  finalLon: Number.isFinite(lon) ? String(lon) : "",
-  finalAccuracyM: Number.isFinite(numAcc) ? String(numAcc) : "",
-  methodTag,
-  presentedSource: presented_source,
-  ipCountry: locationMeta.ipCountry || (request.cf?.country || ""),
-  ipPostal: locationMeta.ipPostal || (request.cf?.postalCode || ""),
-};
-
-     
-    /* --- File validations -------------------------------------------------------- */
-    if (!buffer || buffer.byteLength === 0) {
-      return new Response(JSON.stringify({ ok:false, error:"Empty file" }), { status: 400 });
-    }
-    if (buffer.byteLength > MAX_BYTES) {
-      return new Response(JSON.stringify({ ok:false, error:"File too large (max 25 MB)" }), { status: 413 });
-    }
-    const head = buffer.slice(0, 32);
-    const kind = sniffKind(head);
-    const safeName = (fileName || "upload").toLowerCase();
-    const extFromName = safeName.includes(".") ? safeName.split(".").pop() : "";
-    const mimeOk = ALLOWED_MIME.has(contentType);
-    const extOk  = ALLOWED_EXT.has(extFromName);
-    if (kind === "unknown" || !(mimeOk || extOk)) {
-      return new Response(JSON.stringify({ ok:false, error:"Unsupported or suspicious file" }), { status: 415 });
-    }
-
-    /* --- Key & metadata ---------------------------------------------------------- */
-    const safeBase = (fileName.replace(/[^A-Za-z0-9_.-]/g, "_") || "upload");
-    const dot = safeBase.lastIndexOf(".");
-    const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
-    const nameNoExt = dot > -1 ? safeBase.slice(0, dot) : safeBase;
-
-    const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
-    const baseNameParts = [formatLocalDateTime(new Date(), tzForNames).ymd, formatLocalDateTime(new Date(), tzForNames).hhmm, podfyId, brand];
-    if (cleanRef) baseNameParts.push(cleanRef);
-    const finalBase = baseNameParts.join("_");
-    const key = `${brand}/${finalBase}.${ext}`;
-
+    /* --- Build base locationMeta (raw facts) ------------------------------------ */
     const cf = request.cf || {};
     const ipPostal = (cf.postalCode || "").toString();
     const ipCountryISO2 = (cf.country || "").toString().toUpperCase();
@@ -481,7 +392,8 @@ locationMeta = {
     let locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
       locationMeta = {
-        locationQualifier: locationSource, lat: String(lat), lon: String(lon),
+        locationQualifier: locationSource,
+        lat: String(lat), lon: String(lon),
         ...(accuracy ? { accuracyM: String(accuracy) } : {}),
         ...(locTs ? { locationTimestamp: String(locTs) } : {}),
       };
@@ -494,7 +406,19 @@ locationMeta = {
       };
     }
 
-    // meta used by emails
+    // Enrich raw JSON with final decisions (used by admin views/debugging)
+    locationMeta = {
+      ...locationMeta,
+      finalLat: Number.isFinite(lat) ? String(lat) : "",
+      finalLon: Number.isFinite(lon) ? String(lon) : "",
+      finalAccuracyM: Number.isFinite(accuracy) ? String(accuracy) : "",
+      methodTag,
+      presentedSource: presented_source,
+      ipCountry: locationMeta.ipCountry || (request.cf?.country || ""),
+      ipPostal: locationMeta.ipPostal || (request.cf?.postalCode || ""),
+    };
+
+    // Meta subset used in the email template (kept small and human-friendly)
     const meta = {
       locationQualifier: locationMeta.locationQualifier || "",
       lat: locationMeta.lat || "",
@@ -502,12 +426,31 @@ locationMeta = {
       locationCode: locationMeta.locationCode || "",
     };
 
+    /* --- File validations -------------------------------------------------------- */
+    if (!buffer || buffer.byteLength === 0) return new Response(JSON.stringify({ ok:false, error:"Empty file" }), { status: 400 });
+    if (buffer.byteLength > MAX_BYTES) return new Response(JSON.stringify({ ok:false, error:"File too large (max 25 MB)" }), { status: 413 });
+    const head = buffer.slice(0, 32);
+    const kind = sniffKind(head);
+    const safeName = (fileName || "upload").toLowerCase();
+    const extFromName = safeName.includes(".") ? safeName.split(".").pop() : "";
+    const mimeOk = ALLOWED_MIME.has(contentType);
+    const extOk  = ALLOWED_EXT.has(extFromName);
+    if (kind === "unknown" || !(mimeOk || extOk)) return new Response(JSON.stringify({ ok:false, error:"Unsupported or suspicious file" }), { status: 415 });
+
+    /* --- Key & metadata ---------------------------------------------------------- */
+    const safeBase = (fileName.replace(/[^A-Za-z0-9_.-]/g, "_") || "upload");
+    const dot = safeBase.lastIndexOf(".");
+    const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
+    const nameNoExt = dot > -1 ? safeBase.slice(0, dot) : safeBase;
+
+    const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
+    const { ymd: y, hhmm: hm } = formatLocalDateTime(new Date(), tzForNames);
+    const finalBase = [y, hm, podfyId, brand, ...(cleanRef ? [cleanRef] : [])].join("_");
+    const key = `${brand}/${finalBase}.${ext}`;
+
     /* --- Store in R2 ------------------------------------------------------------- */
     await PODFY_BUCKET.put(key, buffer, {
-      httpMetadata: {
-        contentType,
-        contentDisposition: `attachment; filename="${finalBase}.${ext}"`,
-      },
+      httpMetadata: { contentType, contentDisposition: `attachment; filename="${finalBase}.${ext}"` },
       customMetadata: {
         podfy_id: podfyId, reference: cleanRef, slug: brand,
         orig_name: fileName, orig_type: contentType,
@@ -517,28 +460,24 @@ locationMeta = {
     });
 
     /* --- Preview URL (signed if configured) -------------------------------------- */
+    const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://podfy.net").replace(/\/+$/, "");
     let imagePreviewUrl = "";
     if (contentType.startsWith("image/") && env.SIGNED_MEDIA_SECRET) {
-      const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7; // 7 days
+      const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7;
       const sig = await hmacSHA256(env.SIGNED_MEDIA_SECRET, `${key}:${exp}`);
-      const base = (env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/, "");
-      imagePreviewUrl = `${base}/media/${encodePath(key)}?e=${exp}&sig=${sig}`;
+      imagePreviewUrl = `${mediaBase}/media/${encodePath(key)}?e=${exp}&sig=${sig}`;
     } else if (contentType.startsWith("image/") && previewUrl) {
       imagePreviewUrl = previewUrl;
     }
 
     /* --- Insert/Upsert transaction in D1 ----------------------------------------- */
     try {
-      const tzUpload = (fields.tz || request.cf?.timezone || "UTC");
-      // validate tz defensively
-      try { new Intl.DateTimeFormat("en-CA", { timeZone: tzUpload }).format(new Date()); }
-      catch { /* invalid tz */ }
-
+      let tzUpload = (fields.tz || request.cf?.timezone || "UTC");
+      try { new Intl.DateTimeFormat("en-CA", { timeZone: tzUpload }).format(new Date()); } catch { tzUpload = "UTC"; }
       const { local_date, local_time } = localParts(new Date(), tzUpload);
-      const basePublic = (env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/, "");
-      const fallbackUrl = `${basePublic}/media/${encodePath(key)}`;
+
+      const fallbackUrl = `${mediaBase}/media/${encodePath(key)}`;
       const pictureUrl = imagePreviewUrl || fallbackUrl;
-      const presented_source = mapPresentedSource(locationMeta?.locationQualifier);
       const file_checksum = await sha256Hex(buffer);
       const subscription_code = normalizeSubscriptionCode(fields.subscription_code || fields.subscription || themes[brand]?.subscriptionCode || null);
 
@@ -548,9 +487,9 @@ locationMeta = {
         upload_date: local_date,
         upload_time: local_time,
         reference: cleanRef || null,
-        presented_loc_url: mapUrl,     // ← link to map for (lat, lon)
-        presented_label: methodTag,    // ← “IMG” | “GPS” | “IP” | “UNKNOWN”
-        presented_source,              // ← “exif” | “gps” | “ip” | “unknown”
+        presented_loc_url: mapUrl,        // map link of final coordinates
+        presented_label: methodTag,       // IMG | GPS | IP | UNKNOWN
+        presented_source,                 // exif | gps | ip | unknown
         picture_url: pictureUrl,
         original_filename: fileName || null,
         uploaded_file_type: contentType || null,
@@ -566,34 +505,35 @@ locationMeta = {
         app_version: env.APP_VERSION || null,
         meta_json: { via: "upload", tz: tzUpload, dateTime },
         file_checksum,
-        delivery_issue_code: driverIssue ? (fields.issue_code ? String(fields.issue_code).trim() : "") : "",
-        delivery_issue_notes: driverIssue ? (fields.issue_notes ? String(fields.issue_notes).trim() : "") : "",
+        delivery_issue_code: driverIssue ? driverIssueCode : "",
+        delivery_issue_notes: driverIssue ? driverIssueNotes : "",
         location_raw_json: locationMeta,
       });
-
       console.log("D1 upsert OK:", podfyId);
     } catch (e) {
       console.error("D1 upsert failed (non-fatal):", e);
+      await setProcessStatus(env.DB, podfyId, "error_d1");
     }
 
     /* --- Build email content ----------------------------------------------------- */
     const html = buildHtml({
       brand,
-      brandName: t.brandName,
-      theme: { brandColor: t.brandColor, logo: t.logo },
+      brandName: theme.brandName,
+      theme: { brandColor: theme.brandColor, logo: theme.logo },
       fileName: `${finalBase}.${ext}`,
       podfyId,
       dateTime,
       meta,
       reference: cleanRef || "",
-      imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app",
+      imageUrlBase: mediaBase,
       imagePreviewUrl,
     });
 
-    const brandForSubject = t.brandName || brand;
-    const yyyyMmDd = (dateTime || "").split(" at ")[0] || `${ymd.slice(0,4)}-${ymd.slice(4,6)}-${ymd.slice(6,8)}`;
+    const brandForSubject = theme.brandName || brand;
+    const yyyyMmDd = (dateTime || "").split(" at ")[0] || `${y.slice(0,4)}-${y.slice(4,6)}-${y.slice(6,8)}`;
     const subjectStaff = `POD | ${brandForSubject}${cleanRef ? ` | ${cleanRef}` : ""} | ${yyyyMmDd} by Podfy`;
 
+    // Prepare a small attachment if the file size is below limit.
     let attachment = null;
     try {
       const maxMb = Number(env.MAX_ATTACH_MB || 8);
@@ -604,6 +544,7 @@ locationMeta = {
       }
     } catch (e) {
       console.error("Attachment prepare error:", e);
+      // Not fatal; do not change status for attachment decision.
     }
 
     const fromEnvelope = pickFromAddress(env, brand);
@@ -612,14 +553,14 @@ locationMeta = {
 
     const common = {
       brand,
-      brandName: t.brandName,
-      theme: { brandColor: t.brandColor, logo: t.logo },
+      brandName: theme.brandName,
+      theme: { brandColor: theme.brandColor, logo: theme.logo },
       fileName: `${finalBase}.${ext}`,
       podfyId,
       dateTime,
       meta,
       reference: cleanRef || "",
-      imageUrlBase: env.PUBLIC_BASE_URL || "https://podfy.app",
+      imageUrlBase: mediaBase,
       attachment,
     };
 
@@ -629,11 +570,13 @@ locationMeta = {
       if (mailToList.length) {
         okStaff = await sendMail(env, { fromEmail: fromEnvelope, toList: mailToList, subject: subjectStaff, html, ...common });
         console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
+        if (!okStaff) await setProcessStatus(env.DB, podfyId, "error_staff_mail");
       } else {
         console.log("no staff recipients resolved");
       }
     } catch (e) {
-      console.error("email send (staff) failed (non-fatal):", e);
+      console.error("email send (staff) failed:", e);
+      await setProcessStatus(env.DB, podfyId, "error_staff_mail");
     }
 
     /* --- Send user (driver) email ------------------------------------------------ */
@@ -642,9 +585,11 @@ locationMeta = {
       if (emailCopy) {
         okUser = await sendMail(env, { fromEmail: fromEnvelope, toList: [emailCopy], subject: `We received your file: ${finalBase}.${ext}`, html, ...common });
         console.log("user mail sent?", okUser, { to: emailCopy, from: fromEnvelope });
+        if (!okUser) await setProcessStatus(env.DB, podfyId, "error_user_mail");
       }
     } catch (e) {
-      console.error("email send (user) failed (non-fatal):", e);
+      console.error("email send (user) failed:", e);
+      await setProcessStatus(env.DB, podfyId, "error_user_mail");
     }
 
     /* --- Persist driver-copy identity & attempt result (no auto-issue) ----------- */
@@ -666,7 +611,8 @@ locationMeta = {
         console.log("D1 driver_copy identity persisted:", { podfyId, sent: okUser, domain });
       }
     } catch (e) {
-      console.error("D1 driver_copy persistence failed (non-fatal):", e);
+      console.error("D1 driver_copy persistence failed:", e);
+      await setProcessStatus(env.DB, podfyId, "error_user_mail"); // best-fit category
     }
 
     /* --- Finalize process_status ------------------------------------------------- */
@@ -680,7 +626,8 @@ locationMeta = {
       if (shouldBeDelivered) console.log("process_status → delivered:", podfyId);
       else console.log("process_status unchanged:", { podfyId, driverIssue, okStaff, okUser, hasDriver: !!emailCopy });
     } catch (e) {
-      console.error("final status update failed (non-fatal):", e);
+      console.error("final status update failed:", e);
+      await setProcessStatus(env.DB, podfyId, "error");
     }
 
     /* --- Response ---------------------------------------------------------------- */
@@ -691,6 +638,7 @@ locationMeta = {
 
   } catch (err) {
     console.error("Upload error:", err);
+    // If we crash before D1 insert, we cannot mark status; return 500.
     return new Response(JSON.stringify({ ok: false, error: "Upload failed" }), {
       status: 500, headers: { "content-type": "application/json" },
     });
