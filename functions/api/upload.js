@@ -676,7 +676,13 @@ try {
     const domain = emailDomain(emailCopy);                             // e.g., "example.com"
     const hash = await sha256HexText(emailCopy.trim().toLowerCase());  // SHA-256 hex of full address
 
-    // a) Always record identity + attempt timestamp (UTC) if not set yet
+// --- D1: persist driver copy identity + attempt result (no auto issue on failure) ---
+try {
+  if (emailCopy) {
+    const domain = emailDomain(emailCopy);
+    const hash = await sha256HexText(emailCopy.trim().toLowerCase());
+
+    // a) Always store domain/hash + first attempt time
     await env.DB.prepare(`
       UPDATE transactions
          SET copy_email_domain = ?,
@@ -685,23 +691,16 @@ try {
        WHERE podfy_id = ?
     `).bind(domain, hash, podfyId).run();
 
-    // b) Mark result: success → sent=1, failure → log issue (but never reset sent to 0)
+    // b) Only mark sent flag on success (never downgrade)
     if (okUser) {
       await env.DB.prepare(`
         UPDATE transactions
            SET driver_copy_sent = 1
          WHERE podfy_id = ?
       `).bind(podfyId).run();
-    } else {
-      await env.DB.prepare(`
-        UPDATE transactions
-           SET delivery_issue_code  = COALESCE(delivery_issue_code, 'USER_MAIL_FAIL'),
-               delivery_issue_notes = COALESCE(delivery_issue_notes, 'User copy mail failed to send')
-         WHERE podfy_id = ?
-      `).bind(podfyId).run();
     }
 
-    console.log("D1 driver_copy info persisted:", { podfyId, domain, sent: okUser });
+    console.log("D1 driver_copy identity persisted:", { podfyId, sent: okUser, domain });
   }
 } catch (e) {
   console.error("D1 driver_copy persistence failed (non-fatal):", e);
