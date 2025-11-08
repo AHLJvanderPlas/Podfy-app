@@ -670,37 +670,41 @@ try {
   console.error("email send (user) failed (non-fatal):", e);
 }
 
-// --- D1: persist driver-copy result (PII-safe) ---
+// --- D1: persist driver-copy info regardless of mail success ---
 try {
-  if (emailCopy && okUser) {
-    const domain = emailDomain(emailCopy);                             // e.g., "acme.com"
+  if (emailCopy) {
+    const domain = emailDomain(emailCopy);                             // e.g., "example.com"
     const hash = await sha256HexText(emailCopy.trim().toLowerCase());  // SHA-256 hex of full address
 
+    // a) Always record identity + attempt timestamp (UTC) if not set yet
     await env.DB.prepare(`
       UPDATE transactions
-         SET driver_copy_sent  = 1,
-             driver_copy_at    = strftime('%Y-%m-%dT%H:%M:%fZ','now'),
-             copy_email_domain = ?,
-             copy_email_hash   = ?
+         SET copy_email_domain = ?,
+             copy_email_hash   = ?,
+             driver_copy_at    = COALESCE(driver_copy_at, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
        WHERE podfy_id = ?
     `).bind(domain, hash, podfyId).run();
 
-    console.log("D1 driver_copy update OK:", { podfyId, domain });
-  }
+    // b) Mark result: success → sent=1, failure → log issue (but never reset sent to 0)
+    if (okUser) {
+      await env.DB.prepare(`
+        UPDATE transactions
+           SET driver_copy_sent = 1
+         WHERE podfy_id = ?
+      `).bind(podfyId).run();
+    } else {
+      await env.DB.prepare(`
+        UPDATE transactions
+           SET delivery_issue_code  = COALESCE(delivery_issue_code, 'USER_MAIL_FAIL'),
+               delivery_issue_notes = COALESCE(delivery_issue_notes, 'User copy mail failed to send')
+         WHERE podfy_id = ?
+      `).bind(podfyId).run();
+    }
 
-  // (Optional) If the email failed, record a delivery issue for ops visibility
-  if (emailCopy && !okUser) {
-    await env.DB.prepare(`
-      UPDATE transactions
-         SET delivery_issue_code  = COALESCE(delivery_issue_code, 'USER_MAIL_FAIL'),
-             delivery_issue_notes = COALESCE(delivery_issue_notes, 'User copy mail failed to send')
-       WHERE podfy_id = ?
-    `).bind(podfyId).run();
-
-    console.warn("D1 driver_copy issue recorded:", { podfyId });
+    console.log("D1 driver_copy info persisted:", { podfyId, domain, sent: okUser });
   }
 } catch (e) {
-  console.error("D1 driver_copy DB update failed (non-fatal):", e);
+  console.error("D1 driver_copy persistence failed (non-fatal):", e);
 }
 
     return new Response(
