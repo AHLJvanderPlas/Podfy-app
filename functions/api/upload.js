@@ -6,6 +6,77 @@ import * as exifr from 'exifr';
 
 /* ------------------------------ helpers ------------------------------ */
 
+// ============================================================
+// === D1 TRANSACTION HELPERS (Step 2)
+// ============================================================
+
+// --- Convert JS Date → UTC parts ---
+function utcParts(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return {
+    upload_date: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`,
+    upload_time: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`,
+  };
+}
+
+// --- Optional SHA-256 checksum for file verification ---
+async function sha256Hex(buffer) {
+  try {
+    const hash = await crypto.subtle.digest("SHA-256", buffer);
+    return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return null;
+  }
+}
+
+// --- Safe map of our internal source tags to DB schema values ---
+function mapPresentedSource(qualifier) {
+  switch (String(qualifier || "").toUpperCase()) {
+    case "GPS": return "gps";
+    case "IMG": return "exif";
+    case "IP":  return "ip";
+    case "MANUAL": return "manual";
+    default: return "unknown";
+  }
+}
+
+// --- Compact DB upsert routine (idempotent by podfy_id) ---
+async function upsertTransaction(DB, row) {
+  const sql = `
+    INSERT OR REPLACE INTO transactions (
+      podfy_id, slug, upload_date, upload_time,
+      created_at,
+      reference, presented_loc_url, presented_label, presented_source,
+      picture_url, original_filename, uploaded_file_type, file_size_bytes,
+      storage_bucket, storage_key, driver_copy_sent, process_status,
+      invoice_group_id, subscription_code, uploader_user_id, user_agent, app_version, meta_json,
+      file_checksum, delivery_issue_code, delivery_issue_notes, location_raw_json
+    ) VALUES (
+      ?podfy_id, ?slug, ?upload_date, ?upload_time,
+      COALESCE((SELECT created_at FROM transactions WHERE podfy_id = ?podfy_id),
+               strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+      ?reference, ?presented_loc_url, ?presented_label, ?presented_source,
+      ?picture_url, ?original_filename, ?uploaded_file_type, ?file_size_bytes,
+      ?storage_bucket, ?storage_key, ?driver_copy_sent, ?process_status,
+      ?invoice_group_id, ?subscription_code, ?uploader_user_id, ?user_agent, ?app_version, JSON.stringify(?meta_json),
+      ?file_checksum, ?delivery_issue_code, ?delivery_issue_notes, JSON.stringify(?location_raw_json)
+    );
+  `;
+
+  const stmt = DB.prepare(sql).bind(
+    row.podfy_id, row.slug, row.upload_date, row.upload_time,
+    row.podfy_id,
+    row.reference, row.presented_loc_url, row.presented_label, row.presented_source,
+    row.picture_url, row.original_filename, row.uploaded_file_type, row.file_size_bytes,
+    row.storage_bucket, row.storage_key, row.driver_copy_sent, row.process_status,
+    row.invoice_group_id, row.subscription_code, row.uploader_user_id, row.user_agent, row.app_version, row.meta_json,
+    row.file_checksum, row.delivery_issue_code, row.delivery_issue_notes, row.location_raw_json
+  );
+
+  await stmt.run();
+  return true;
+}
+
 // --- Config ---
 const MAX_BYTES = 25 * 1024 * 1024;
 const ALLOWED_MIME = new Set([
