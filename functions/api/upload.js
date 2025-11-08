@@ -108,6 +108,13 @@ function mapPresentedSource(qualifier) {
   }
 }
 
+function buildMapUrl(lat, lon) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "";
+  // You can swap this for OSM if preferred:
+  // return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`;
+  return `https://www.google.com/maps?q=${lat},${lon}`;
+}
+
 function normalizeSubscriptionCode(s) {
   if (!s) return null;
   const x = String(s).trim().toUpperCase();
