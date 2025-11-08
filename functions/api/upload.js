@@ -522,9 +522,11 @@ const meta = {
       imagePreviewUrl = previewUrl; // if provided externally
     }
 
-// ----- D1: record upload in transactions table -----
+// ----- D1: record upload transaction -----
 try {
-  const { upload_date, upload_time } = utcParts(new Date());
+  // Use uploader's local TZ if available; else CF tz; else UTC
+  const tzUpload = (fields.tz || request.cf?.timezone || "UTC");
+  const { local_date, local_time } = localParts(new Date(), tzUpload);
 
   const basePublic = (env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/, "");
   const fallbackUrl = `${basePublic}/media/${encodePath(key)}`;
@@ -533,11 +535,15 @@ try {
   const presented_source = mapPresentedSource(locationMeta?.locationQualifier);
   const file_checksum = await sha256Hex(buffer);
 
+  // Subscription code (from form/json now; future: derive from slug)
+  const subscription_code =
+    normalizeSubscriptionCode(fields.subscription_code || fields.subscription || t.subscriptionCode);
+
   await upsertTransaction(env.DB, {
     podfy_id: podfyId,
     slug: brand,
-    upload_date,
-    upload_time,
+    upload_date: local_date,              // <-- uploader local date
+    upload_time: local_time,              // <-- uploader local time
     reference: cleanRef || null,
     presented_loc_url: pictureUrl,
     presented_label: null,
@@ -550,12 +556,12 @@ try {
     storage_key: key,
     driver_copy_sent: 0,
     process_status: "received",
-    invoice_group_id: upload_date.slice(0, 7),
-    subscription_code: null,
+    invoice_group_id: local_date.slice(0, 7), // YYYY-MM
+    subscription_code,                        // <-- normalized or null
     uploader_user_id: null,
     user_agent: request.headers.get("user-agent") || null,
     app_version: env.APP_VERSION || null,
-    meta_json: { via: "upload", tz, dateTime },
+    meta_json: { via: "upload", tz: tzUpload, dateTime },
     file_checksum,
     delivery_issue_code: null,
     delivery_issue_notes: null,
