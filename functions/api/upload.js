@@ -267,6 +267,15 @@ export const onRequestPost = async ({ request, env }) => {
     const { mode, file, fields } = await parseRequest(request);
     let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
 
+    // --- Driver issue fields from form (store empty strings if not provided) ---
+    const driverIssue =
+      String(fields.issue || "").toLowerCase() === "1" ||
+      String(fields.issue || "").toLowerCase() === "true" ||
+      String(fields.issue || "").toLowerCase() === "on";
+
+    const driverIssueCode  = driverIssue ? (fields.issue_code  ? String(fields.issue_code).trim()  : "") : "";
+    const driverIssueNotes = driverIssue ? (fields.issue_notes ? String(fields.issue_notes).trim() : "") : "";
+    
   // --- Bot checks (honeypot + form age + origin) -----------------------
     {
   // Honeypot: reject if filled
@@ -557,16 +566,16 @@ try {
     storage_bucket: env.PODFY_BUCKET_NAME || "podfy",
     storage_key: key,
     driver_copy_sent: 0,
-    process_status: "received",
-    invoice_group_id: local_date.slice(0, 7), // YYYY-MM
-    subscription_code,                        // <-- normalized or null
+    process_status: driverIssue ? "issue_reported" : "received",  // <-- set from checkbox
+    invoice_group_id: local_date.slice(0, 7),
+    subscription_code,
     uploader_user_id: null,
     user_agent: request.headers.get("user-agent") || null,
     app_version: env.APP_VERSION || null,
     meta_json: { via: "upload", tz: tzUpload, dateTime },
     file_checksum,
-    delivery_issue_code: null,
-    delivery_issue_notes: null,
+    delivery_issue_code: driverIssueCode,    // "" if none provided
+    delivery_issue_notes: driverIssueNotes,  // "" if none provided
     location_raw_json: locationMeta,
   });
 
