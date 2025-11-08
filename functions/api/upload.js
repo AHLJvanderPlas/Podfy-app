@@ -40,8 +40,7 @@ function mapPresentedSource(qualifier) {
   }
 }
 
-// --- Compact DB upsert (idempotent by podfy_id) ---
-// Uses positional placeholders (?) and pre-serialized JSON strings.
+// --- Compact DB upsert routine (idempotent by podfy_id) ---
 async function upsertTransaction(DB, row) {
   const sql = `
     INSERT OR REPLACE INTO transactions (
@@ -64,24 +63,16 @@ async function upsertTransaction(DB, row) {
     );
   `;
 
-  // Pre-serialize JSON fields for TEXT storage
-  const meta_json_text = row.meta_json != null ? JSON.stringify(row.meta_json) : null;
-  const location_raw_json_text = row.location_raw_json != null ? JSON.stringify(row.location_raw_json) : null;
+  const meta_json_text = row.meta_json ? JSON.stringify(row.meta_json) : null;
+  const location_raw_json_text = row.location_raw_json ? JSON.stringify(row.location_raw_json) : null;
 
   const stmt = DB.prepare(sql).bind(
-    // podfy_id, slug, upload_date, upload_time
     row.podfy_id, row.slug, row.upload_date, row.upload_time,
-    // created_at preservation subquery param
     row.podfy_id,
-    // reference, presented_loc_url, presented_label, presented_source
     row.reference, row.presented_loc_url, row.presented_label, row.presented_source,
-    // picture_url, original_filename, uploaded_file_type, file_size_bytes
     row.picture_url, row.original_filename, row.uploaded_file_type, row.file_size_bytes,
-    // storage_bucket, storage_key, driver_copy_sent, process_status
     row.storage_bucket, row.storage_key, row.driver_copy_sent, row.process_status,
-    // invoice_group_id, subscription_code, uploader_user_id, user_agent, app_version, meta_json
     row.invoice_group_id, row.subscription_code, row.uploader_user_id, row.user_agent, row.app_version, meta_json_text,
-    // file_checksum, delivery_issue_code, delivery_issue_notes, location_raw_json
     row.file_checksum, row.delivery_issue_code, row.delivery_issue_notes, location_raw_json_text
   );
 
