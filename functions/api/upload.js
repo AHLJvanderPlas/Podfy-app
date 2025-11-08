@@ -706,6 +706,30 @@ try {
   console.error("D1 driver_copy persistence failed (non-fatal):", e);
 }
 
+// --- D1: finalize process_status ---
+try {
+  // If driver reported an issue, keep the status as 'issue_reported'
+  // Otherwise, we call it 'delivered' only if staff mail succeeded AND (if a driver email was provided) driver mail also succeeded.
+  const shouldBeDelivered = !driverIssue && okStaff && (emailCopy ? okUser : true);
+
+  await env.DB.prepare(`
+    UPDATE transactions
+       SET process_status = CASE
+         WHEN ?1 THEN 'delivered'
+         ELSE process_status
+       END
+     WHERE podfy_id = ?2
+  `).bind(shouldBeDelivered ? 1 : 0, podfyId).run();
+
+  if (shouldBeDelivered) {
+    console.log("process_status → delivered:", podfyId);
+  } else {
+    console.log("process_status unchanged:", { podfyId, driverIssue, okStaff, okUser, hasDriver: !!emailCopy });
+  }
+} catch (e) {
+  console.error("final status update failed (non-fatal):", e);
+}
+    
     return new Response(
       JSON.stringify({
         ok: true,
