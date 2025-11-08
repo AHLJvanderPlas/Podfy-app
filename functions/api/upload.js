@@ -575,8 +575,8 @@ try {
   console.error("D1 upsert failed (non-fatal):", e);
 }
     
-  // We do not block the upload flow — storage & emails can still proceed.
-}
+// We do not block the upload flow — storage & emails can still proceed.
+
 // Build HTML email (preview only; sendMail will rebuild with CID logos)
 const html = buildHtml({
   brand,
