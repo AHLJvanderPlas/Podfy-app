@@ -6,10 +6,41 @@ import * as exifr from 'exifr';
 
 /* ------------------------------ helpers ------------------------------ */
 
-// ============================================================
-// === D1 TRANSACTION HELPERS (Step 2, corrected)
-// ============================================================
+// --- Local date/time (YYYY-MM-DD / HH:MM:SS) for a given IANA tz ---
+function localParts(d = new Date(), timeZone = "UTC") {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(d).map(p => [p.type, p.value]));
+  return {
+    local_date: `${parts.year}-${parts.month}-${parts.day}`,
+    local_time: `${parts.hour}:${parts.minute}:${parts.second}`,
+  };
+}
 
+// --- Normalize subscription code (accepts long names, returns 2-letter code or null) ---
+function normalizeSubscriptionCode(s) {
+  if (!s) return null;
+  const x = String(s).trim().toUpperCase();
+  if (["TR","BA","AD","PR","PM","EN","UN"].includes(x)) return x;
+  const map = {
+    "TRIAL":"TR","BASIC":"BA","ADVANCED":"AD","PRO":"PR","PREMIUM":"PM","ENTERPRISE":"EN","UNKNOWN":"UN"
+  };
+  return map[x] || null;
+}
+
+// --- SHA-256 hex of text (for email hash) ---
+async function sha256HexText(str) {
+  const buf = new TextEncoder().encode(str);
+  return sha256Hex(buf);
+}
+
+// --- Extract email domain safely ---
+function emailDomain(addr) {
+  const m = String(addr || "").toLowerCase().match(/^[^@]+@([^@]+)$/);
+  return m ? m[1] : null;
+}
 // --- Convert JS Date → UTC parts ---
 function utcParts(d = new Date()) {
   const pad = (n) => String(n).padStart(2, "0");
