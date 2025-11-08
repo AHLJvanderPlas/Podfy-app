@@ -487,6 +487,56 @@ const meta = {
       imagePreviewUrl = previewUrl; // if provided externally
     }
 
+// ----- D1: record transaction (idempotent by podfy_id) -----
+try {
+  // 1) UTC date/time for the row
+  const { upload_date, upload_time } = utcParts(new Date());
+
+  // 2) Public URL preference: signed preview (if any) → fallback to /media route
+  const basePublic = (env.PUBLIC_BASE_URL || "https://podfy.app").replace(/\/+$/, "");
+  const fallbackUrl = `${basePublic}/media/${encodePath(key)}`;
+  const pictureUrl = imagePreviewUrl || fallbackUrl;
+
+  // 3) Source + checksum
+  const presented_source = mapPresentedSource((locationMeta && locationMeta.locationQualifier) || "");
+  const file_checksum = await sha256Hex(buffer);
+
+  // 4) Upsert into D1
+  await upsertTransaction(env.DB, {
+    podfy_id: podfyId,
+    slug: brand,
+    upload_date,
+    upload_time,
+    reference: cleanRef || null,
+    // If you later have a Maps URL, put it here; for now we keep the preview link as a convenience.
+    presented_loc_url: imagePreviewUrl ? pictureUrl : null,
+    presented_label: null,
+    presented_source,
+    picture_url: pictureUrl,
+    original_filename: fileName || null,
+    uploaded_file_type: contentType || null,
+    file_size_bytes: buffer.byteLength,
+    storage_bucket: env.PODFY_BUCKET_NAME || "podfy",
+    storage_key: key,
+    driver_copy_sent: 0,                   // will update after we send user mail (Step 4)
+    process_status: "received",
+    invoice_group_id: upload_date.slice(0, 7),  // YYYY-MM
+    subscription_code: null,               // unknown at upload time; reviewed later
+    uploader_user_id: null,                // fill if you have an authenticated user
+    user_agent: request.headers.get("user-agent") || null,
+    app_version: env.APP_VERSION || null,
+    meta_json: { via: "upload", tz, dateTime },
+    file_checksum,
+    delivery_issue_code: null,
+    delivery_issue_notes: null,
+    location_raw_json: locationMeta,       // raw GPS/EXIF/IP payload
+  });
+
+  console.log("D1 upsert OK:", podfyId);
+} catch (e) {
+  console.error("D1 upsert failed (non-fatal):", e);
+  // We do not block the upload flow — storage & emails can still proceed.
+}
 // Build HTML email (preview only; sendMail will rebuild with CID logos)
 const html = buildHtml({
   brand,
