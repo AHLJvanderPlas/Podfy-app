@@ -460,7 +460,7 @@ export const onRequestPost = async ({ request, env }) => {
     });
 
     /* --- Preview URL (signed if configured) -------------------------------------- */
-    const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://podfy.net").replace(/\/+$/, "");
+    const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, "");
     let imagePreviewUrl = "";
     if (contentType.startsWith("image/") && env.SIGNED_MEDIA_SECRET) {
       const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7;
