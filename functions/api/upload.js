@@ -716,6 +716,39 @@ try {
   console.error("email send (user) failed (non-fatal):", e);
 }
 
+// --- D1: persist driver-copy result (PII-safe) ---
+try {
+  if (emailCopy && okUser) {
+    const domain = emailDomain(emailCopy);                             // e.g., "acme.com"
+    const hash = await sha256HexText(emailCopy.trim().toLowerCase());  // SHA-256 hex of full address
+
+    await env.DB.prepare(`
+      UPDATE transactions
+         SET driver_copy_sent  = 1,
+             driver_copy_at    = strftime('%Y-%m-%dT%H:%M:%fZ','now'),
+             copy_email_domain = ?,
+             copy_email_hash   = ?
+       WHERE podfy_id = ?
+    `).bind(domain, hash, podfyId).run();
+
+    console.log("D1 driver_copy update OK:", { podfyId, domain });
+  }
+
+  // (Optional) If the email failed, record a delivery issue for ops visibility
+  if (emailCopy && !okUser) {
+    await env.DB.prepare(`
+      UPDATE transactions
+         SET delivery_issue_code  = COALESCE(delivery_issue_code, 'USER_MAIL_FAIL'),
+             delivery_issue_notes = COALESCE(delivery_issue_notes, 'User copy mail failed to send')
+       WHERE podfy_id = ?
+    `).bind(podfyId).run();
+
+    console.warn("D1 driver_copy issue recorded:", { podfyId });
+  }
+} catch (e) {
+  console.error("D1 driver_copy DB update failed (non-fatal):", e);
+}
+
     return new Response(
       JSON.stringify({
         ok: true,
