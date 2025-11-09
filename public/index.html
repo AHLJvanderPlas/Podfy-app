@@ -158,10 +158,7 @@
 <!-- Popover content for the info button, same structure as your other (i) popovers -->
 <div id="help-delivery" class="popover" hidden>
   <div class="popover-inner">
-    <strong data-i18n="deliveryOutcomeHelpTitle">Delivery outcome</strong>
-    <p data-i18n="deliveryOutcomeHelp">
-      Tick 'Clean delivery' if everything went well. Untick to report an issue...
-    </p>
+    <p data-i18n="deliveryOutcomeHelp"></p>
   </div>
 </div>
 </div>
@@ -169,12 +166,13 @@
 
     <!-- E-mailveld (hidden tot checkbox geactiveerd is) -->
     <div id="emailWrap" class="email-wrap" hidden>
-      <input
-        id="emailField"
-        type="email"
-        placeholder="name@example.com"
-        data-i18n-placeholder="emailPlaceholder"
-        autocomplete="email" />
+ <fieldset class="group" id="emailPanel" hidden>
+  <legend data-i18n="EmailLegend">Add email to receive a copy</legend>
+  <label class="field">
+    <span class="sr-only">Email</span>
+    <input id="emailField" type="email" data-i18n-placeholder="emailPlaceholder" />
+  </label>
+</fieldset>
     </div>
 
 <!-- Outlined box that appears ONLY when Clean delivery is UNCHECKED -->
@@ -193,7 +191,7 @@
 
     <label class="field">
       <span data-i18n="issueNotes">Issue notes (optional)</span>
-      <textarea id="issue_notes" rows="3" placeholder="Describe the issue briefly"></textarea>
+      <textarea id="issue_notes" rows="3" data-i18n-placeholder="IssuePlaceholder"></textarea>
     </label>
   </div>
 </fieldset>
