@@ -56,6 +56,7 @@
   const copyCheck  = qs('#copyCheck');
   const emailWrap  = qs('#emailWrap');
   const emailField = qs('#emailField');
+  const emailPanel = document.getElementById('emailPanel');
 
   // Location (GPS) toggle + status
   const locCheck  = qs('#locCheck');
@@ -200,6 +201,36 @@
     }, 400);
   }
 
+   // ---- Issue code dropdown (stable codes + localized labels)
+const ISSUE_CODES = ["DAMAGE","MISSING","WRONG","DELAY","DOCUMENTS","OTHER"];
+
+function localizeIssueLabel(code) {
+  const dict = (langStrings[currentLang] || langStrings.en || {});
+  return dict["issue_" + code] || code; // fallback to code if missing
+}
+
+function buildIssueOptions() {
+  const sel = document.getElementById("issue_code");
+  if (!sel) return;
+
+  const prev = sel.value;       // remember current selection
+  sel.innerHTML = "";           // clear
+
+  const dict = (langStrings[currentLang] || langStrings.en || {});
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = dict.issueCodePlaceholder || "Select an issue (optional)";
+  sel.appendChild(opt0);
+
+  ISSUE_CODES.forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;                // value sent to backend
+    opt.textContent = localizeIssueLabel(code);
+    sel.appendChild(opt);
+  });
+
+  if (ISSUE_CODES.includes(prev)) sel.value = prev; // restore if possible
+}
   // ----------------------------------------------------------
   // 4) Language & theme
   // ----------------------------------------------------------
@@ -249,7 +280,7 @@
       const key = el.getAttribute('data-i18n-placeholder');
       if (dict[key]) el.setAttribute('placeholder', dict[key]);
     });
-
+  buildIssueOptions();
     // Description meta
     const meta = dict.metaDescription || (langStrings.en && langStrings.en.metaDescription) || '';
     ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]']
@@ -487,31 +518,30 @@
 
     // Email copy → show/hide + required toggle
     copyCheck?.addEventListener('change', () => {
-      const show = !!copyCheck.checked;
-      if (emailWrap) {
-        emailWrap.classList.toggle('hidden', !show);
-        emailWrap.hidden = !show;
-      }
-      if (emailField) {
-        if (show) {
-          if (emailField.type !== 'email') emailField.type = 'email';
-          emailField.required = true;
-          emailField.setAttribute('aria-required', 'true');
-          emailField.focus();
-        } else {
-          emailField.required = false;
-          emailField.removeAttribute('aria-required');
-          emailField.setCustomValidity && emailField.setCustomValidity('');
-          emailField.value = '';
-        }
-      }
-    });
+  const show = !!copyCheck.checked;
+  if (emailWrap)  { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden  = !show; }
+  if (emailPanel) { emailPanel.hidden = !show; } // <-- add this
+  if (emailField) {
+    if (show) {
+      if (emailField.type !== 'email') emailField.type = 'email';
+      emailField.required = true;
+      emailField.setAttribute('aria-required', 'true');
+      emailField.focus();
+    } else {
+      emailField.required = false;
+      emailField.removeAttribute('aria-required');
+      emailField.setCustomValidity && emailField.setCustomValidity('');
+      emailField.value = '';
+    }
+  }
+});
     // Initialize email UI
     (() => {
-      const show = !!copyCheck?.checked;
-      if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
-      if (emailField) { if (show && emailField.type !== 'email') emailField.type = 'email'; emailField.required = !!show; }
-    })();
+  const show = !!copyCheck?.checked;
+  if (emailWrap)  { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden  = !show; }
+  if (emailPanel) { emailPanel.hidden = !show; } // <-- add this
+  if (emailField) { if (show && emailField.type !== 'email') emailField.type = 'email'; emailField.required = !!show; }
+})();
 
     // Delivery outcome (“Clean” vs “Issue”)
     function syncIssueUI() {
@@ -806,6 +836,7 @@
   // ----------------------------------------------------------
   (async function init() {
     await loadI18n();
+    buildIssueOptions();
     await loadTheme();
     buildLangMenu();
     wireLanguageMenu();
