@@ -1,147 +1,360 @@
-/* public/main.js — Podfy
-   - Drag & drop only dropzone; file selection via buttons
-   - Reliable file/camera pickers (mobile/desktop) with cancelable off-screen fallback
-   - No auto-upload; Submit triggers upload
-   - Email field required when checked
-   - GPS-only from client; backend chooses IP fallback if GPS absent
-   - Title localization with headingWithRef and meta description per i18n
+/* public/main.js — PODFY uploader
+   ------------------------------------------------------------
+   Purpose
+   - Structured controller for the public uploader.
+
+   Capabilities
+   - Theme & i18n loading
+   - File selection (buttons + drag/drop) with client-side validation
+   - Optional driver-copy email (toggle + validation)
+   - (3C) Robust GPS capture (Android/iOS friendly) on user gesture
+   - Delivery outcome: “Clean delivery” vs “Issue” (code/notes)
+   - (3D) Anti-bot timestamp + browser timezone
+   - (3E) Upload with progress bar and clear UX states
+
+   Notes
+   - Backend will also derive location from EXIF/IP if GPS is missing.
+   - Only the fields your API expects are submitted.
+   ------------------------------------------------------------
 */
 
 (() => {
-  const qs  = (s) => document.querySelector(s);
-  const qsa = (s) => Array.from(document.querySelectorAll(s));
+  // ----------------------------------------------------------
+  // 0) Tiny DOM helpers
+  // ----------------------------------------------------------
+  const qs  = (s, r = document) => r.querySelector(s);
+  const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-  // ---------- Elements ----------
-  const brandLogo   = qs('#brandLogo');
-  const banner      = qs('#banner');
+  // ----------------------------------------------------------
+  // 1) Element references (UI)
+  // ----------------------------------------------------------
+  // Branding
+  const brandLogo = qs('#brandLogo');
+  const banner    = qs('#banner');
+  const heading   = qs('#heading');
 
-  const dropzone    = qs('#dropzone');
-  const fileInput   = qs('#fileInput');   // general picker
-  const chooseBtn   = qs('#chooseBtn');
+  // Dropzone & file pickers
+  const dropzone     = qs('#dropzone');
+  const fileInput    = qs('#fileInput');     // general picker
+  const chooseBtn    = qs('#chooseBtn');
+  const cameraInput  = qs('#cameraInput');   // camera picker (image/* capture=environment)
+  const cameraBtn    = qs('#cameraBtn');
 
-  const cameraInput = qs('#cameraInput'); // camera-only picker (accept="image/*" capture="environment")
-  const cameraBtn   = qs('#cameraBtn');
-
-  const submitBtn   = qs('#submitBtn');
-  const statusEl    = qs('#status');
-
-  // New UI bits
-  const filePreview   = qs('#filePreview');
-  const fileNameEl    = qs('#fileName');
-  const removeFileBtn = qs('#removeFileBtn');
+  // File preview & progress
+  const filePreview    = qs('#filePreview');
+  const fileNameEl     = qs('#fileName');
+  const removeFileBtn  = qs('#removeFileBtn');
   const uploadProgress = qs('#uploadProgress');
   const progressBar    = qs('#progressBar');
   const progressLabel  = qs('#progressLabel');
 
-  // Email
-  const copyCheck   = qs('#copyCheck');
-  const emailWrap   = qs('#emailWrap');
-  const emailField  = qs('#emailField');
+  // Action & status
+  const submitBtn = qs('#submitBtn');
+  const statusEl  = qs('#status');
 
-  // Location
-  const locCheck    = qs('#locCheck');
-  const locStatus   = qs('#locStatus');
+  // Email copy toggle + field
+  const copyCheck  = qs('#copyCheck');
+  const emailWrap  = qs('#emailWrap');
+  const emailField = qs('#emailField');
+  const emailPanel = document.getElementById('emailPanel');
 
-  // Language
+  // Location (GPS) toggle + status
+  const locCheck  = qs('#locCheck');
+  const locStatus = qs('#locStatus');
+
+  // Delivery outcome block
+  const chkClean   = document.getElementById("chk_clean");
+  const issuePanel = document.getElementById("issuePanel");
+  const issueCode  = document.getElementById("issue_code");
+  const issueNotes = document.getElementById("issue_notes");
+
+  // Hidden form helpers
+  const issuedAtInput = qs('#form_issued_at'); // anti-bot timestamp
+
+  // Language UI
   const langTrigger = qs('#translateBtn');
   const langMenu    = qs('#langMenu');
   const langLabel   = qs('#currentLangLabel');
 
-  // File constraint checker
-  const MAX_BYTES = 25 * 1024 * 1024;
-  const ALLOWED_EXT = ['pdf','jpg','jpeg','png','heic','heif','webp']; // add 'avif' if you support it
+  // ----------------------------------------------------------
+  // 2) Constants & local state
+  // ----------------------------------------------------------
+  const MAX_BYTES    = 25 * 1024 * 1024;
+  const ALLOWED_EXT  = ['pdf','jpg','jpeg','png','heic','heif','webp'];
   const ALLOWED_MIME = ['application/pdf','image/jpeg','image/png','image/heic','image/heif','image/webp'];
-  const extOf = (n='') => (n.includes('.') ? n.split('.').pop().toLowerCase() : '');
-   
-  const heading     = qs('#heading');
 
-  // ---------- Path: slug + optional reference ----------
-  const path = new URL(location.href).pathname.replace(/\/+$/,'') || '/';
-  const segs = path.split('/').filter(Boolean);
-  const rawSlug = (segs[0] || '').toLowerCase();
-  const refFromPathRaw = segs[1] || '';
-  const refFromPath = refFromPathRaw.replace(/[^A-Za-z0-9._-]/g, '');
-  let   slug = rawSlug || 'default';
+  const path     = new URL(location.href).pathname.replace(/\/+$/, '') || '/';
+  const segs     = path.split('/').filter(Boolean);
+  const rawSlug  = (segs[0] || '').toLowerCase();
+  const refRaw   = segs[1] || '';
+  const refSafe  = refRaw.replace(/[^A-Za-z0-9._-]/g, '');
+  let   slug     = rawSlug || 'default';
 
-  // ---------- State ----------
-  let themes = {};
-  let theme  = null;
+  let themes      = {};
+  let theme       = null;
   let langStrings = {};
   let currentLang = 'en';
   let selectedFile = null;
 
-   // ---------- helpers on upload file name ----------
-function showPreview(f){
-  if (!f || !f.name) return;
-  // set name + size
-  if (fileNameEl) {
-    const mb = (f.size/1048576);
-    fileNameEl.textContent = `${f.name} ${isFinite(mb)?`(${mb.toFixed(1)} MB)`:''}`;}
-  // show chip, hide helper texts & action buttons
-  filePreview?.removeAttribute('hidden');
-  qs('.dz-sub')?.classList.add('hidden');
-  qs('.dz-constraints')?.classList.add('hidden');
-  qs('.dz-actions')?.setAttribute('hidden','');   // NEW: hide buttons when a file is chosen
-}
-   
-function hidePreview(){
-  // hide chip, show helper texts & action buttons, clear filename
-  filePreview?.setAttribute('hidden','');
-  qs('.dz-sub')?.classList.remove('hidden');
-  qs('.dz-constraints')?.classList.remove('hidden');
-  qs('.dz-actions')?.removeAttribute('hidden');   // NEW: show buttons again
-  if (fileNameEl) fileNameEl.textContent = '';    // NEW: clear leftover text
-}
-   
-function resetProgress(){
-  uploadProgress?.setAttribute('hidden','');
-  progressBar && (progressBar.style.width = '0%');
-  uploadProgress?.setAttribute('aria-valuenow','0');
-  progressLabel && (progressLabel.textContent = '0%');
-}
-   
-function updateProgress(pct){
-  if (!uploadProgress) return;
-  uploadProgress.removeAttribute('hidden');
-  progressBar.style.width = pct+'%';
-  uploadProgress.setAttribute('aria-valuenow', String(pct));
-  progressLabel && (progressLabel.textContent = pct+'%');
-}
+  // (3D) Browser timezone
+  let browserTz = 'UTC';
+  try {
+    browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {}
 
-// ---------- File Validation helpers ----------
-function validateClientFile(f){
-  const okType = ALLOWED_MIME.includes(f.type) || ALLOWED_EXT.includes(extOf(f.name));
-  if (!okType) return { ok:false, msg:`Unsupported file type.` };
-  if (f.size > MAX_BYTES) return { ok:false, msg:`File too large (max 25 MB).` };
-  return { ok:true };
-}
-   
-  // ---------- Language helpers ----------
-function normalizeLangCode(code) {
-  if (!code) return '';
-  let c = code.toLowerCase().replace('_','-');
-  if (c === 'ro-md') return 'ro_MD';
-  if (c === 'ckb' || c === 'ku-iq') return 'ckb';
-  if (c.startsWith('pt-')) return 'pt';
-  return c.split('-')[0];
-}
-
-function pickInitialLang(available) {
-  const urlLang = new URLSearchParams(location.search).get('lang');
-  if (urlLang) {
-    const k = normalizeLangCode(urlLang);
-    if (available[k]) return k;
+  // (3D) Ensure anti-bot timestamp exists
+  if (issuedAtInput && !issuedAtInput.value) {
+    issuedAtInput.value = String(Date.now());
   }
-  const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
-  const k = normalizeLangCode(nav);
-  if (available[k]) return k; return 'en';
+
+  // ----------------------------------------------------------
+  // 3) Small utilities
+  // ----------------------------------------------------------
+  const extOf = (name = '') => (name.includes('.') ? name.split('.').pop().toLowerCase() : '');
+
+  function validateClientFile(f) {
+    const okType = ALLOWED_MIME.includes(f.type) || ALLOWED_EXT.includes(extOf(f.name));
+    if (!okType) return { ok: false, msg: 'Unsupported file type.' };
+    if (f.size > MAX_BYTES) return { ok: false, msg: 'File too large (max 25 MB).' };
+    return { ok: true };
+  }
+
+  // Preview chip & progress helpers
+  function showPreview(f) {
+    if (!f || !f.name) return;
+    if (fileNameEl) {
+      const mb = (f.size / 1048576);
+      fileNameEl.textContent = `${f.name} ${isFinite(mb) ? `(${mb.toFixed(1)} MB)` : ''}`;
+    }
+    filePreview?.removeAttribute('hidden');
+    qs('.dz-sub')?.classList.add('hidden');
+    qs('.dz-constraints')?.classList.add('hidden');
+    qs('.dz-actions')?.setAttribute('hidden', '');
+  }
+
+  function hidePreview() {
+    filePreview?.setAttribute('hidden', '');
+    qs('.dz-sub')?.classList.remove('hidden');
+    qs('.dz-constraints')?.classList.remove('hidden');
+    qs('.dz-actions')?.removeAttribute('hidden');
+    if (fileNameEl) fileNameEl.textContent = '';
+  }
+
+  function resetProgress() {
+    uploadProgress?.setAttribute('hidden', '');
+    if (progressBar) progressBar.style.width = '0%';
+    uploadProgress?.setAttribute('aria-valuenow', '0');
+    if (progressLabel) progressLabel.textContent = '0%';
+    uploadProgress?.classList.remove('error', 'success');
+  }
+
+  function updateProgress(pct) {
+    if (!uploadProgress) return;
+    uploadProgress.removeAttribute('hidden');
+    progressBar && (progressBar.style.width = pct + '%');
+    uploadProgress.setAttribute('aria-valuenow', String(pct));
+    progressLabel && (progressLabel.textContent = pct + '%');
+  }
+
+  // Make click handlers count as “trusted user gestures” on mobile
+  function bindUserActivation(el, handler) {
+    if (!el) return;
+    if (window.PointerEvent) el.addEventListener('pointerup', handler);
+    else el.addEventListener('click', handler);
+  }
+
+  // Safely open file inputs on mobile (iOS quirks)
+  function resilientOpen(inputEl) {
+    if (!inputEl) return;
+
+    // Clean up old timers/styles
+    if (inputEl._fallbackTimer)  { clearTimeout(inputEl._fallbackTimer);  inputEl._fallbackTimer = null; }
+    if (inputEl._revertTimer)    { clearTimeout(inputEl._revertTimer);    inputEl._revertTimer = null; }
+    if (inputEl._prevStyles) { Object.assign(inputEl.style, inputEl._prevStyles); inputEl._prevStyles = null; }
+
+    let opened = false;
+    const onChange = () => { opened = true; };
+    inputEl.addEventListener('change', onChange, { once: true });
+
+    inputEl.click?.();
+
+    inputEl._fallbackTimer = setTimeout(() => {
+      if (opened) return;
+
+      inputEl._prevStyles = {
+        position: inputEl.style.position, left: inputEl.style.left, top: inputEl.style.top,
+        width: inputEl.style.width, height: inputEl.style.height, opacity: inputEl.style.opacity,
+        display: inputEl.style.display
+      };
+      Object.assign(inputEl.style, { display: 'block', position: 'fixed', left: '-9999px', top: '0', width: '1px', height: '1px', opacity: '0' });
+      inputEl.focus?.();
+
+      inputEl._revertTimer = setTimeout(() => {
+        if (inputEl._prevStyles) {
+          Object.assign(inputEl.style, inputEl._prevStyles);
+          inputEl._prevStyles = null;
+        }
+        inputEl._revertTimer = null;
+      }, 3000);
+
+      inputEl._fallbackTimer = null;
+    }, 400);
+  }
+
+   // ---- Issue code dropdown (stable codes + localized labels)
+const ISSUE_CODES = ["DAMAGE","MISSING","WRONG","DELAY","DOCUMENTS","OTHER"];
+
+function localizeIssueLabel(code) {
+  const dict = (langStrings[currentLang] || langStrings.en || {});
+  return dict["issue_" + code] || code; // fallback to code if missing
 }
 
-  // ---------- Unknown slug banner ----------
-function renderUnknownSlugBanner(slugValue) {
-  if (!banner) return;
+function buildIssueOptions() {
+  const sel = document.getElementById("issue_code");
+  if (!sel) return;
+
+  const prev = sel.value;       // remember current selection
+  sel.innerHTML = "";           // clear
+
+  const dict = (langStrings[currentLang] || langStrings.en || {});
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = dict.issueCodePlaceholder || "Select an issue (optional)";
+  sel.appendChild(opt0);
+
+  ISSUE_CODES.forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;                // value sent to backend
+    opt.textContent = localizeIssueLabel(code);
+    sel.appendChild(opt);
+  });
+
+  if (ISSUE_CODES.includes(prev)) sel.value = prev; // restore if possible
+}
+  // ----------------------------------------------------------
+  // 4) Language & theme
+  // ----------------------------------------------------------
+  function normalizeLangCode(code) {
+    if (!code) return '';
+    let c = code.toLowerCase().replace('_','-');
+    if (c === 'ro-md') return 'ro_MD';
+    if (c === 'ckb' || c === 'ku-iq') return 'ckb';
+    if (c.startsWith('pt-')) return 'pt';
+    return c.split('-')[0];
+  }
+
+  function pickInitialLang(available) {
+    const urlLang = new URLSearchParams(location.search).get('lang');
+    if (urlLang) {
+      const k = normalizeLangCode(urlLang);
+      if (available[k]) return k;
+    }
+    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+    const k = normalizeLangCode(nav);
+    return available[k] ? k : 'en';
+  }
+
+  async function loadI18n() {
+    const res = await fetch('/i18n.json?v=' + Date.now(), { cache: 'no-store' });
+    langStrings = await res.json();
+    const first = pickInitialLang(langStrings);
+    applyLang(first);
+    buildLangMenu();
+  }
+
+  function applyLang(code) {
+  // Set the active language first so all helpers read the right one
+  currentLang = code;
+
+  const dict = langStrings[code] || langStrings['en'] || {};
+
+  // 1) Apply text, titles, aria-labels, placeholders
+  qsa('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
+  qsa('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (dict[key]) el.setAttribute('title', dict[key]);
+  });
+  qsa('[data-i18n-aria-label]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria-label');
+    if (dict[key]) el.setAttribute('aria-label', dict[key]);
+  });
+  qsa('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (dict[key]) el.setAttribute('placeholder', dict[key]);
+  });
+
+  // 2) Rebuild the issue dropdown NOW, with the correct currentLang
+  buildIssueOptions();
+
+  // 3) Meta description
+  const meta = dict.metaDescription || (langStrings.en && langStrings.en.metaDescription) || '';
+  ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]']
+    .map(sel => qs(sel))
+    .forEach(m => m && m.setAttribute('content', meta));
+
+  // 4) dir/lang
+  const rtl = new Set(['ar','fa','he','ur']);
+  document.documentElement.setAttribute('lang', code);
+  document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
+
+  // 5) Heading with/without ref
+  if (heading) {
+    if (refSafe) {
+      const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
+      heading.textContent = tmpl.replace('{ref}', refSafe);
+    } else {
+      heading.textContent = (langStrings[code] && langStrings[code].heading) || 'Upload CMR / POD';
+    }
+  }
+
+  // 6) Reflect UI state
+  reflectLangSelection();
+}
+
+  async function loadTheme() {
+    const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
+    themes = await res.json();
+
+    const isKnown = !!themes[rawSlug];
+    theme = isKnown ? themes[rawSlug] : (themes['default'] || {});
+    if (!isKnown && rawSlug) renderUnknownSlugBanner(rawSlug);
+    if (!isKnown) slug = 'default';
+
+    const r = document.documentElement;
+    const c = theme.colors || {};
+    r.style.setProperty('--brand-primary', c.primary || '#000000');
+    r.style.setProperty('--brand-accent',  c.accent  || '#1F2937');
+    r.style.setProperty('--brand-text',    c.text    || '#0B1220');
+    r.style.setProperty('--brand-muted',   c.muted   || '#6B7280');
+    r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
+    r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
+
+    const headerBg = (theme.header && theme.header.bg) || '#FFFFFF';
+    r.style.setProperty('--header-bg', headerBg);
+
+    if (brandLogo && theme.logo) brandLogo.src = theme.logo;
+    const favicon = qs('link[rel="icon"]');
+    if (favicon && theme.favicon) favicon.href = theme.favicon;
+
+    // Localized H1 title set in applyLang as well
+    if (heading) {
+      const dict = langStrings[currentLang] || langStrings['en'] || {};
+      if (refSafe) {
+        const tmpl = dict.headingWithRef || 'Upload CMR / POD for reference {ref}';
+        heading.textContent = tmpl.replace('{ref}', refSafe);
+      } else {
+        heading.textContent = dict.heading || 'Upload CMR / POD';
+      }
+    }
+  }
+
+  function renderUnknownSlugBanner(slugValue) {
+    if (!banner) return;
     const dict = langStrings[currentLang] || langStrings['en'] || {};
-    const msgTmpl   = dict.unknownSlug || 'Unknown reference “{slug}”. Please verify the URL or use the general uploader.';
+    const msgTmpl   = dict.unknownSlug || 'Unknown reference “{slug}”. You can use the default tool below.';
     const linkLabel = dict.learnAboutPodfy || 'Learn about Podfy';
     const msg = msgTmpl.replace('{slug}', slugValue);
     banner.hidden = false;
@@ -150,12 +363,12 @@ function renderUnknownSlugBanner(slugValue) {
     banner.innerHTML = `${msg} <a href="https://podfy.net/introduction" target="_blank" rel="noopener">${linkLabel}</a>`;
   }
 
-  // ---------- Language menu ----------
+  // Language menu wiring
   function buildLangMenu() {
     if (!langMenu || !langStrings) return;
-    const entries = Object.keys(langStrings).map(k => ({
-      key: k, name: langStrings[k].__name || k
-    })).sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
+    const entries = Object.keys(langStrings)
+      .map(k => ({ key: k, name: langStrings[k].__name || k }))
+      .sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base'}));
 
     langMenu.innerHTML = '';
     entries.forEach(({ key, name }) => {
@@ -166,10 +379,7 @@ function renderUnknownSlugBanner(slugValue) {
       btn.setAttribute('aria-checked', String(key === currentLang));
       btn.setAttribute('data-lang', key);
       btn.textContent = name;
-      btn.addEventListener('click', () => {
-        applyLang(key);
-        closeLangMenu();
-      });
+      btn.addEventListener('click', () => { applyLang(key); closeLangMenu(); });
       langMenu.appendChild(btn);
     });
     reflectLangSelection();
@@ -207,12 +417,10 @@ function renderUnknownSlugBanner(slugValue) {
     document.addEventListener('click', (e) => {
       if (!langTrigger.contains(e.target) && !langMenu.contains(e.target)) closeLangMenu();
     });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeLangMenu();
-    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLangMenu(); });
   }
 
-  // ---------- Info popovers ----------
+  // Info-popovers for (i) buttons
   function wireInfoPopovers() {
     const buttons = qsa('.info-btn');
     const popovers = new Map();
@@ -242,115 +450,22 @@ function renderUnknownSlugBanner(slugValue) {
       const inPop = Array.from(popovers.values()).some(p => p.contains(e.target));
       if (!isBtn && !inPop) {
         popovers.forEach((p, btn) => {
-          p.hidden = true;
-          p.setAttribute('aria-hidden', 'true');
-          btn.setAttribute('aria-expanded', 'false');
+          p.hidden = true; p.setAttribute('aria-hidden', 'true'); btn.setAttribute('aria-expanded', 'false');
         });
       }
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         popovers.forEach((p, btn) => {
-          p.hidden = true;
-          p.setAttribute('aria-hidden', 'true');
-          btn.setAttribute('aria-expanded', 'false');
+          p.hidden = true; p.setAttribute('aria-hidden', 'true'); btn.setAttribute('aria-expanded', 'false');
         });
       }
     });
   }
 
-  // ---------- Theme load ----------
-  async function loadTheme() {
-    const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
-    themes = await res.json();
-
-    const isKnown = !!themes[rawSlug];
-    theme = isKnown ? themes[rawSlug] : (themes['default'] || {});
-    if (!isKnown && rawSlug) renderUnknownSlugBanner(rawSlug);
-    if (!isKnown) slug = 'default';
-
-    const r = document.documentElement;
-    const c = theme.colors || {};
-    r.style.setProperty('--brand-primary', c.primary || '#000000');
-    r.style.setProperty('--brand-accent',  c.accent  || '#1F2937');
-    r.style.setProperty('--brand-text',    c.text    || '#0B1220');
-    r.style.setProperty('--brand-muted',   c.muted   || '#6B7280');
-    r.style.setProperty('--brand-border',  c.border  || '#E5E7EB');
-    r.style.setProperty('--brand-button-text', c.buttonText || '#FFFFFF');
-
-    const headerBg = (theme.header && theme.header.bg) || '#FFFFFF';
-    r.style.setProperty('--header-bg', headerBg);
-
-    if (brandLogo && theme.logo) brandLogo.src = theme.logo;
-    const favicon = qs('link[rel="icon"]');
-    if (favicon && theme.favicon) favicon.href = theme.favicon;
-
-    // Localized H1 title
-    if (heading) {
-      const dict = langStrings[currentLang] || langStrings['en'] || {};
-      if (refFromPath) {
-        const tmpl = dict.headingWithRef || 'Upload CMR / POD for reference {ref}';
-        heading.textContent = tmpl.replace('{ref}', refFromPath);
-      } else {
-        heading.textContent = dict.heading || 'Upload CMR / POD';
-      }
-    }
-  }
-
-  // ---------- i18n ----------
-  async function loadI18n() {
-    const res = await fetch('/i18n.json?v=' + Date.now(), { cache: 'no-store' });
-    langStrings = await res.json();
-    const first = pickInitialLang(langStrings);
-    applyLang(first);
-    buildLangMenu();
-  }
-
-  function applyLang(code) {
-    const dict = langStrings[code] || langStrings['en'] || {};
-    qsa('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      if (dict[key]) el.textContent = dict[key];
-    });
-    currentLang = code;
-
-    qsa('[data-i18n-title]').forEach(el => {
-      const key = el.getAttribute('data-i18n-title');
-      if (dict[key]) el.setAttribute('title', dict[key]);
-    });
-    qsa('[data-i18n-aria-label]').forEach(el => {
-      const key = el.getAttribute('data-i18n-aria-label');
-      if (dict[key]) el.setAttribute('aria-label', dict[key]);
-    });
-    qsa('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
-      if (dict[key]) el.setAttribute('placeholder', dict[key]);
-    });
-
-    const desc   = document.querySelector('meta[name="description"]');
-    const ogDesc = document.querySelector('meta[property="og:description"]');
-    const twDesc = document.querySelector('meta[name="twitter:description"]');
-    const meta   = dict.metaDescription || (langStrings.en && langStrings.en.metaDescription) || '';
-    [desc, ogDesc, twDesc].forEach(m => m && m.setAttribute('content', meta));
-
-    const rtl = new Set(['ar','fa','he','ur']);
-    document.documentElement.setAttribute('lang', code);
-    document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
-
-    // keep localized title with/without ref after language changes
-    if (heading) {
-      if (refFromPath) {
-        const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
-        heading.textContent = tmpl.replace('{ref}', refFromPath);
-      } else {
-        heading.textContent = (langStrings[code] && langStrings[code].heading) || 'Upload CMR / POD';
-      }
-    }
-
-    reflectLangSelection();
-  }
-
-  // ---------- Location (GPS only from client) ----------
+  // ----------------------------------------------------------
+  // 5) (3C) Location (GPS) capture: best effort + UI feedback
+  // ----------------------------------------------------------
   function setLocDataFromPosition(pos) {
     const c = pos && pos.coords ? pos.coords : {};
     const ts = pos && pos.timestamp ? String(pos.timestamp) : String(Date.now());
@@ -360,7 +475,7 @@ function renderUnknownSlugBanner(slugValue) {
       locStatus.textContent = `Location ready (${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)})`;
       locStatus.dataset.lat = String(c.latitude);
       locStatus.dataset.lon = String(c.longitude);
-      if (typeof c.accuracy === 'number') locStatus.dataset.acc = String(c.accuracy);
+      if (typeof c.accuracy === 'number') locStatus.dataset.acc = String(Math.round(c.accuracy));
       locStatus.dataset.ts = ts;
     } else {
       locStatus.textContent = 'Location unavailable';
@@ -368,133 +483,104 @@ function renderUnknownSlugBanner(slugValue) {
     }
   }
 
-  async function requestLocationFix() {
-    if (!navigator.geolocation || !locStatus) return;
-    locStatus.textContent = 'Requesting location…';
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { setLocDataFromPosition(pos); resolve(true); },
-        (err) => {
-          console.warn('Geolocation error:', err);
-          locStatus.textContent = 'Unable to get location (permission denied or timeout)';
-          ['lat','lon','acc','ts'].forEach(k => delete locStatus.dataset[k]);
-          resolve(false);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
+  function getCurrentPositionOnce() {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true, timeout: 12000, maximumAge: 0
+      });
     });
   }
 
-  // ---------- Picker helpers (mobile/desktop safe) ----------
-  function cancelTimersForInput(inputEl) {
-    if (!inputEl) return;
-    if (inputEl._fallbackTimer) { clearTimeout(inputEl._fallbackTimer); inputEl._fallbackTimer = null; }
-    if (inputEl._revertTimer)   { clearTimeout(inputEl._revertTimer);   inputEl._revertTimer = null; }
-    if (inputEl._prevStyles) {
-      Object.assign(inputEl.style, inputEl._prevStyles);
-      inputEl._prevStyles = null;
+  function watchPositionOnce() {
+    return new Promise((resolve, reject) => {
+      const id = navigator.geolocation.watchPosition(
+        (pos) => { navigator.geolocation.clearWatch(id); resolve(pos); },
+        (err) => { navigator.geolocation.clearWatch(id); reject(err); },
+        { enableHighAccuracy: true, maximumAge: 0 }
+      );
+      setTimeout(() => { try { navigator.geolocation.clearWatch(id); } catch {} reject(new Error('watch timeout')); }, 14000);
+    });
+  }
+
+  async function requestLocationFix() {
+    if (!navigator.geolocation || !locStatus) return false;
+    locStatus.textContent = 'Requesting location…';
+    try { if (navigator.permissions?.query) await navigator.permissions.query({ name: 'geolocation' }); } catch {}
+    try {
+      const pos = await getCurrentPositionOnce().catch(() => watchPositionOnce());
+      setLocDataFromPosition(pos);
+      return true;
+    } catch (err) {
+      console.warn('Geolocation error:', err);
+      locStatus.textContent = 'Unable to get location (permission denied or timeout)';
+      ['lat','lon','acc','ts'].forEach(k => delete locStatus.dataset[k]);
+      return false;
     }
   }
 
-  function resilientOpen(inputEl) {
-    if (!inputEl) return;
-
-    // Clear any prior timers before opening
-    cancelTimersForInput(inputEl);
-
-    let opened = false;
-    const onChange = () => {
-      opened = true;
-      cancelTimersForInput(inputEl); // stop fallback if a file was chosen
-    };
-    inputEl.addEventListener('change', onChange, { once: true });
-
-    // Try normal programmatic click within user gesture
-    inputEl.click?.();
-
-    // Fallback if dialog didn’t open / selection not made
-    inputEl._fallbackTimer = setTimeout(() => {
-      if (opened) return;
-
-      // Move input fully off-screen but still interactive for iOS
-      inputEl._prevStyles = {
-        position: inputEl.style.position,
-        left:     inputEl.style.left,
-        top:      inputEl.style.top,
-        width:    inputEl.style.width,
-        height:   inputEl.style.height,
-        opacity:  inputEl.style.opacity,
-        display:  inputEl.style.display
-      };
-      Object.assign(inputEl.style, {
-        display:  'block',
-        position: 'fixed',
-        left:     '-9999px',
-        top:      '0',
-        width:    '1px',
-        height:   '1px',
-        opacity:  '0'
-      });
-
-      // iOS sometimes needs a focus() before showing the chooser
-      inputEl.focus?.();
-
-      inputEl._revertTimer = setTimeout(() => {
-        if (inputEl._prevStyles) {
-          Object.assign(inputEl.style, inputEl._prevStyles);
-          inputEl._prevStyles = null;
-        }
-        inputEl._revertTimer = null;
-      }, 3000);
-
-      inputEl._fallbackTimer = null;
-    }, 400);
-  }
-
-  // --- NEW: user-activation-safe binder (pointerup preferred, no preventDefault) ---
-  function bindUserActivation(el, handler) {
-    if (!el) return;
-    if (window.PointerEvent) {
-      el.addEventListener('pointerup', handler);    // counts as a trusted user activation
-    } else {
-      el.addEventListener('click', handler);        // fallback for older browsers
-    }
-  }
-
-  // ---------- Upload wiring ----------
+  // ----------------------------------------------------------
+  // 6) UI wiring (email toggle, issue toggle, pickers, dropzone)
+  // ----------------------------------------------------------
   function wireUI() {
+    // Initial button state
     if (submitBtn) submitBtn.disabled = true;
 
-    // Email checkbox: show/hide + required
+    // Email copy → show/hide + required toggle
     copyCheck?.addEventListener('change', () => {
-      const show = !!copyCheck.checked;
+  const show = !!copyCheck.checked;
+  if (emailWrap)  { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden  = !show; }
+  if (emailPanel) { emailPanel.hidden = !show; } // <-- add this
+  if (emailField) {
+    if (show) {
+      if (emailField.type !== 'email') emailField.type = 'email';
+      emailField.required = true;
+      emailField.setAttribute('aria-required', 'true');
+      emailField.focus();
+    } else {
+      emailField.required = false;
+      emailField.removeAttribute('aria-required');
+      emailField.setCustomValidity && emailField.setCustomValidity('');
+      emailField.value = '';
+    }
+  }
+});
+    // Initialize email UI
+    (() => {
+  const show = !!copyCheck?.checked;
+  if (emailWrap)  { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden  = !show; }
+  if (emailPanel) { emailPanel.hidden = !show; } // <-- add this
+  if (emailField) { if (show && emailField.type !== 'email') emailField.type = 'email'; emailField.required = !!show; }
+})();
 
-      if (emailWrap) {
-        emailWrap.classList.toggle('hidden', !show);
-        emailWrap.hidden = !show;
-      }
-      if (emailField) {
-        if (show) {
-          if (emailField.type !== 'email') emailField.type = 'email';
-          emailField.required = true;
-          emailField.setAttribute('aria-required', 'true');
-          emailField.focus();
-        } else {
-          emailField.required = false;
-          emailField.removeAttribute('aria-required');
-          emailField.setCustomValidity && emailField.setCustomValidity('');
-          emailField.value = '';
-        }
-      }
-    });
-    // Initialize email UI on load
-    (function initEmailCopyUI() {
-      const show = !!copyCheck?.checked;
-      if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
-      if (emailField) { if (show && emailField.type !== 'email') emailField.type = 'email'; emailField.required = !!show; }
-    })();
+  // === GPS panel toggle (new) ===
+  const locCheck = document.getElementById('locCheck');
+  const gpsPanel = document.getElementById('gpsPanel');
 
-    // Location checkbox: show status + request fix immediately
+  function updateGpsPanel() {
+    gpsPanel.hidden = !locCheck.checked;
+  }
+
+  // Initialize + listen
+  if (locCheck && gpsPanel) {
+    updateGpsPanel();
+    locCheck.addEventListener('change', updateGpsPanel);
+  }
+     
+    // Delivery outcome (“Clean” vs “Issue”)
+    function syncIssueUI() {
+      const isClean = !!(chkClean && chkClean.checked);
+      if (issuePanel) issuePanel.hidden = isClean;   // outlined panel only when NOT clean
+      if (isClean) {
+        if (issueCode)  issueCode.value = "";
+        if (issueNotes) issueNotes.value = "";
+      }
+    }
+    if (chkClean) {
+      chkClean.addEventListener("change", syncIssueUI);
+      syncIssueUI(); // initialize
+    }
+
+    // Location checkbox → show status & try to capture on demand
     locCheck?.addEventListener('change', async () => {
       const on = !!locCheck.checked;
       if (locStatus) {
@@ -516,17 +602,16 @@ function renderUnknownSlugBanner(slugValue) {
       }
     })();
 
-    // Buttons → open pickers (now pointerup/click without preventDefault)
+    // Open pickers with robust user activation handling
     bindUserActivation(chooseBtn, () => resilientOpen(fileInput));
     bindUserActivation(cameraBtn, () => resilientOpen(cameraInput));
 
-    // --- Dropzone: drag & drop only (no click-to-open) ---
-    const dz = dropzone;
-    if (dz) {
+    // --- Dropzone (drag & drop only) ---
+    if (dropzone) {
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
 
-      // SHIELD: if buttons live inside the dropzone, stop their events in capture phase
-      const actionsWrap = document.querySelector('.dz-actions');
+      // Shield dropzone from button clicks (if buttons sit inside)
+      const actionsWrap = qs('.dz-actions');
       if (actionsWrap) {
         const shield = (e) => { e.stopPropagation(); };
         actionsWrap.addEventListener('touchstart', shield, { capture: true, passive: false });
@@ -535,152 +620,137 @@ function renderUnknownSlugBanner(slugValue) {
       }
 
       ['dragenter', 'dragover'].forEach(ev => {
-        dz.addEventListener(ev, (e) => {
+        dropzone.addEventListener(ev, (e) => {
           prevent(e);
           if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
-          dz.classList.add('dragover');
+          dropzone.classList.add('dragover');
         });
       });
 
       ['dragleave', 'dragend'].forEach(ev => {
-        dz.addEventListener(ev, (e) => {
+        dropzone.addEventListener(ev, (e) => {
           prevent(e);
-          dz.classList.remove('dragover');
+          dropzone.classList.remove('dragover');
         });
       });
 
-      dz.addEventListener('drop', (e) => {
+      dropzone.addEventListener('drop', (e) => {
         prevent(e);
-        dz.classList.remove('dragover');
+        dropzone.classList.remove('dragover');
         const files = e.dataTransfer && e.dataTransfer.files;
         const f = files && files[0];
+        if (!f) return;
 
-if (f) {
-  // NEW: validate before accepting
-  const v = validateClientFile(f);   // uses MAX_BYTES/ALLOWED_* you added
-  if (!v.ok) {
-    // reject + reset UI
-    statusEl && (statusEl.textContent = v.msg);
-    dz.classList.remove('ready');
-    hidePreview();
-    resetProgress();
-    if (submitBtn) submitBtn.disabled = true;
-    if (fileInput)  fileInput.value  = '';
-    if (cameraInput) cameraInput.value = '';
-    return;                          // IMPORTANT: do not proceed
-  }
+        const v = validateClientFile(f);
+        if (!v.ok) {
+          statusEl && (statusEl.textContent = v.msg);
+          dropzone.classList.remove('ready');
+          hidePreview();
+          resetProgress();
+          submitBtn && (submitBtn.disabled = true);
+          if (fileInput) fileInput.value = '';
+          if (cameraInput) cameraInput.value = '';
+          return;
+        }
 
-  // Accept file only if valid
-  selectedFile = f;
-  dz.classList.add('ready');
-  if (submitBtn) submitBtn.disabled = false;
-  statusEl && (statusEl.textContent = '');
-  showPreview(f);
-  resetProgress();
-}
-
-
+        selectedFile = f;
+        dropzone.classList.add('ready');
+        submitBtn && (submitBtn.disabled = false);
+        statusEl && (statusEl.textContent = '');
+        showPreview(f);
+        resetProgress();
       });
 
-      // Block click + keyboard activation on the dropzone itself
-      dz.addEventListener('click', (e) => e.preventDefault());
-      dz.addEventListener('keydown', (e) => {
+      // Prevent activating chooser by clicking dropzone area
+      dropzone.addEventListener('click', (e) => e.preventDefault());
+      dropzone.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
       });
     }
 
-    // On file picker/camera selection: select file, don’t upload
-fileInput?.addEventListener('change', () => {
-  const f = fileInput.files && fileInput.files[0];
-  if (!f) return;
+    // File input changes
+    fileInput?.addEventListener('change', () => {
+      const f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      const v = validateClientFile(f);
+      if (!v.ok) {
+        statusEl && (statusEl.textContent = v.msg);
+        dropzone?.classList.remove('ready');
+        hidePreview();
+        resetProgress();
+        submitBtn && (submitBtn.disabled = true);
+        fileInput.value = '';
+        return;
+      }
+      selectedFile = f;
+      showPreview(f);
+      resetProgress();
+      dropzone?.classList.add('ready');
+      submitBtn && (submitBtn.disabled = false);
+      statusEl && (statusEl.textContent = '');
+    });
 
-  // NEW: validate first
-  const v = validateClientFile(f); // uses MAX_BYTES/ALLOWED_* you added
-  if (!v.ok) {
-    statusEl && (statusEl.textContent = v.msg);
-    dropzone?.classList.remove('ready');   // <-- not ready on invalid
-    hidePreview();
-    resetProgress();
-    submitBtn && (submitBtn.disabled = true);
-    fileInput.value = '';                  // clear bad selection
-    return;                                // IMPORTANT: stop here
-  }
+    cameraInput?.addEventListener('change', () => {
+      const f = cameraInput.files && cameraInput.files[0];
+      if (!f) return;
+      const v = validateClientFile(f);
+      if (!v.ok) {
+        statusEl && (statusEl.textContent = v.msg);
+        dropzone?.classList.remove('ready');
+        hidePreview();
+        resetProgress();
+        submitBtn && (submitBtn.disabled = true);
+        cameraInput.value = '';
+        return;
+      }
+      selectedFile = f;
+      showPreview(f);
+      resetProgress();
+      dropzone?.classList.add('ready');
+      submitBtn && (submitBtn.disabled = false);
+      statusEl && (statusEl.textContent = '');
+    });
 
-  // Accept only if valid
-  selectedFile = f;
-  showPreview(f);
-  resetProgress();
-  dropzone?.classList.add('ready');        // <-- ready on valid
-  submitBtn && (submitBtn.disabled = false);
-  statusEl && (statusEl.textContent = '');
-});
+    // Remove selected file
+    removeFileBtn?.addEventListener('click', () => {
+      selectedFile = null;
+      dropzone?.classList.remove('ready');
+      hidePreview();
+      resetProgress();
+      if (fileInput) fileInput.value = '';
+      if (cameraInput) cameraInput.value = '';
+      if (submitBtn) submitBtn.disabled = true;
+      statusEl && (statusEl.textContent = '');
+    });
 
-cameraInput?.addEventListener('change', () => {
-  const f = cameraInput.files && cameraInput.files[0];
-  if (!f) return;
-
-  // NEW: validate first
-  const v = validateClientFile(f); // uses MAX_BYTES/ALLOWED_* you added
-  if (!v.ok) {
-    statusEl && (statusEl.textContent = v.msg);
-    dropzone?.classList.remove('ready');   // <-- not ready on invalid
-    hidePreview();
-    resetProgress();
-    submitBtn && (submitBtn.disabled = true);
-    cameraInput.value = '';                // clear bad selection
-    return;                                // IMPORTANT: stop here
-  }
-
-  // Accept only if valid
-  selectedFile = f;
-  showPreview(f);
-  resetProgress();
-  dropzone?.classList.add('ready');        // <-- ready on valid
-  submitBtn && (submitBtn.disabled = false);
-  statusEl && (statusEl.textContent = '');
-});
-
-
-     removeFileBtn?.addEventListener('click', () => {
-  selectedFile = null;
-  dropzone?.classList.remove('ready');
-  hidePreview();
-  resetProgress();
-  if (fileInput) fileInput.value = '';
-  if (cameraInput) cameraInput.value = '';
-  if (submitBtn) submitBtn.disabled = true;
-  statusEl && (statusEl.textContent = '');
-});
-
-
-    // Submit click → upload selected file
+    // Submit → validate email (if requested) and upload
     submitBtn?.addEventListener('click', async (e) => {
       e.preventDefault();
-
-      // If email copy is requested, require valid email
       if (copyCheck?.checked) {
-        if (!emailField?.value || !emailField.checkValidity()) {
+        if (!emailField?.value || !emailField.checkValidity || !emailField.checkValidity()) {
           emailField?.reportValidity && emailField.reportValidity();
           statusEl && (statusEl.textContent = 'Please enter a valid email address.');
           return;
         }
       }
-
       if (selectedFile) await submitFile(selectedFile);
     });
-   hidePreview();        // hide chip, show helper text + buttons
-    resetProgress();      // hide progress bar and set it to 0
+
+    // Initial visual state
+    hidePreview();
+    resetProgress();
     dropzone?.classList.remove('ready');
     submitBtn && (submitBtn.disabled = true);
     statusEl && (statusEl.textContent = '');
   }
 
-  // ---------- Upload ----------
+  // ----------------------------------------------------------
+  // 7) Upload logic (with progress) — includes Steps 3D + 3E
+  // ----------------------------------------------------------
   async function submitFile(f) {
-    const dict = langStrings[currentLang] || langStrings['en'] || {};
     if (!f) return;
 
-    // refresh GPS before submit if requested
+    // Refresh GPS right before submit if checkbox is on
     if (locCheck?.checked) {
       await requestLocationFix();
     }
@@ -688,30 +758,32 @@ cameraInput?.addEventListener('change', () => {
     if (submitBtn) submitBtn.disabled = true;
 
     const form = new FormData();
-     // --- Bot-defense fields sent with the upload ---
-      const issuedInput = document.getElementById('form_issued_at');
-      // server expects both fields:
-      //  - form_issued_at: timestamp when the form was shown
-      //  - company_website: honeypot (must be empty)
-      form.append('form_issued_at', issuedInput?.value || String(Date.now()));
-      form.append('company_website', '');
 
+    // (3D) Anti-bot + honeypot
+    form.append('form_issued_at', issuedAtInput?.value || String(Date.now()));
+    form.append('company_website', ''); // honeypot must remain empty
+
+    // File + slug + ref
     form.append('file', f);
-      // Always post the brand slug explicitly
-      form.append('brand', rawSlug || 'default');
+    form.append('brand', rawSlug || 'default');
+    form.append('slug_original', rawSlug || 'default');
+    form.append('slug_known', themes[rawSlug] ? '1' : '0');
+    if (refSafe) form.append('reference', refSafe);
 
-      // Keep extra fields if you still want them
-      form.append('slug_original', rawSlug || 'default');
-      form.append('slug_known', themes[rawSlug] ? '1' : '0');
-
-    if (refFromPath) form.append('reference', refFromPath);
-
-    // Email (only if valid)
+    // Email copy (optional)
     if (copyCheck?.checked && emailField?.value && emailField.checkValidity && emailField.checkValidity()) {
       form.append('email', emailField.value.trim());
     }
 
-    // GPS fields only; backend picks IP fallback if GPS absent
+    // Delivery outcome flags (3E)
+    const isClean = !!(chkClean && chkClean.checked);
+    form.append('issue', isClean ? '0' : '1');
+    if (!isClean) {
+      if (issueCode && issueCode.value.trim())  form.append('issue_code',  issueCode.value.trim());
+      if (issueNotes && issueNotes.value.trim()) form.append('issue_notes', issueNotes.value.trim());
+    }
+
+    // Browser GPS (3E). Backend falls back to EXIF/IP if absent.
     if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
       form.append('lat',  locStatus.dataset.lat);
       form.append('lon',  locStatus.dataset.lon);
@@ -719,86 +791,75 @@ cameraInput?.addEventListener('change', () => {
       if (locStatus.dataset.ts)  form.append('loc_ts',  locStatus.dataset.ts);
     }
 
-try {
-  // Show initial bar state and perform the whole upload inside a Promise
-  await new Promise((resolve) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload');
+    // Browser timezone (3D)
+    form.append('tz', browserTz);
 
-    // Initialize the bar text/visibility BEFORE sending
-    updateProgress(0);
-    uploadProgress?.removeAttribute('hidden');
-    progressLabel && (progressLabel.textContent = 'Starting… 0%');
+    // Upload with progress using XHR (shows a proper progress bar)
+    try {
+      await new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/upload');
 
-    // Byte progress → write INSIDE the progress bar (not statusEl)
-    xhr.upload.addEventListener('progress', (e) => {
-      if (!e.lengthComputable) return;
-      const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
-      updateProgress(pct);
-      progressLabel && (progressLabel.textContent = `Uploading… ${pct}%`);
-    });
+        // Initialize bar
+        updateProgress(0);
+        uploadProgress?.removeAttribute('hidden');
+        progressLabel && (progressLabel.textContent = 'Starting… 0%');
 
-    // Server responded
-    xhr.addEventListener('load', () => {
-      const ok = xhr.status >= 200 && xhr.status < 300;
+        xhr.upload.addEventListener('progress', (e) => {
+          if (!e.lengthComputable) return;
+          const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
+          updateProgress(pct);
+          progressLabel && (progressLabel.textContent = `Uploading… ${pct}%`);
+        });
 
-      if (ok) {
-        // Success message in the bar; keep it visible
-        updateProgress(100);
-        progressLabel && (progressLabel.textContent = 'Thanks. File received.');
-        uploadProgress?.classList.remove('error');
-        uploadProgress?.classList.add('success');
+        xhr.addEventListener('load', () => {
+          const ok = xhr.status >= 200 && xhr.status < 300;
+          if (ok) {
+            updateProgress(100);
+            progressLabel && (progressLabel.textContent = 'Thanks. File received.');
+            uploadProgress?.classList.remove('error');
+            uploadProgress?.classList.add('success');
 
-        // Clear selection + show buttons again
-        hidePreview();
-        selectedFile = null;
-        dropzone?.classList.remove('ready');
-        [fileInput, cameraInput].forEach(cancelTimersForInput);
-        if (fileInput) fileInput.value = '';
-        if (cameraInput) cameraInput.value = '';
-        if (submitBtn) submitBtn.disabled = true;
+            // Reset UI
+            hidePreview();
+            selectedFile = null;
+            dropzone?.classList.remove('ready');
+            if (fileInput) fileInput.value = '';
+            if (cameraInput) cameraInput.value = '';
+            submitBtn && (submitBtn.disabled = true);
+            statusEl && (statusEl.textContent = '');
+          } else {
+            progressLabel && (progressLabel.textContent = 'Upload failed. Please try again.');
+            uploadProgress?.classList.remove('success');
+            uploadProgress?.classList.add('error');
+            submitBtn && (submitBtn.disabled = false);
+          }
+          resolve();
+        });
 
-        // Optional: clear any old status area
-        statusEl && (statusEl.textContent = '');
-      } else {
-        progressLabel && (progressLabel.textContent = 'Upload failed. Please try again.');
-        uploadProgress?.classList.remove('success');
-        uploadProgress?.classList.add('error');
-        submitBtn && (submitBtn.disabled = false);
-      }
-      resolve(); // <-- important: resolve the Promise
-    });
+        xhr.addEventListener('error', () => {
+          progressLabel && (progressLabel.textContent = 'Network error. Please try again.');
+          uploadProgress?.classList.remove('success');
+          uploadProgress?.classList.add('error');
+          submitBtn && (submitBtn.disabled = false);
+          resolve();
+        });
 
-    // Network error
-    xhr.addEventListener('error', () => {
-      progressLabel && (progressLabel.textContent = 'Network error. Please try again.');
-      uploadProgress?.classList.remove('success');
-      uploadProgress?.classList.add('error');
+        xhr.send(form);
+      });
+    } catch (err) {
+      console.error(err);
+      statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
       submitBtn && (submitBtn.disabled = false);
-      resolve(); // <-- important: resolve the Promise
-    });
-
-    xhr.send(form);
-  });
-
-} catch (err) {
-  console.error(err);
-  statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
-  submitBtn && (submitBtn.disabled = false);
-}
-
+    }
   }
 
-  // ---------- Init ----------
+  // ----------------------------------------------------------
+  // 8) Init
+  // ----------------------------------------------------------
   (async function init() {
-
-  // NEW: set bot-check timestamp as early as possible
-  const issuedAtInput = document.getElementById('form_issued_at');
-    if (issuedAtInput && !issuedAtInput.value) {
-      issuedAtInput.value = String(Date.now());
-    }
-     
     await loadI18n();
+    buildIssueOptions();
     await loadTheme();
     buildLangMenu();
     wireLanguageMenu();

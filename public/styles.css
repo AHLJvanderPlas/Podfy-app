@@ -1,84 +1,79 @@
 /*
- * Podfy styles.css — clean & documented
- * - Theme tokens under :root
- * - Components grouped below
+ * Podfy styles.css — tidy, documented, and polished
+ * -------------------------------------------------
+ * Structure
+ *  01) Theme tokens (:root CSS variables)
+ *  02) Base / resets / typography
+ *  03) Banner
+ *  04) Header + language picker
+ *  05) Main container
+ *  06) Dropzone (hero)
+ *  07) Buttons (neutral + primary)
+ *  08) Options row + info (i) popovers
+ *  09) Email field
+ *  10) Delivery outcome box (clean / issue)
+ *  11) File preview chip + progress bar
+ *  12) Footer
+ *  13) Utilities & accessibility tweaks
  */
 
-/* ===== THEME TOKENS (CSS Variables) ===== */
+/* 01) THEME TOKENS --------------------------------------------------------- */
 :root {
-  --brand-primary: #000000;        /* primary (Submit) bg */
-  --brand-accent:  #1F2937;        /* accents, icons */
-  --brand-text:    #0B1220;        /* body text */
-  --brand-muted:   #6B7280;        /* helper text */
-  --brand-border:  #E5E7EB;        /* borders */
-  --brand-button-text: #FFFFFF;    /* primary button text */
+  --brand-primary:      #000000;   /* primary action (Submit) */
+  --brand-accent:       #1F2937;   /* accents, icons */
+  --brand-text:         #0B1220;   /* body text */
+  --brand-muted:        #6B7280;   /* helper text */
+  --brand-border:       #E5E7EB;   /* borders */
+  --brand-button-text:  #FFFFFF;   /* primary button text */
+  --header-bg:          #FFFFFF;   /* header background */
 
-  --header-bg: #FFFFFF;            /* header/banner background */
+  /* Dropzone */
+  --dz-icon-base: #CBD5E1;
+  --dz-accent:    #16A34A;
+  --dz-hover-bg:  #F3F4F6;
+  --dz-hover-bord:#CBD5E1;
 
-  /* Dropzone colors */
-  --dz-icon-base: #CBD5E1;         /* default icon fill (gray-300) */
-  --dz-accent:    #16A34A;         /* on dragover (green-600) */
-  --dz-hover-bg:  #F3F4F6;         /* dropzone bg on dragover (gray-100) */
-  --dz-hover-bord:#CBD5E1;         /* dropzone border on dragover */
+  /* Surfaces */
+  --surface: #FFFFFF;
+  --muted-bg: #eef2f7;
 }
 
-/* ===== RESET / BASE ===== */
+/* 02) BASE / TYPOGRAPHY ---------------------------------------------------- */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+html { -webkit-text-size-adjust: 100%; } /* avoid unexpected scaling on iOS */
 body {
   margin: 0;
   font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   color: var(--brand-text);
   background: #fff;
 }
+h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 
-/* ===== BANNER (unknown slug) ===== */
+/* 03) BANNER (unknown slug etc.) ------------------------------------------ */
 .banner {
   box-sizing: border-box;
   display: block;
   max-width: 720px;
   margin: 16px auto 0;
   padding: 12px 16px;
-
-  background: #FFF7ED;          /* light amber */
-  border: 1px solid #FED7AA;    /* amber border */
-  color: #7C2D12;               /* dark amber text */
+  background: #FFF7ED;            /* light amber */
+  border: 1px solid #FED7AA;
+  color: #7C2D12;
   border-radius: 10px;
-
   line-height: 1.45;
-  white-space: normal;
   overflow-wrap: anywhere;
-  word-break: break-word;
-  hyphens: auto;
-
   box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 6px 12px rgba(0,0,0,.04);
 }
 .banner[hidden] { display: none !important; }
 .banner a {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  font-weight: 600;
+  color: inherit; text-decoration: underline; text-underline-offset: 2px; font-weight: 600;
 }
-.banner a:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 2px;
-}
+.banner a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
-/* (If you want dark mode later, uncomment the WHOLE block, braces included)
-@media (prefers-color-scheme: dark) {
-  .banner {
-    background: #2B1D12;
-    border-color: #9A3412;
-    color: #FDE68A;
-    box-shadow: none;
-  }
-}
-*/
-
-/* ===== HEADER ===== */
+/* 04) HEADER + LANGUAGE PICKER -------------------------------------------- */
 .site-header {
-  background: var(--header-bg, #ffffff);
+  background: var(--header-bg, #fff);
   border-bottom: 1px solid var(--brand-border);
   padding: 0;
 }
@@ -88,198 +83,10 @@ body {
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
-  align-items: center;           /* logo left, language right */
+  align-items: center;
 }
 .brand img { display: block; height: 28px; }
 
-/* ===== MAIN CONTAINER ===== */
-.container { max-width: 720px; margin: 32px auto; padding: 0 20px; }
-
-/* ===== TYPOGRAPHY ===== */
-h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
-
-/* ===== DROPZONE (hero) ===== */
-.dz-wrap { margin: 16px 0 8px; }
-
-.dropzone {
-  border: 2px dashed var(--brand-border);
-  border-radius: 8px;
-  padding: 32px;
-  text-align: center;
-  transition: background-color .15s ease, border-color .15s ease;
-}
-
-/* Large hero style */
-.dropzone.dz-hero {
-  border-radius: 10px;
-  background: #fff;
-  min-height: 240px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 36px 24px;
-  transition: background-color .15s ease, border-color .15s ease;
-}
-
-/* Podfy icon as mask so we can recolor per state */
-.dz-icon-mask {
-  width: 72px; height: 72px;
-  background-color: var(--dz-icon-base);
-  -webkit-mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
-  mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
-  opacity: .95;
-  margin-bottom: 12px;
-  transition: background-color .15s ease, opacity .15s ease;
-}
-
-/* Headline + help text inside the hero */
-.dz-title { font-size: 20px; line-height: 1.2; margin: 4px 0; }
-.dz-sub   { color: var(--brand-muted); margin: 6px 0 14px; }
-
-/* Buttons row under the icon/text */
-.dz-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 2px 0 8px;
-}
-
-/* Accepted types line */
-.dz-constraints {
-  margin-top: 8px;
-  color: var(--brand-muted);
-  font-size: 14px;
-}
-
-/* Drag-over state */
-.dropzone.dz-hero.dragover {
-  background: var(--dz-hover-bg);
-  border-color: var(--dz-hover-bord);
-}
-.dropzone.dz-hero.dragover .dz-icon-mask {
-  background-color: var(--dz-accent);
-  opacity: 1;
-}
-
-/* File selected (Submit enabled) */
-.dropzone.dz-hero.ready .dz-icon-mask {
-  background-color: var(--brand-primary);
-  opacity: 1;
-}
-
-/* ===== BUTTONS ===== */
-/* Neutral gray buttons for Choose/Camera (decoupled from Submit) */
-#chooseBtn,
-#cameraBtn,
-.btn {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--brand-border);
-  background: #F3F4F6;                    /* gray */
-  color: var(--brand-text);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, transform .02s ease-in-out;
-}
-#chooseBtn:hover,
-#cameraBtn:hover,
-.btn:hover {
-  background: #E5E7EB;
-  border-color: #D1D5DB;
-}
-#chooseBtn:active,
-#cameraBtn:active,
-.btn:active { transform: translateY(1px); }
-#chooseBtn:focus-visible,
-#cameraBtn:focus-visible,
-.btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-
-/* Primary (Submit) button keeps brand color */
-.primary {
-  margin-top: 12px;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 18px;
-  background: var(--brand-primary);
-  color: var(--brand-button-text);
-  cursor: pointer;
-  --primary-text: currentColor;
-}
-.primary[disabled] { opacity: .5; cursor: not-allowed; }
-.primary-full { width: 100%; display: block; }
-
-/* ===== OPTIONS (location + email) ===== */
-.options-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 16px;
-  align-items: center;
-  margin: 12px 0 4px;
-}
-@media (min-width: 640px) { .options-row { gap: 12px 24px; } }
-
-.option {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  border: 0;
-  background: transparent;
-}
-.checkbox { display: inline-flex; align-items: center; gap: 8px; }
-
-/* Info “i” button + popover */
-.info-btn {
-  width: 20px; height: 20px; min-width: 20px;
-  border-radius: 50%;
-  border: 1px solid var(--brand-border);
-  font: 12px/18px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  background: #fff; color: var(--brand-accent);
-  text-align: center; cursor: pointer;
-}
-.info-btn:hover { background: #f7f7f7; }
-
-.popover {
-  position: absolute; top: 28px; left: 0;
-  max-width: 360px; padding: 10px 12px;
-  border: 1px solid var(--brand-border);
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.06);
-  z-index: 20;
-  color: var(--brand-text);
-  font-size: 14px;
-}
-
-/* Email field (shown only when checkbox is checked) */
-.email-wrap { margin-top: 8px; }
-.email-wrap input[type="email"] {
-  width: 100%; max-width: 480px;
-  padding: 10px 12px;
-  border: 1px solid var(--brand-border);
-  border-radius: 8px;
-}
-
-/* ===== STATUS / FOOTER ===== */
-.small  { color: var(--brand-muted); margin-top: 12px; }
-.status { margin-top: 16px; min-height: 24px; }
-
-.site-footer {
-  display: flex; gap: 28px; justify-content: center;
-  padding: 24px; color: var(--brand-accent);
-}
-.site-footer a { color: var(--brand-accent); text-decoration: none; }
-.site-footer a:hover { text-decoration: underline; }
-
-/* ===== LANGUAGE PICKER ===== */
 .lang { position: relative; }
 .lang-trigger {
   display: flex; align-items: center; gap: 10px;
@@ -292,6 +99,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 .lang-ic { width: 18px; height: 18px; color: #6B7280; }
 .lang-caret { width: 14px; height: 14px; color: #6B7280; transition: transform .15s ease; }
 .lang-trigger[aria-expanded="true"] .lang-caret { transform: rotate(180deg); }
+#currentLangLabel { font-weight: 600; }
 
 .lang-panel {
   position: absolute; right: 0; top: 44px; z-index: 50;
@@ -303,8 +111,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 .lang-item {
   display: flex; align-items: center; gap: 10px;
   width: 100%; border: 0; background: transparent;
-  padding: 10px 10px; cursor: pointer; border-radius: 8px;
-  color: #111827; text-align: left;
+  padding: 10px 10px; cursor: pointer; border-radius: 8px; color: #111827; text-align: left;
 }
 .lang-item:hover { background: #F3F4F6; }
 .lang-bullet {
@@ -316,122 +123,193 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
   content: ""; position: absolute; top: 2px; left: 2px; width: 8px; height: 8px;
   border-radius: 50%; background: #2563EB;
 }
-#currentLangLabel { font-weight: 600; }
 
-/* ===== UTILITIES ===== */
-.row { display: flex; gap: 16px; align-items: center; margin: 16px 0; }
-.help { color: var(--brand-muted); }
-#fileInput { display: none; } /* keep hidden via CSS (not the hidden attribute) */
+/* 05) MAIN CONTAINER ------------------------------------------------------- */
+.container { max-width: 720px; margin: 32px auto; padding: 0 20px; }
 
-/* ===== FILE PREVIEW (chip) + PROGRESS BAR ===== */
-/* --- File chip --- */
+/* 06) DROPZONE (hero) ------------------------------------------------------ */
+.dz-wrap { margin: 16px 0 8px; }
+
+.dropzone {
+  border: 2px dashed var(--brand-border);
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.dropzone.dz-hero {
+  border-radius: 10px;
+  background: #fff;
+  min-height: 240px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 36px 24px;
+}
+.dz-icon-mask {
+  width: 72px; height: 72px;
+  background-color: var(--dz-icon-base);
+  -webkit-mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
+  mask: url('/logos/podfy-favicon.svg') no-repeat center / contain;
+  opacity: .95;
+  margin-bottom: 12px;
+  transition: background-color .15s ease, opacity .15s ease;
+}
+.dz-title { font-size: 20px; line-height: 1.2; margin: 4px 0; }
+.dz-sub   { color: var(--brand-muted); margin: 6px 0 14px; }
+
+.dz-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 2px 0 8px; }
+.dz-constraints { margin-top: 8px; color: var(--brand-muted); font-size: 14px; }
+
+.dropzone.dz-hero.dragover { background: var(--dz-hover-bg); border-color: var(--dz-hover-bord); }
+.dropzone.dz-hero.dragover .dz-icon-mask { background-color: var(--dz-accent); opacity: 1; }
+.dropzone.dz-hero.ready .dz-icon-mask { background-color: var(--brand-primary); opacity: 1; }
+
+/* 07) BUTTONS -------------------------------------------------------------- */
+#chooseBtn, #cameraBtn, .btn {
+  appearance: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 10px 14px; border-radius: 10px;
+  border: 1px solid var(--brand-border);
+  background: #F3F4F6; color: var(--brand-text); font-weight: 600;
+  cursor: pointer; transition: background .15s ease, border-color .15s ease, transform .02s ease-in-out;
+}
+#chooseBtn:hover, #cameraBtn:hover, .btn:hover { background: #E5E7EB; border-color: #D1D5DB; }
+#chooseBtn:active, #cameraBtn:active, .btn:active { transform: translateY(1px); }
+#chooseBtn:focus-visible, #cameraBtn:focus-visible, .btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* Primary Submit */
+.primary {
+  margin-top: 12px; border: none; border-radius: 10px; padding: 12px 18px;
+  background: var(--brand-primary); color: var(--brand-button-text);
+  cursor: pointer; --primary-text: currentColor;
+}
+.primary[disabled] { opacity: .5; cursor: not-allowed; }
+.primary-full { width: 100%; display: block; }
+
+/* 08) OPTIONS + INFO (i) POPOVERS ----------------------------------------- */
+.options-row {
+  display: flex; flex-wrap: wrap; gap: 12px 8px; align-items: center; margin: 12px 0 4px; justify-content: space-evenly;
+}
+@media (min-width: 640px) { .options-row { gap: 12px 24px; } }
+.option { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.checkbox { display: inline-flex; align-items: center; gap: 4px; }
+
+.info-btn {
+  width: 20px; height: 20px; min-width: 20px;
+  border-radius: 50%; border: 1px solid var(--brand-border);
+  font: 12px/18px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: #fff; color: var(--brand-accent); text-align: center; cursor: pointer;
+}
+.info-btn:hover { background: #f7f7f7; }
+
+/* Float-over popover; same look for all (including Clean delivery) */
+.popover {
+  position: absolute; top: 28px; left: 0;
+  max-width: 360px; padding: 10px 12px;
+  border: 1px solid var(--brand-border);
+  background: #fff; border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+  z-index: 20; color: var(--brand-text); font-size: 14px;
+}
+.popover[hidden] { display: none !important; }
+
+/* 09) EMAIL FIELD ---------------------------------------------------------- */
+.email-wrap { margin-top: 8px; }
+.email-wrap input[type="email"] {
+  width: 100%; max-width: 480px;
+  padding: 10px 12px; border: 1px solid var(--brand-border); border-radius: 8px;
+  font-family: inherit; font-size: 16px; color: var(--brand-text);
+}
+
+/* 10) DELIVERY OUTCOME (CLEAN / ISSUE) ------------------------------------ */
+fieldset.group {
+  border: 1px solid var(--brand-border);
+  border-radius: 8px; padding: 12px 16px; margin: -8px 0;
+}
+fieldset.group legend {
+  font-weight: 600; margin-bottom: 8px; font-size: 15px; color: var(--brand-text);
+}
+fieldset.group label.checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px; }
+fieldset.group label.checkbox input[type="checkbox"] { width: 18px; height: 18px; }
+
+.issue-box { margin-top: 1px;}
+.issue-box .field { display: block; margin-top: 8px; }
+.issue-box .field > span { display: block; font-size: 14px; color: var(--brand-muted); margin-bottom: 4px; }
+
+/* Uniform font/size for select + textarea to match the page (polish #1–#2) */
+.issue-box select,
+.issue-box textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--brand-text);
+  background: #fff;
+}
+
+/* Dropdown visual polish (polish #3) */
+.issue-box select {
+  appearance: none;
+  background:
+    #fff
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+    no-repeat right 12px center;
+  background-size: 12px;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.issue-box textarea { resize: vertical; min-height: 60px; }
+
+/* 11) FILE PREVIEW CHIP + PROGRESS BAR ------------------------------------ */
 .file-preview{
   display:flex; align-items:center; gap:.5rem;
   margin:.75rem 0; padding:.5rem .75rem;
   border:1px solid var(--brand-border); border-radius:.5rem;
-  background: var(--surface, #fff);
+  background: var(--surface);
 }
 .file-ic{ width:18px; height:18px; opacity:.6; }
-.file-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.file-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
 .linklike{ background:none; border:0; color:var(--brand-accent); cursor:pointer; font-weight:600; }
 .linklike:hover { text-decoration: underline; }
 .linklike:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
 
-/* Prevent the file chip from overflowing on phones */
-.dz-hero .file-preview{
-  width: 100%;
-  max-width: 90vw;            /* never wider than the viewport */
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-  overflow: hidden;           /* clip any stubborn overflow */
-}
+/* Keep chip within viewport on phones */
+.dz-hero .file-preview{ width:100%; max-width:90vw; margin-left:auto; margin-right:auto; }
 
-/* Let the filename shrink inside the flex row */
-.file-name{
-  min-width: 0;               /* KEY: allows flex item to shrink */
-  flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Keep the icon and × from stretching the row */
-.file-ic, #removeFileBtn{ flex: 0 0 auto; }
-
-/* Optional: a slightly wider cap on larger phones/tablets */
-@media (min-width: 480px){
-  .dz-hero .file-preview{ max-width: 520px; }
-}
-
-/* --- Progress bar --- */
+/* Progress bar */
 .progress{
-  position:relative;
-  height:24px;                     /* 2× thicker */
-  background: var(--muted-bg, #eef2f7);
-  border-radius:999px;
-  margin:.75rem 0;
+  position:relative; height:24px; background: var(--muted-bg);
+  border-radius:999px; margin:.75rem 0;
 }
-.progress-bar{
-  height:100%; width:0%; border-radius:999px;
-  background: var(--brand-primary);
-  transition:width .2s ease;
-}
-/* ===== Optional polish (safe to keep) ===== */
-
-/* Better accessibility for the remove “×” button */
-.linklike:hover { text-decoration: underline; }
-.linklike:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-
-/* Easier-to-read percent (monospaced numerals) */
-.progress-label { font-variant-numeric: tabular-nums; }
-
-/* Put the status text inside the bar, centered, single line */
-.progress-label{
-  position:absolute; top:50%; left:50%;
-  transform:translate(-50%, -50%);
-  white-space:nowrap;
-  font-size:14px;
-  line-height:1;
-  font-variant-numeric: tabular-nums;
-  /* Match the Submit button's text color automatically */
-  color: var(--primary-text, var(--brand-button-text));
-}
-
-/* Success / error states (optional) */
+.progress-bar{ height:100%; width:0%; border-radius:999px; background: var(--brand-primary); transition:width .2s ease; }
 .progress.success .progress-bar { background: var(--brand-primary); }
-.progress.error   .progress-bar { background: var(--danger, #e11d48); }
-
-/* Make the progress bar span the hero width and sit centered */
-.dz-hero .progress{
-  width: 80%;
-  max-width: 420px;      /* adjust to taste */
-  margin: 12px auto;     /* center horizontally */
-  height: 24px;          /* slightly taller looks better */
+.progress.error   .progress-bar { background: #e11d48; }
+.progress-label{
+  position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+  white-space:nowrap; font-size:14px; line-height:1; font-variant-numeric: tabular-nums;
+  color: var(--brand-button-text);
 }
+.dz-hero .progress{ width:80%; max-width:420px; margin:12px auto; }
 
-/* Helpers */
+/* 12) FOOTER --------------------------------------------------------------- */
+.site-footer { display:flex; gap:28px; justify-content:center; padding:24px; color: var(--brand-accent); }
+.site-footer a { color: var(--brand-accent); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+
+/* 13) UTILITIES & ACCESSIBILITY ------------------------------------------- */
+.small  { color: var(--brand-muted); margin-top: 12px; }
+.status { margin-top: 16px; min-height: 24px; }
+.row { display: flex; gap: 16px; align-items: center; margin: 16px 0; }
+.help { color: var(--brand-muted); }
+#fileInput { display: none; } /* hide input via CSS (not hidden attr) */
 .hidden{ display:none !important; }
 [hidden]{ display:none !important; }
-
-/* Honeypot field: hide visually, keep in DOM for bots */
 .hp{ position:absolute !important; left:-9999px !important; width:1px; height:1px; overflow:hidden; }
 
-/* Respect reduced-motion preferences */
-@media (prefers-reduced-motion: reduce){ .progress-bar { transition:none; }}
-
-/* Prevent iOS auto-zoom on focus */
+/* Prevent iOS zoom on focus: keep inputs >=16px (polish for mobile) */
 @media (max-width: 480px) {
-  input[type="email"],
-  input[type="text"],
-  input[type="tel"],
-  input[type="number"],
-  input[type="password"],
-  select,
-  textarea {
-    font-size: 16px;     /* key line – iOS won’t zoom */
-    line-height: 1.2;    /* keep height tidy */
-  }
+  input, select, textarea { font-size: 16px !important; line-height: 1.2; }
 }
-html { -webkit-text-size-adjust: 100%; }  /* avoid unexpected text scaling */
-
