@@ -543,6 +543,20 @@ function buildIssueOptions() {
   if (emailField) { if (show && emailField.type !== 'email') emailField.type = 'email'; emailField.required = !!show; }
 })();
 
+  // === GPS panel toggle (new) ===
+  const locCheck = document.getElementById('locCheck');
+  const gpsPanel = document.getElementById('gpsPanel');
+
+  function updateGpsPanel() {
+    gpsPanel.hidden = !locCheck.checked;
+  }
+
+  // Initialize + listen
+  if (locCheck && gpsPanel) {
+    updateGpsPanel();
+    locCheck.addEventListener('change', updateGpsPanel);
+  }
+     
     // Delivery outcome (“Clean” vs “Issue”)
     function syncIssueUI() {
       const isClean = !!(chkClean && chkClean.checked);
