@@ -185,7 +185,10 @@
     <!-- Issue code (will become dropdown in next step) -->
     <label class="field">
       <span data-i18n="issueCode">Issue code (optional)</span>
-      <input id="issue_code" type="text" placeholder="e.g., DAMAGED, MISSING, DELAY" />
+      <select id="issue_code">
+  <!-- JS will populate options; this first option is a fallback -->
+  <option value="" data-i18n="issueCodePlaceholder">Select an issue (optional)</option>
+</select>
     </label>
 
     <label class="field">
