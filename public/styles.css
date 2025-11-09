@@ -435,3 +435,53 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 }
 html { -webkit-text-size-adjust: 100%; }  /* avoid unexpected text scaling */
 
+/* ===== DELIVERY OUTCOME (Clean / Issue) ===== */
+fieldset.group {
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 16px 0;
+}
+fieldset.group legend {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: var(--brand-text);
+}
+fieldset.group label.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+fieldset.group label.checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+.issue-box {
+  margin-top: 10px;
+}
+.issue-box .field {
+  display: block;
+  margin-top: 8px;
+}
+.issue-box .field > span {
+  display: block;
+  font-size: 14px;
+  color: var(--brand-muted);
+  margin-bottom: 4px;
+}
+.issue-box input,
+.issue-box textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--brand-text);
+}
+.issue-box textarea {
+  resize: vertical;
+  min-height: 60px;
+}
