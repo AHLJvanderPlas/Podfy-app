@@ -12,33 +12,31 @@
   <!-- Global stylesheet -->
   <link rel="stylesheet" href="/styles.css" />
 
-  <!-- Single adaptive favicon: zwart in light, wit in dark (via prefers-color-scheme in de SVG) -->
+  <!-- Adaptive favicon (dark/light via prefers-color-scheme in SVG) -->
   <link rel="icon" href="/logos/podfy-favicon-adaptive.svg" type="image/svg+xml">
 </head>
 <body>
-  <!-- Runtime banner voor status/alerts -->
+  <!-- Runtime banner for status/alerts -->
   <div id="banner" class="banner" hidden></div>
 
   <!-- ===== SITE HEADER (brand + language) ===== -->
   <header class="site-header" role="banner">
     <div class="header-inner">
       <div class="brand">
-        <!-- Initieel logo; wordt door main.js vervangen op basis van het thema -->
+        <!-- Initial logo; replaced by main.js based on theme -->
         <img id="brandLogo" alt="Company logo" src="/logos/podfy.svg" height="28" />
       </div>
 
       <!-- Language selector -->
       <div class="lang">
         <button id="translateBtn" class="lang-trigger" aria-haspopup="menu" aria-expanded="false">
-          <!-- Globe icon -->
           <img class="lang-ic" src="/logos/Language-01.svg" alt="" aria-hidden="true">
           <span id="currentLangLabel">English</span>
           <svg class="lang-caret" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
           </svg>
         </button>
-
-        <!-- Wordt door main.js gevuld met talen -->
+        <!-- Populated by main.js -->
         <div id="langMenu" class="lang-panel" role="menu" aria-label="Select language" hidden></div>
       </div>
     </div>
@@ -46,167 +44,162 @@
 
   <!-- ===== MAIN: uploader ===== -->
   <main class="container" role="main" aria-live="polite">
-    <!-- H1 voor pagina (SEO/a11y); tekst wordt door i18n gezet -->
+    <!-- H1 for page (SEO/a11y); text is set by i18n -->
     <h1 id="heading" data-i18n="heading">Upload CMR / POD</h1>
 
-<!-- ===== HERO / DROPZONE ===== -->
-  <section class="dz-wrap">
-    <div id="dropzone" class="dropzone dz-hero" tabindex="0" aria-label="Upload area" data-i18n-aria-label="uploadAreaLabel">
-      <!-- Decoratieve achtergrond-icoon -->
-      <div class="dz-icon-mask" aria-hidden="true"></div>
+    <!-- ===== HERO / DROPZONE ===== -->
+    <section class="dz-wrap">
+      <div id="dropzone" class="dropzone dz-hero" tabindex="0" aria-label="Upload area" data-i18n-aria-label="uploadAreaLabel">
+        <!-- Decorative background icon -->
+        <div class="dz-icon-mask" aria-hidden="true"></div>
 
-      <!-- Titel in de hero; kan gelijk zijn aan h1, maar wordt apart geüpdatet -->
-      <h2 class="dz-title" data-i18n="heading">Upload CMR / POD</h2>
+        <!-- Title inside hero; updated separately by i18n -->
+        <h2 class="dz-title" data-i18n="heading">Upload CMR / POD</h2>
 
-      <p class="dz-sub" data-i18n="dzText">Drag & drop your document/photo here</p>
-      <p class="dz-constraints" id="acceptText" data-i18n="acceptText">
-        Accepted: PDF, JPG, PNG, HEIC, WEBP · Max 25 MB
-      </p>
+        <p class="dz-sub" data-i18n="dzText">Drag & drop your document/photo here</p>
+        <p class="dz-constraints" id="acceptText" data-i18n="acceptText">
+          Accepted: PDF, JPG, PNG, HEIC, WEBP · Max 25 MB
+        </p>
 
-      <!-- Selected-file chip + remove -->
-      <div id="filePreview" class="file-preview" hidden>
-        <svg class="file-ic" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6" />
-        </svg>
-        <span id="fileName" class="file-name"></span>
-        <button id="removeFileBtn" type="button" class="linklike"
-          aria-label="Remove attached file" data-i18n-aria-label="removeFile">×</button>
+        <!-- Selected-file chip + remove -->
+        <div id="filePreview" class="file-preview" hidden>
+          <svg class="file-ic" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6" />
+          </svg>
+          <span id="fileName" class="file-name"></span>
+          <button id="removeFileBtn" type="button" class="linklike"
+            aria-label="Remove attached file" data-i18n-aria-label="removeFile">×</button>
+        </div>
+
+        <!-- Upload progress -->
+        <div id="uploadProgress" class="progress" role="progressbar"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+          <div id="progressBar" class="progress-bar"></div>
+          <span id="progressLabel" class="progress-label">0%</span>
+        </div>
+
+        <!-- Honeypot + form-age (bot protection) -->
+        <label class="hp" aria-hidden="true">
+          Company Website
+          <input type="text" name="company_website" tabindex="-1" autocomplete="off">
+        </label>
+        <input type="hidden" name="form_issued_at" id="form_issued_at">
+
+        <div class="dz-actions">
+          <!-- Hidden inputs -->
+          <input id="fileInput"  type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp" style="display:none" />
+          <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" />
+
+          <!-- Visible buttons -->
+          <button type="button" class="btn" id="chooseBtn" data-i18n="chooseFile">Choose file</button>
+          <button type="button" class="btn" id="cameraBtn" data-i18n="takePhoto">Take photo</button>
+        </div>
       </div>
+    </section>
 
-      <!-- Upload progress bar -->
-      <div id="uploadProgress" class="progress" role="progressbar"
-           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
-        <div id="progressBar" class="progress-bar"></div>
-        <span id="progressLabel" class="progress-label">0%</span>
-      </div>
-
-<!-- Honeypot + form-age (bot protection) -->
-<label class="hp" aria-hidden="true">
-  Company Website
-  <input type="text" name="company_website" tabindex="-1" autocomplete="off">
-</label>
-<input type="hidden" name="form_issued_at" id="form_issued_at">
-      
-      <div class="dz-actions">
-        <!-- Verborgen inputs -->
-        <input id="fileInput"  type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp" style="display:none" />
-        <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" />
-
-        <!-- Zichtbare knoppen -->
-        <button type="button" class="btn" id="chooseBtn" data-i18n="chooseFile">Choose file</button>
-        <button type="button" class="btn" id="cameraBtn" data-i18n="takePhoto">Take photo</button>
-      </div>
-    </div>
-  </section>
-
-    <!-- Options row: LOCATION FIRST, then SHARE COPY -->
+    <!-- ===== OPTIONS ROW =====
+         Keep original (i) popover pattern. Each option = label.checkbox + info button + popover sibling.
+    -->
     <div class="options-row">
-      <!-- Locatie (optioneel) -->
+      <!-- Share location (optional) -->
       <div class="option">
         <label class="checkbox">
           <input id="locCheck" type="checkbox" />
           <span data-i18n="shareLocation">Share my location (optional)</span>
         </label>
-
-        <!-- Info-knopje met i18n voor title/aria-label -->
         <button
-          class="info-btn"
-          type="button"
-          aria-expanded="false"
-          aria-controls="locInfo"
-          data-i18n-title="whatIsThis"
-          data-i18n-aria-label="whatIsThis">i</button>
-
-        <!-- Popover-tekst; i18n + focusable voor a11y -->
+          class="info-btn" type="button"
+          aria-expanded="false" aria-controls="locInfo"
+          data-i18n-title="whatIsThis" data-i18n-aria-label="whatIsThis">i</button>
         <div id="locInfo" class="popover" hidden tabindex="-1" data-i18n="locInfoText">
-          This allows Podfy to share the location where you uploaded the POD in case of investigation on issues.
+          Preferred: store upload location for investigations.
         </div>
       </div>
 
-      <!-- E-mailkopie (optioneel); e-mailveld verschijnt alleen indien aangevinkt -->
+      <!-- Email me a copy (optional) -->
       <div class="option">
         <label class="checkbox">
           <input id="copyCheck" type="checkbox" />
           <span data-i18n="emailMeCopy">Email me a copy</span>
         </label>
-
-        <!-- Info-knopje met i18n voor title/aria-label -->
         <button
-          class="info-btn"
-          type="button"
-          aria-expanded="false"
-          aria-controls="copyInfo"
-          data-i18n-title="whatIsThis"
-          data-i18n-aria-label="whatIsThis">i</button>
-
-        <!-- Popover-tekst; i18n + focusable -->
+          class="info-btn" type="button"
+          aria-expanded="false" aria-controls="copyInfo"
+          data-i18n-title="whatIsThis" data-i18n-aria-label="whatIsThis">i</button>
         <div id="copyInfo" class="popover" hidden tabindex="-1" data-i18n="copyInfoText">
-          Can be used to see if the file has been sent and to make sure you have a back-up for yourself.
+          Send a copy to your email.
         </div>
       </div>
-<div class="option">
-<!-- Clean delivery inline toggle (same pattern as other options) -->
-<label class="option">
-  <input type="checkbox" id="chk_clean" checked />
-  <span data-i18n="cleanDelivery">Clean delivery (no issues)</span>
-  <button type="button"
-          class="info-btn"
-          aria-controls="help-delivery"
-          aria-expanded="false">i</button>
-</label>
 
-<!-- Popover content for the info button, same structure as your other (i) popovers -->
-<div id="help-delivery" class="popover" hidden>
-  <div class="popover-inner">
-    <p data-i18n="deliveryOutcomeHelp"></p>
-  </div>
-</div>
-</div>
+      <!-- Clean delivery (no issues) — same layout & (i) style as above -->
+      <div class="option">
+        <label class="checkbox">
+          <input type="checkbox" id="chk_clean" checked />
+          <span data-i18n="cleanDelivery">Clean delivery (no issues)</span>
+        </label>
+        <button
+          class="info-btn" type="button"
+          aria-expanded="false" aria-controls="help-delivery"
+          data-i18n-title="whatIsThis" data-i18n-aria-label="whatIsThis">i</button>
+        <div id="help-delivery" class="popover" hidden tabindex="-1">
+          <div class="popover-inner" data-i18n="deliveryOutcomeHelp">
+            Tick ‘Clean delivery’ if all went well. Untick to report an issue and add a short code and notes.
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- E-mailveld (hidden tot checkbox geactiveerd is) -->
+    <!-- ===== EMAIL FIELD (appears only when copyCheck is checked) ===== -->
     <div id="emailWrap" class="email-wrap" hidden>
- <fieldset class="group" id="emailPanel" hidden>
-  <legend data-i18n="EmailLegend">Add email to receive a copy</legend>
-  <label class="field">
-    <span class="sr-only">Email</span>
-    <input id="emailField" type="email" data-i18n-placeholder="emailPlaceholder" />
-  </label>
-</fieldset>
+      <fieldset class="group" id="emailPanel">
+        <legend data-i18n="EmailLegend">Add email to receive a copy</legend>
+        <label class="field">
+          <span class="sr-only">Email</span>
+          <!-- Wrapped in .field so CSS can unify font size with other controls -->
+          <input id="emailField" type="email" data-i18n-placeholder="emailPlaceholder" />
+        </label>
+      </fieldset>
     </div>
 
-<!-- Outlined box that appears ONLY when Clean delivery is UNCHECKED -->
-<fieldset class="group" id="issuePanel" hidden>
-  <legend data-i18n="deliveryOutcomeLegend">Delivery outcome</legend>
+    <!-- ===== DELIVERY OUTCOME (appears only when Clean delivery is UNCHECKED) ===== -->
+    <fieldset class="group" id="issuePanel" hidden>
+      <legend data-i18n="deliveryOutcomeLegend">Delivery outcome</legend>
 
-  <div class="issue-box">
-    <!-- Issue code (will become dropdown in next step) -->
-    <label class="field">
-      <span data-i18n="issueCode">Issue code (optional)</span>
-      <select id="issue_code">
-  <!-- JS will populate options; this first option is a fallback -->
-  <option value="" data-i18n="issueCodePlaceholder">Select an issue (optional)</option>
-</select>
-    </label>
+      <!-- Outlined box: dropdown + notes; .field wrappers keep typography consistent -->
+      <div class="issue-box">
+        <label class="field">
+          <span data-i18n="issueCode">Issue type</span>
+          <select id="issue_code" data-i18n-placeholder="issueCodePlaceholder">
+            <!-- JS will (re)build options from i18n; first option is a fallback -->
+            <option value="" data-i18n="issueCodePlaceholder">Select an issue (optional)</option>
+            <option value="DAMAGE" data-i18n="issue_DAMAGE">Damage</option>
+            <option value="MISSING" data-i18n="issue_MISSING">Missing</option>
+            <option value="WRONG" data-i18n="issue_WRONG">Wrong goods</option>
+            <option value="DELAY" data-i18n="issue_DELAY">Delay</option>
+            <option value="DOCUMENTS" data-i18n="issue_DOCUMENTS">Documents</option>
+            <option value="OTHER" data-i18n="issue_OTHER">Other</option>
+          </select>
+        </label>
 
-    <label class="field">
-      <span data-i18n="issueNotes">Issue notes (optional)</span>
-      <textarea id="issue_notes" rows="3" data-i18n-placeholder="IssuePlaceholder"></textarea>
-    </label>
-  </div>
-</fieldset>
-    <!-- Status van locatie/geo -->
+        <label class="field">
+          <span data-i18n="issueNotes">Issue notes (optional)</span>
+          <textarea id="issue_notes" rows="3" data-i18n-placeholder="IssuePlaceholder"></textarea>
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Geolocation status line (filled by JS) -->
     <div id="locStatus" class="small"></div>
 
     <!-- Submit -->
     <button id="submitBtn" class="primary primary-full" disabled data-i18n="submit">Submit</button>
 
-    <!-- Privacy-notitie -->
+    <!-- Privacy note -->
     <p class="small" id="privacyNote" data-i18n="privacy">
       Security & privacy: Files are sent securely and deleted after delivery.
     </p>
 
-    <!-- Live status van upload/resultaat -->
+    <!-- Live status of upload/result -->
     <div id="status" class="status" role="status" aria-live="assertive"></div>
   </main>
 
