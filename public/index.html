@@ -155,7 +155,29 @@
         data-i18n-placeholder="emailPlaceholder"
         autocomplete="email" />
     </div>
+    <!-- Delivery outcome -->
+    <fieldset class="group" id="deliveryOutcome">
+      <legend data-i18n="deliveryOutcomeLegend">Delivery outcome</legend>
 
+      <!-- Clean delivery toggle (default: clean = checked) -->
+      <label class="checkbox">
+        <input type="checkbox" id="chk_clean" checked />
+        <span data-i18n="cleanDelivery">Clean delivery (no issues)</span>
+      </label>
+
+      <!-- Issue detail fields: only shown when NOT clean -->
+      <div id="issueBox" class="issue-box" hidden>
+        <label class="field">
+          <span data-i18n="issueCode">Issue code (optional)</span>
+          <input id="issue_code" type="text" placeholder="e.g., DAMAGED, MISSING, DELAY" />
+        </label>
+
+        <label class="field">
+          <span data-i18n="issueNotes">Issue notes (optional)</span>
+          <textarea id="issue_notes" rows="3" placeholder="Describe the issue briefly"></textarea>
+        </label>
+      </div>
+    </fieldset>
     <!-- Status van locatie/geo -->
     <div id="locStatus" class="small"></div>
 
