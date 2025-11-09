@@ -151,14 +151,14 @@
 
     <!-- ===== EMAIL FIELD (appears only when copyCheck is checked) ===== -->
     <div id="emailWrap" class="email-wrap" hidden>
-      <fieldset class="group" id="emailPanel">
-        <legend data-i18n="EmailLegend">Add email to receive a copy</legend>
-        <label class="field">
-          <span class="sr-only">Email</span>
-          <!-- Wrapped in .field so CSS can unify font size with other controls -->
-          <input id="emailField" type="email" data-i18n-placeholder="emailPlaceholder" />
-        </label>
-      </fieldset>
+        <fieldset class="group" id="emailPanel">
+          <legend data-i18n="EmailLegend">Add email to receive a copy</legend>
+            <input
+              id="emailField"
+              type="email"
+              data-i18n-placeholder="emailPlaceholder"
+              style="width:100%;max-width:480px;padding:10px 12px;border:1px solid var(--brand-border);border-radius:8px;font:inherit;"/>
+        </fieldset>
     </div>
 
     <!-- ===== DELIVERY OUTCOME (appears only when Clean delivery is UNCHECKED) ===== -->
@@ -188,8 +188,14 @@
       </div>
     </fieldset>
 
-    <!-- Geolocation status line (filled by JS) -->
-    <div id="locStatus" class="small"></div>
+    <!-- GPS status panel: shown when “Add GPS” is checked -->
+    <fieldset class="group" id="gpsPanel" hidden>
+      <legend data-i18n="shareLocation">Add GPS</legend>
+        <label class="field">
+    <!-- This keeps your original status text, just moved into the panel -->
+          <div id="locStatus" class="small"></div>
+        </label>
+    </fieldset>
 
     <!-- Submit -->
     <button id="submitBtn" class="primary primary-full" disabled data-i18n="submit">Submit</button>
