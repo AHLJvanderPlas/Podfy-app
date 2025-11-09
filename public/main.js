@@ -25,6 +25,21 @@
   const submitBtn   = qs('#submitBtn');
   const statusEl    = qs('#status');
 
+// --- Delivery outcome elements ---
+const chkClean   = document.getElementById("chk_clean");
+const issueBox   = document.getElementById("issueBox");
+const issueCode  = document.getElementById("issue_code");
+const issueNotes = document.getElementById("issue_notes");
+
+// --- Existing controls we already use ---
+const locCheck   = document.getElementById("locCheck");     // device location toggle
+const copyCheck  = document.getElementById("copyCheck");    // email me a copy
+const emailField = document.getElementById("emailField");
+const submitBtn  = document.getElementById("submitBtn");
+
+// Hidden anti-bot & tz fields (ids in your HTML)
+const formIssuedAt = document.getElementById("form_issued_at");
+   
   // New UI bits
   const filePreview   = qs('#filePreview');
   const fileNameEl    = qs('#fileName');
@@ -493,7 +508,66 @@ function renderUnknownSlugBanner(slugValue) {
       if (emailWrap) { emailWrap.classList.toggle('hidden', !show); emailWrap.hidden = !show; }
       if (emailField) { if (show && emailField.type !== 'email') emailField.type = 'email'; emailField.required = !!show; }
     })();
+function syncIssueUI() {
+  const isClean = !!(chkClean && chkClean.checked);
+  if (issueBox) issueBox.hidden = isClean;
+  if (isClean) {
+    if (issueCode)  issueCode.value = "";
+    if (issueNotes) issueNotes.value = "";
+  }
+}
+if (chkClean) {
+  chkClean.addEventListener("change", syncIssueUI);
+  syncIssueUI(); // init on load
+}
 
+// --- GPS capture (Android/iOS friendly, user-gesture on checkbox) ---
+let gps = { lat: "", lon: "", acc: "", ts: "" };
+
+function clearGps() { gps = { lat: "", lon: "", acc: "", ts: "" }; }
+
+function getCurrentPositionOnce() {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 12000,
+      maximumAge: 0,
+    });
+  });
+}
+function watchPositionOnce() {
+  return new Promise((resolve, reject) => {
+    const id = navigator.geolocation.watchPosition(
+      (pos) => { navigator.geolocation.clearWatch(id); resolve(pos); },
+      (err) => { navigator.geolocation.clearWatch(id); reject(err); },
+      { enableHighAccuracy: true, maximumAge: 0 }
+    );
+    setTimeout(() => { try { navigator.geolocation.clearWatch(id); } catch {} reject(new Error("watch timeout")); }, 14000);
+  });
+}
+
+async function captureGps() {
+  if (!locCheck || !locCheck.checked) { clearGps(); return; }
+  if (!("geolocation" in navigator)) { clearGps(); return; }
+  try { if (navigator.permissions?.query) await navigator.permissions.query({ name: "geolocation" }); } catch {}
+  try {
+    const pos = await getCurrentPositionOnce().catch(() => watchPositionOnce());
+    const { latitude, longitude, accuracy } = pos.coords || {};
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      gps.lat = String(latitude);
+      gps.lon = String(longitude);
+      gps.acc = String(Math.round(accuracy || 0));
+      gps.ts  = String(Date.now());
+    } else {
+      clearGps();
+    }
+  } catch {
+    clearGps();
+  }
+}
+if (locCheck) {
+  locCheck.addEventListener("change", captureGps, { passive: true });
+}
     // Location checkbox: show status + request fix immediately
     locCheck?.addEventListener('change', async () => {
       const on = !!locCheck.checked;
