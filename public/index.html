@@ -157,7 +157,14 @@
     </div>
     <!-- Delivery outcome -->
     <fieldset class="group" id="deliveryOutcome">
-      <legend data-i18n="deliveryOutcomeLegend">Delivery outcome</legend>
+<legend class="with-help">
+  <span data-i18n="deliveryOutcomeLegend">Delivery outcome</span>
+  <button type="button"
+          class="info-btn"
+          aria-label="Help"
+          data-i18n-title="deliveryOutcomeHelpTitle"
+          data-i18n-content="deliveryOutcomeHelp">i</button>
+</legend>
 
       <!-- Clean delivery toggle (default: clean = checked) -->
       <label class="checkbox">
