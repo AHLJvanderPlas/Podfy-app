@@ -1,20 +1,20 @@
 /* public/main.js — PODFY uploader
    ------------------------------------------------------------
    Purpose
-   - Single-file, structured controller for the public uploader.
+   - Structured controller for the public uploader.
 
-   What it does
+   Capabilities
    - Theme & i18n loading
-   - File selection (buttons + drag/drop), client-side validation
-   - Optional driver copy email (toggle + validation)
-   - Optional GPS capture with best-effort fallback
+   - File selection (buttons + drag/drop) with client-side validation
+   - Optional driver-copy email (toggle + validation)
+   - (3C) Robust GPS capture (Android/iOS friendly) on user gesture
    - Delivery outcome: “Clean delivery” vs “Issue” (code/notes)
-   - Anti-bot timestamp + browser timezone
-   - Upload with progress bar and clear UX states
+   - (3D) Anti-bot timestamp + browser timezone
+   - (3E) Upload with progress bar and clear UX states
 
    Notes
-   - Backend uses request IP/EXIF if GPS is not provided.
-   - Only submits the fields your API expects.
+   - Backend will also derive location from EXIF/IP if GPS is missing.
+   - Only the fields your API expects are submitted.
    ------------------------------------------------------------
 */
 
@@ -95,13 +95,13 @@
   let currentLang = 'en';
   let selectedFile = null;
 
-  // Browser timezone (Step 3D)
+  // (3D) Browser timezone
   let browserTz = 'UTC';
   try {
     browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   } catch {}
 
-  // Ensure anti-bot timestamp (Step 3D)
+  // (3D) Ensure anti-bot timestamp exists
   if (issuedAtInput && !issuedAtInput.value) {
     issuedAtInput.value = String(Date.now());
   }
@@ -380,7 +380,7 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLangMenu(); });
   }
 
-  // Info-popovers for existing (i) buttons (legend help uses simple title text)
+  // Info-popovers for (i) buttons
   function wireInfoPopovers() {
     const buttons = qsa('.info-btn');
     const popovers = new Map();
@@ -424,7 +424,7 @@
   }
 
   // ----------------------------------------------------------
-  // 5) Location (GPS) capture: best effort + UI feedback
+  // 5) (3C) Location (GPS) capture: best effort + UI feedback
   // ----------------------------------------------------------
   function setLocDataFromPosition(pos) {
     const c = pos && pos.coords ? pos.coords : {};
@@ -515,17 +515,17 @@
 
     // Delivery outcome (“Clean” vs “Issue”)
     function syncIssueUI() {
-     const isClean = !!(chkClean && chkClean.checked);
-     if (issuePanel) issuePanel.hidden = isClean;   // outlined panel only when NOT clean
-     if (isClean) {
-       if (issueCode)  issueCode.value = "";
-       if (issueNotes) issueNotes.value = "";
-       }
+      const isClean = !!(chkClean && chkClean.checked);
+      if (issuePanel) issuePanel.hidden = isClean;   // outlined panel only when NOT clean
+      if (isClean) {
+        if (issueCode)  issueCode.value = "";
+        if (issueNotes) issueNotes.value = "";
       }
-      if (chkClean) {
-        chkClean.addEventListener("change", syncIssueUI);
-        syncIssueUI(); // initialize
-      }
+    }
+    if (chkClean) {
+      chkClean.addEventListener("change", syncIssueUI);
+      syncIssueUI(); // initialize
+    }
 
     // Location checkbox → show status & try to capture on demand
     locCheck?.addEventListener('change', async () => {
