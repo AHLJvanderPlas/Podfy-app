@@ -62,10 +62,10 @@
   const locStatus = qs('#locStatus');
 
   // Delivery outcome block
-  const chkClean   = qs('#chk_clean');
-  const issueBox   = qs('#issueBox');
-  const issueCode  = qs('#issue_code');
-  const issueNotes = qs('#issue_notes');
+  const chkClean   = document.getElementById("chk_clean");
+  const issuePanel = document.getElementById("issuePanel");
+  const issueCode  = document.getElementById("issue_code");
+  const issueNotes = document.getElementById("issue_notes");
 
   // Hidden form helpers
   const issuedAtInput = qs('#form_issued_at'); // anti-bot timestamp
@@ -515,17 +515,17 @@
 
     // Delivery outcome (“Clean” vs “Issue”)
     function syncIssueUI() {
-      const isClean = !!(chkClean && chkClean.checked);
-      if (issueBox) issueBox.hidden = isClean;
-      if (isClean) {
-        if (issueCode)  issueCode.value = '';
-        if (issueNotes) issueNotes.value = '';
+     const isClean = !!(chkClean && chkClean.checked);
+     if (issuePanel) issuePanel.hidden = isClean;   // outlined panel only when NOT clean
+     if (isClean) {
+       if (issueCode)  issueCode.value = "";
+       if (issueNotes) issueNotes.value = "";
+       }
       }
-    }
-    if (chkClean) {
-      chkClean.addEventListener('change', syncIssueUI);
-      syncIssueUI();
-    }
+      if (chkClean) {
+        chkClean.addEventListener("change", syncIssueUI);
+        syncIssueUI(); // initialize
+      }
 
     // Location checkbox → show status & try to capture on demand
     locCheck?.addEventListener('change', async () => {
