@@ -224,7 +224,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* 10) DELIVERY OUTCOME (CLEAN / ISSUE) ------------------------------------ */
 fieldset.group {
   border: 1px solid var(--brand-border);
-  border-radius: 8px; padding: 12px 16px; margin: 8px 0;
+  border-radius: 8px; padding: 12px 16px; margin: -8px 0;
 }
 fieldset.group legend {
   font-weight: 600; margin-bottom: 8px; font-size: 15px; color: var(--brand-text);
