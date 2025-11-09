@@ -485,3 +485,26 @@ fieldset.group label.checkbox input[type="checkbox"] {
   resize: vertical;
   min-height: 60px;
 }
+/* ===== DELIVERY OUTCOME helper ===== */
+legend.with-help {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+legend.with-help .info-btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--brand-border);
+  border-radius: 50%;
+  background: var(--brand-surface, #fff);
+  color: var(--brand-text, #111);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+legend.with-help .info-btn:hover {
+  background: var(--brand-muted-bg, #f6f6f7);
+}
