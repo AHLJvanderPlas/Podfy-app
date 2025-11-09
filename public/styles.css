@@ -188,11 +188,11 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 
 /* 08) OPTIONS + INFO (i) POPOVERS ----------------------------------------- */
 .options-row {
-  display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin: 12px 0 4px;
+  display: flex; flex-wrap: wrap; gap: 12px 8px; align-items: center; margin: 12px 0 4px; justify-content: space-evenly;
 }
 @media (min-width: 640px) { .options-row { gap: 12px 24px; } }
-.option { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 4px 0; }
-.checkbox { display: inline-flex; align-items: center; gap: 8px; }
+.option { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.checkbox { display: inline-flex; align-items: center; gap: 4px; }
 
 .info-btn {
   width: 20px; height: 20px; min-width: 20px;
@@ -224,7 +224,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* 10) DELIVERY OUTCOME (CLEAN / ISSUE) ------------------------------------ */
 fieldset.group {
   border: 1px solid var(--brand-border);
-  border-radius: 8px; padding: 12px 16px; margin: 16px 0;
+  border-radius: 8px; padding: 12px 16px; margin: 8px 0;
 }
 fieldset.group legend {
   font-weight: 600; margin-bottom: 8px; font-size: 15px; color: var(--brand-text);
@@ -232,7 +232,7 @@ fieldset.group legend {
 fieldset.group label.checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px; }
 fieldset.group label.checkbox input[type="checkbox"] { width: 18px; height: 18px; }
 
-.issue-box { margin-top: 10px; background: #fafafa; border: 1px solid var(--brand-border); border-radius: 8px; padding: 12px; }
+.issue-box { margin-top: 1px;}
 .issue-box .field { display: block; margin-top: 8px; }
 .issue-box .field > span { display: block; font-size: 14px; color: var(--brand-muted); margin-bottom: 4px; }
 
