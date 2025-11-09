@@ -144,6 +144,27 @@
           Can be used to see if the file has been sent and to make sure you have a back-up for yourself.
         </div>
       </div>
+<div class="option">
+<!-- Clean delivery inline toggle (same pattern as other options) -->
+<label class="option">
+  <input type="checkbox" id="chk_clean" checked />
+  <span data-i18n="cleanDelivery">Clean delivery (no issues)</span>
+  <button type="button"
+          class="info-btn"
+          aria-controls="help-delivery"
+          aria-expanded="false">i</button>
+</label>
+
+<!-- Popover content for the info button, same structure as your other (i) popovers -->
+<div id="help-delivery" class="popover" hidden>
+  <div class="popover-inner">
+    <strong data-i18n="deliveryOutcomeHelpTitle">Delivery outcome</strong>
+    <p data-i18n="deliveryOutcomeHelp">
+      Tick 'Clean delivery' if everything went well. Untick to report an issue...
+    </p>
+  </div>
+</div>
+</div>
     </div>
 
     <!-- E-mailveld (hidden tot checkbox geactiveerd is) -->
@@ -155,36 +176,24 @@
         data-i18n-placeholder="emailPlaceholder"
         autocomplete="email" />
     </div>
-    <!-- Delivery outcome -->
-    <fieldset class="group" id="deliveryOutcome">
-<legend class="with-help">
-  <span data-i18n="deliveryOutcomeLegend">Delivery outcome</span>
-  <button type="button"
-          class="info-btn"
-          aria-label="Help"
-          data-i18n-title="deliveryOutcomeHelpTitle"
-          data-i18n-content="deliveryOutcomeHelp">i</button>
-</legend>
 
-      <!-- Clean delivery toggle (default: clean = checked) -->
-      <label class="checkbox">
-        <input type="checkbox" id="chk_clean" checked />
-        <span data-i18n="cleanDelivery">Clean delivery (no issues)</span>
-      </label>
+<!-- Outlined box that appears ONLY when Clean delivery is UNCHECKED -->
+<fieldset class="group" id="issuePanel" hidden>
+  <legend data-i18n="deliveryOutcomeLegend">Delivery outcome</legend>
 
-      <!-- Issue detail fields: only shown when NOT clean -->
-      <div id="issueBox" class="issue-box" hidden>
-        <label class="field">
-          <span data-i18n="issueCode">Issue code (optional)</span>
-          <input id="issue_code" type="text" placeholder="e.g., DAMAGED, MISSING, DELAY" />
-        </label>
+  <div class="issue-box">
+    <!-- Issue code (will become dropdown in next step) -->
+    <label class="field">
+      <span data-i18n="issueCode">Issue code (optional)</span>
+      <input id="issue_code" type="text" placeholder="e.g., DAMAGED, MISSING, DELAY" />
+    </label>
 
-        <label class="field">
-          <span data-i18n="issueNotes">Issue notes (optional)</span>
-          <textarea id="issue_notes" rows="3" placeholder="Describe the issue briefly"></textarea>
-        </label>
-      </div>
-    </fieldset>
+    <label class="field">
+      <span data-i18n="issueNotes">Issue notes (optional)</span>
+      <textarea id="issue_notes" rows="3" placeholder="Describe the issue briefly"></textarea>
+    </label>
+  </div>
+</fieldset>
     <!-- Status van locatie/geo -->
     <div id="locStatus" class="small"></div>
 
