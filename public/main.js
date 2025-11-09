@@ -263,47 +263,56 @@ function buildIssueOptions() {
   }
 
   function applyLang(code) {
-    const dict = langStrings[code] || langStrings['en'] || {};
-    qsa('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      if (dict[key]) el.textContent = dict[key];
-    });
-    qsa('[data-i18n-title]').forEach(el => {
-      const key = el.getAttribute('data-i18n-title');
-      if (dict[key]) el.setAttribute('title', dict[key]);
-    });
-    qsa('[data-i18n-aria-label]').forEach(el => {
-      const key = el.getAttribute('data-i18n-aria-label');
-      if (dict[key]) el.setAttribute('aria-label', dict[key]);
-    });
-    qsa('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
-      if (dict[key]) el.setAttribute('placeholder', dict[key]);
-    });
+  // Set the active language first so all helpers read the right one
+  currentLang = code;
+
+  const dict = langStrings[code] || langStrings['en'] || {};
+
+  // 1) Apply text, titles, aria-labels, placeholders
+  qsa('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
+  qsa('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (dict[key]) el.setAttribute('title', dict[key]);
+  });
+  qsa('[data-i18n-aria-label]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria-label');
+    if (dict[key]) el.setAttribute('aria-label', dict[key]);
+  });
+  qsa('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (dict[key]) el.setAttribute('placeholder', dict[key]);
+  });
+
+  // 2) Rebuild the issue dropdown NOW, with the correct currentLang
   buildIssueOptions();
-    // Description meta
-    const meta = dict.metaDescription || (langStrings.en && langStrings.en.metaDescription) || '';
-    ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]']
-      .map(sel => qs(sel))
-      .forEach(m => m && m.setAttribute('content', meta));
 
-    const rtl = new Set(['ar','fa','he','ur']);
-    document.documentElement.setAttribute('lang', code);
-    document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
+  // 3) Meta description
+  const meta = dict.metaDescription || (langStrings.en && langStrings.en.metaDescription) || '';
+  ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]']
+    .map(sel => qs(sel))
+    .forEach(m => m && m.setAttribute('content', meta));
 
-    // Keep localized title with/without ref
-    if (heading) {
-      if (refSafe) {
-        const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
-        heading.textContent = tmpl.replace('{ref}', refSafe);
-      } else {
-        heading.textContent = (langStrings[code] && langStrings[code].heading) || 'Upload CMR / POD';
-      }
+  // 4) dir/lang
+  const rtl = new Set(['ar','fa','he','ur']);
+  document.documentElement.setAttribute('lang', code);
+  document.documentElement.setAttribute('dir', rtl.has(code) ? 'rtl' : 'ltr');
+
+  // 5) Heading with/without ref
+  if (heading) {
+    if (refSafe) {
+      const tmpl = (langStrings[code] && langStrings[code].headingWithRef) || 'Upload CMR / POD for reference {ref}';
+      heading.textContent = tmpl.replace('{ref}', refSafe);
+    } else {
+      heading.textContent = (langStrings[code] && langStrings[code].heading) || 'Upload CMR / POD';
     }
-
-    currentLang = code;
-    reflectLangSelection();
   }
+
+  // 6) Reflect UI state
+  reflectLangSelection();
+}
 
   async function loadTheme() {
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
