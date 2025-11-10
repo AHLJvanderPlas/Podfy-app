@@ -224,7 +224,7 @@ h1 { margin: 16px 0 24px; font-size: 28px; line-height: 1.2; }
 /* 10) DELIVERY OUTCOME (CLEAN / ISSUE) ------------------------------------ */
 fieldset.group {
   border: 1px solid var(--brand-border);
-  border-radius: 8px; padding: 12px 16px; margin: -8px 0;
+  border-radius: 8px; padding: 12px 16px; margin: 8px 0;
 }
 fieldset.group legend {
   font-weight: 600; margin-bottom: 8px; font-size: 15px; color: var(--brand-text);
@@ -300,7 +300,7 @@ fieldset.group label.checkbox input[type="checkbox"] { width: 18px; height: 18px
 .site-footer a:hover { text-decoration: underline; }
 
 /* 13) UTILITIES & ACCESSIBILITY ------------------------------------------- */
-.small  { color: var(--brand-muted); margin-top: 12px; }
+.small  { color: var(--brand-muted); margin-top: 0px; }
 .status { margin-top: 16px; min-height: 24px; }
 .row { display: flex; gap: 16px; align-items: center; margin: 16px 0; }
 .help { color: var(--brand-muted); }
