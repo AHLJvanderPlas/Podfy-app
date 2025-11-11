@@ -2,16 +2,15 @@
   "name": "podfy",
   "private": true,
   "type": "module",
-"scripts": {
-  "build": "wrangler build",
-  "build:logos": "node tools/build-logos.js",
-  "deploy": "wrangler publish"
-},
+  "scripts": {
+    "build:logos": "node tools/build-logos.js"
+  },
   "dependencies": {
     "exifr": "^7.1.3",
     "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
-    "sharp": "^0.33.0"
+    "@aws-sdk/client-s3": "^3.676.0",
+    "@resvg/resvg-js": "^2.6.0"
   }
 }
