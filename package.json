@@ -2,10 +2,11 @@
   "name": "podfy",
   "private": true,
   "type": "module",
-  "scripts": {
-    "build:logos": "node scripts/generate-logos.mjs",
-    "build": "npm run build:logos && wrangler publish"
-  },
+"scripts": {
+  "build": "wrangler build",
+  "build:logos": "node tools/build-logos.js",
+  "deploy": "wrangler publish"
+},
   "dependencies": {
     "exifr": "^7.1.3",
     "pdf-lib": "^1.17.1"
