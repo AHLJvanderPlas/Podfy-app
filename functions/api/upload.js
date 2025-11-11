@@ -559,7 +559,7 @@ export const onRequestPost = async ({ request, env }) => {
     }
 
     const fromEnvelope = pickFromAddress(env, brand);
-    const { name: fromName, email: fromEmail } = parseFromNameAddr(env.MAIL_FROM, env.MAIL_DOMAIN || "podfy.app");
+    const { name: fromName, email: fromEmail } = parseFromNameAddr(env.MAIL_FROM, env.MAIL_DOMAIN || "podfy.net");
     console.log("email from envelope:", fromEnvelope, "| display name:", fromName, "| display email:", fromEmail);
 
     const common = {
