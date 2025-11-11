@@ -17,11 +17,15 @@ if (!R2_ENDPOINT || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
   process.exit(1);
 }
 
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: R2_ENDPOINT,
-  credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
-});
+ const s3 = new S3Client({
+   region: "auto",
+   endpoint: R2_ENDPOINT,        // e.g. https://<accountid>.r2.cloudflarestorage.com
+   forcePathStyle: true,         // <-- IMPORTANT for R2 signing
+   credentials: {
+     accessKeyId: R2_ACCESS_KEY_ID,
+     secretAccessKey: R2_SECRET_ACCESS_KEY,
+   },
+ });
 
 async function streamToBuffer(body) {
   if (Buffer.isBuffer(body)) return body;
