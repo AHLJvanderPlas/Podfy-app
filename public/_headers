@@ -10,7 +10,8 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   # CSP: allow images from self, data URIs, and Podfy logos worker;
   # allow XHR/fetch to podfy.net (and podfy.app if needed)
-  Content-Security-Policy: default-src 'self'; img-src 'self' data: https://podfy.net https://podfy.app; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://podfy.net https://podfy.app; frame-ancestors 'none'*/
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https://podfy.net https://podfy.app; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://podfy.net https://podfy.app; frame-ancestors 'none';
+*/
 
 # NOTE: Paths below are URL paths at runtime (no "/public" prefix).
 
@@ -30,4 +31,3 @@
   # Static files in /public/logos (if any) may still be served by Pages;
   # your R2-backed worker sets its own headers for /logos on podfy.net/app.
   Cache-Control: public, max-age=31536000, immutable
-
