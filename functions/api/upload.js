@@ -15,6 +15,127 @@ import { resolveEmailTheme, buildHtml, pickFromAddress, sendMail } from "../_mai
 import * as exifr from "exifr";
 
 /* =============================================================================
+   Recipient loading/parsing from slug_settings.email_recipients
+   -----------------------------------------------------------------------------
+   PURPOSE:
+   This helper replaces the old theme-based mail addresses and instead retrieves
+   recipient settings from the database table `slug_settings`, column
+   `email_recipients`.
+
+   WHY:
+   Each slug (brand/customer) can define its own To, CC, and BCC recipients.
+   These values are stored as JSON in the database. They may appear as arrays
+   or as comma-separated strings. This code normalizes, validates, and deduplicates
+   them before sending the email.
+
+   EXAMPLE STORED JSON SHAPES SUPPORTED:
+   {
+     "to": ["a@company.com", "b@company.com"],
+     "cc": "manager@company.com, team@company.com",
+     "bcc": []
+   }
+
+   BEHAVIOUR:
+   - Reads JSON safely (parses if stringified).
+   - Accepts arrays or comma-separated strings.
+   - Removes duplicates and invalid addresses.
+   - Ensures proper precedence:
+        TO > CC > BCC (an address in TO is removed from CC/BCC, and from CC removed from BCC)
+   - Returns clean arrays ready for Resend or MailChannels.
+============================================================================= */
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email validation regex
+
+/**
+ * Split a string on commas and trim whitespace.
+ * Example: "a@x.com, b@x.com" → ["a@x.com", "b@x.com"]
+ */
+function splitComma(v) {
+  return String(v || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Normalizes possible JSON inputs (array or comma-separated string)
+ * into a single flat array of strings.
+ */
+function normalizeList(x) {
+  if (!x) return [];
+  if (Array.isArray(x)) return x.flatMap(splitComma);
+  return splitComma(x); // handle plain string
+}
+
+/**
+ * Cleans and validates all emails.
+ * - Lowercases
+ * - Removes empties
+ * - Removes duplicates
+ * - Checks with simple EMAIL_RE
+ */
+function sanitizeEmails(list) {
+  const set = new Set();
+  for (const raw of list) {
+    const e = String(raw || "").trim().toLowerCase();
+    if (e && EMAIL_RE.test(e)) set.add(e);
+  }
+  return Array.from(set);
+}
+
+/**
+ * Enforces recipient precedence:
+ * - Anything in TO is removed from CC and BCC.
+ * - Anything in CC is removed from BCC.
+ */
+function precedenceDedup({ to, cc, bcc }) {
+  const TO  = new Set(to);
+  const CC  = new Set(cc);
+  const BCC = new Set(bcc);
+  for (const e of TO) { CC.delete(e); BCC.delete(e); }
+  for (const e of CC) { BCC.delete(e); }
+  return { to: Array.from(TO), cc: Array.from(CC), bcc: Array.from(BCC) };
+}
+
+/**
+ * Loads and resolves recipients for the given slug.
+ * Reads from D1 database column `slug_settings.email_recipients`.
+ *
+ * Accepts both:
+ *   - Proper JSON object (already parsed)
+ *   - JSON text (stringified)
+ * and safely normalizes it into arrays of valid email addresses.
+ */
+async function loadRecipientsFromDB(DB, slug) {
+  // Query database
+  const row = await DB.prepare(
+    "SELECT email_recipients FROM slug_settings WHERE slug = ?"
+  ).bind(slug).first();
+
+  // Return empty lists if nothing found
+  if (!row || !row.email_recipients) return { to: [], cc: [], bcc: [] };
+
+  // Try to parse JSON if it’s stored as a string
+  let cfg;
+  try {
+    cfg =
+      typeof row.email_recipients === "string"
+        ? JSON.parse(row.email_recipients)
+        : row.email_recipients;
+  } catch {
+    cfg = {};
+  }
+
+  // Normalize and sanitize all three lists
+  const to  = sanitizeEmails(normalizeList(cfg.to));
+  const cc  = sanitizeEmails(normalizeList(cfg.cc));
+  const bcc = sanitizeEmails(normalizeList(cfg.bcc));
+
+  // Apply precedence and return
+  return precedenceDedup({ to, cc, bcc });
+}
+
+/* =============================================================================
    Helpers (each helper has a short, plain-English explanation)
 ============================================================================= */
 
@@ -301,12 +422,17 @@ export const onRequestPost = async ({ request, env }) => {
     brand = normalizeBrand(resolvedBrand, themes);
     console.log("resolved brand:", brand, { posted: fields.brand || fields.slug || "", referer: request.headers.get("referer") || "", url: request.url });
 
-    const theme = resolveEmailTheme(brand, themes);
-    const mailToList = (theme.mailTo ? [theme.mailTo] : [])
-      .concat(env.MAIL_TO || [])
-      .flatMap((s) => String(s).split(","))
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const theme = resolveEmailTheme(brand, themes); // branding only
+    // Recipients now come from D1: slug_settings.email_recipients (plus optional env.MAIL_TO)
+    const { to: dbTo, cc: dbCc, bcc: dbBcc } = await loadRecipientsFromDB(env.DB, brand);
+    const envExtras = sanitizeEmails(
+      Array.isArray(env.MAIL_TO) ? env.MAIL_TO.flatMap(splitComma) : splitComma(env.MAIL_TO)
+    );
+    const { to: mailToList, cc: mailCcList, bcc: mailBccList } = precedenceDedup({
+      to:  [...dbTo,  ...envExtras],
+      cc:  dbCc,
+      bcc: dbBcc
+    });
 
     /* --- Time & IDs -------------------------------------------------------------- */
     const tzForNames = request.cf?.timezone || "UTC";
@@ -579,7 +705,15 @@ export const onRequestPost = async ({ request, env }) => {
     let okStaff = false;
     try {
       if (mailToList.length) {
-        okStaff = await sendMail(env, { fromEmail: fromEnvelope, toList: mailToList, subject: subjectStaff, html, ...common });
+        okStaff = await sendMail(env, {
+          fromEmail: fromEnvelope,
+          toList: mailToList,
+          ccList: mailCcList,
+          bccList: mailBccList,
+          subject: subjectStaff,
+          html,
+          ...common
+        });
         console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
         if (!okStaff) await setProcessStatus(env.DB, podfyId, "error_staff_mail");
       } else {
