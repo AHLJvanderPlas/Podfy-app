@@ -131,12 +131,15 @@ async function sendViaResend(env, { fromEmail, toList, ccList, bccList, subject,
   if (!apiKey) return null; // signal to fallback to MailChannels
 
   // Resend expects 'cid' for inline images; it ignores 'contentId'/'disposition'.
-const attachments = attachmentsAll?.map(a => ({
-  filename: a.filename,
-  content: a.contentBase64,
-  contentType: a.type || "application/octet-stream",
-  content_id: a.cid || undefined,           // <-- Resend requires this field name
-}));
+  const attachments = attachmentsAll?.map(a => ({
+    filename: a.filename,
+    content: a.contentBase64,
+    contentType: a.type || "application/octet-stream",
+    // Be liberal: include both keys to maximize client compatibility.
+    // Many providers/clients rely on 'cid' for inline <img src="cid:...">.
+    cid: a.cid || undefined,
+    content_id: a.cid || undefined,
+  }));
 
 console.log("resend attachments", attachments?.map(x => ({
   fn: x.filename, cid: x.content_id, type: x.contentType, size: x.content?.length || 0
@@ -145,6 +148,8 @@ console.log("resend attachments", attachments?.map(x => ({
   const payload = {
     from: env.MAIL_FROM || `Podfy <${fromEmail}>`,
     to: toList,
+    ...(ccList?.length ? { cc: ccList } : {}),
+    ...(bccList?.length ? { bcc: bccList } : {}),
     subject,
     html,
     ...(attachments?.length ? { attachments } : {}),
@@ -262,7 +267,8 @@ export async function sendMail(env, args) {
 
   // Try Resend first; if RESEND_API_KEY is missing, fall back to MailChannels
   const ok = await sendViaResend(env, { ...args, html: htmlFinal, attachmentsAll });
-  if (ok !== null) return ok;
+  if (ok === true) return true;             // success → done
+  // ok === false (Resend tried but failed) OR ok === null (no key) → try MC
   return await sendViaMailchannels(env, { ...args, html: htmlFinal, attachmentsAll });
 }
 
