@@ -126,7 +126,7 @@ export function buildHtml({
    Transports
    =========================== */
 
-async function sendViaResend(env, { fromEmail, toList, subject, html, attachmentsAll }) {
+async function sendViaResend(env, { fromEmail, toList, ccList, bccList, subject, html, attachmentsAll }) {
   const apiKey = env.RESEND_API_KEY;
   if (!apiKey) return null; // signal to fallback to MailChannels
 
@@ -168,9 +168,13 @@ console.log("resend attachments", attachments?.map(x => ({
     return false;
   }
 }
-async function sendViaMailchannels(env, { fromEmail, toList, subject, html, attachmentsAll }) {
+async function sendViaMailchannels(env, {fromEmail, toList, ccList, bccList, subject, html, attachmentsAll }) {
   const payload = {
-    personalizations: [{ to: toList.map(email => ({ email })) }],
+    personalizations: [{
+      to:  toList.map(email => ({ email })),
+      ...(ccList?.length  ? { cc:  ccList.map(email => ({ email })) } : {}),
+      ...(bccList?.length ? { bcc: bccList.map(email => ({ email })) } : {}),
+    }],
     from: { email: fromEmail, name: env.MAIL_FROM || "Podfy" },
     subject,
     content: [{ type: "text/html", value: html }],
