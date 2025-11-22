@@ -740,26 +740,37 @@ export const onRequestPost = async ({ request, env }) => {
     /* --- Persist driver-copy identity & attempt result (no auto-issue) ----------- */
     try {
       if (emailCopy) {
-        const domain = emailDomain(emailCopy);
-        const hash = await sha256HexText(emailCopy.trim().toLowerCase());
+        // normalise once so domain + hash + stored email are consistent
+        const normalizedEmail = emailCopy.trim().toLowerCase();
+        const domain = emailDomain(normalizedEmail);
+        const hash = await sha256HexText(normalizedEmail);
+
         await env.DB.prepare(`
           UPDATE transactions
-             SET copy_email_domain = ?,
+             SET copy_email       = COALESCE(copy_email, ?),
+                 copy_email_domain = ?,
                  copy_email_hash   = ?,
                  driver_copy_at    = COALESCE(driver_copy_at, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
            WHERE podfy_id = ?
-        `).bind(domain, hash, podfyId).run();
+        `).bind(normalizedEmail, domain, hash, podfyId).run();
 
         if (okUser) {
-          await env.DB.prepare(`UPDATE transactions SET driver_copy_sent = 1 WHERE podfy_id = ?`).bind(podfyId).run();
+          await env.DB.prepare(
+            `UPDATE transactions SET driver_copy_sent = 1 WHERE podfy_id = ?`
+          ).bind(podfyId).run();
         }
-        console.log("D1 driver_copy identity persisted:", { podfyId, sent: okUser, domain });
+
+        console.log("D1 driver_copy identity persisted:", {
+          podfyId,
+          sent: okUser,
+          domain,
+          email: normalizedEmail,
+        });
       }
     } catch (e) {
       console.error("D1 driver_copy persistence failed:", e);
       await setProcessStatus(env.DB, podfyId, "error_user_mail"); // best-fit category
     }
-
     /* --- Finalize process_status ------------------------------------------------- */
     try {
       const shouldBeDelivered = !driverIssue && okStaff && (emailCopy ? okUser : true);
