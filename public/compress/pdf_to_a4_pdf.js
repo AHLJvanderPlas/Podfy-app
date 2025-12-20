@@ -106,13 +106,16 @@ export async function pdfFileToRasterA4Pdf(file, options = {}) {
   const inputBytes = new Uint8Array(await file.arrayBuffer());
 
   // Load PDF.js
-  const pdfjs = await loadPdfJs();
+const pdfjs = await loadPdfJs();
 
-  // Use no worker (simpler, CSP-safe). Acceptable for <=10 pages sequentially.
-  const loadingTask = pdfjs.getDocument({
-    data: inputBytes,
-    disableWorker: true,
-  });
+// Configure worker from same origin (CSP-safe)
+if (pdfjs.GlobalWorkerOptions) {
+  pdfjs.GlobalWorkerOptions.workerSrc = "/vendor/pdfjs/pdf.worker.mjs";
+}
+
+const loadingTask = pdfjs.getDocument({
+  data: inputBytes,
+});
 
   const pdf = await loadingTask.promise;
 
