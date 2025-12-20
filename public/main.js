@@ -110,6 +110,30 @@
   // ----------------------------------------------------------
   // 3) Small utilities
   // ----------------------------------------------------------
+async function maybeCompressToPdf(file) {
+  try {
+    const { compressFileToPdf } = await import("./compress/compress_file_to_pdf.js");
+
+    // Only images are implemented right now. PDFs will throw "not implemented".
+    const { pdfBlob, meta } = await compressFileToPdf(file);
+
+    // Turn Blob into a File so existing upload code keeps working.
+    const baseName = (file.name || "upload").replace(/\.[^/.]+$/, "");
+    const pdfFile = new File([pdfBlob], `${baseName}.pdf`, {
+      type: "application/pdf",
+      lastModified: Date.now(),
+    });
+
+    // Optional: attach meta for later backend storage (safe if backend ignores unknown fields)
+    pdfFile.__podfy_meta = meta;
+
+    return pdfFile;
+  } catch (e) {
+    // Fail-open: silently return original
+    return file;
+  }
+}
+   
   const extOf = (name = '') => (name.includes('.') ? name.split('.').pop().toLowerCase() : '');
 
   function validateClientFile(f) {
@@ -764,7 +788,14 @@ function buildIssueOptions() {
     form.append('company_website', ''); // honeypot must remain empty
 
     // File + slug + ref
-    form.append('file', f);
+   const uploadable = await maybeCompressToPdf(f);
+   form.append('file', uploadable);
+
+    // Optional meta (backend can ignore for now; safe to send)
+    if (uploadable && uploadable.__podfy_meta) {
+      form.append('client_meta_json', JSON.stringify(uploadable.__podfy_meta));
+    }
+
     form.append('brand', rawSlug || 'default');
     form.append('slug_original', rawSlug || 'default');
     form.append('slug_known', themes[rawSlug] ? '1' : '0');
