@@ -33,7 +33,7 @@ function isPortrait(width, height) {
 }
 
 function chooseA4PixelBox(imgW, imgH) {
-  return isPortrait(imgW, imgH) ? A4.pxPortrait : A4.pxLandscape;
+  return A4.pxPortrait;
 }
 
 /**
@@ -193,10 +193,9 @@ export async function imageFileToA4Pdf(file, options = {}) {
   const { PDFDocument } = await loadPdfLib();
   const pdfDoc = await PDFDocument.create();
 
-  // A4 page (portrait or landscape based on targetPx)
-  const isA4Portrait = targetPx.w === A4.pxPortrait.w;
-  const pageWidthPt = isA4Portrait ? A4.widthPt : A4.heightPt;
-  const pageHeightPt = isA4Portrait ? A4.heightPt : A4.widthPt;
+  // Always portrait A4
+  const pageWidthPt = A4.widthPt;
+  const pageHeightPt = A4.heightPt;
 
   const page = pdfDoc.addPage([pageWidthPt, pageHeightPt]);
 
@@ -227,7 +226,7 @@ export async function imageFileToA4Pdf(file, options = {}) {
     },
     exif: exif || null,
     processing: {
-      a4: isA4Portrait ? "portrait" : "landscape",
+      a4: "portrait",
       targetPx,
       jpegQualityUsed: jpegQ,
       jpgBytes: jpgBytes.byteLength,
