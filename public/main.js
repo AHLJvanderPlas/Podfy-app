@@ -789,6 +789,12 @@ function buildIssueOptions() {
 
     // File + slug + ref
    const uploadable = await maybeCompressToPdf(f);
+     console.log(
+     '[PODFY upload]',
+     'original:', f.name, f.type,
+     '→ uploadable:', uploadable.name, uploadable.type,
+     'size:', uploadable.size
+   );
    form.append('file', uploadable);
 
     // Optional meta (backend can ignore for now; safe to send)
