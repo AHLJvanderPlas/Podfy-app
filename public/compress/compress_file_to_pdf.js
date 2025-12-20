@@ -22,8 +22,8 @@ export async function compressFileToPdf(file) {
   }
 
   if (isPdf(file)) {
-    // Step 2 will implement: rasterize PDF -> A4@300DPI -> JPEG pages -> PDF
-    throw new Error("PDF compression not implemented yet (Step 2).");
+    const { pdfFileToRasterA4Pdf } = await import("./pdf_to_a4_pdf.js");
+    return pdfFileToRasterA4Pdf(file);
   }
 
   throw new Error(`Unsupported file type: ${file.type || "unknown"} (${file.name})`);
