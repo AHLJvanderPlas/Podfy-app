@@ -129,9 +129,15 @@ async function maybeCompressToPdf(file) {
 
     return pdfFile;
   } catch (e) {
-    // Fail-open: silently return original
-    return file;
-  }
+  // TEMP DEBUG (remove after): see why PDF compression falls back
+  console.warn("[compress] fallback to original", {
+    name: file?.name,
+    type: file?.type,
+    err: e?.message || String(e),
+    stack: e?.stack || null,
+  });
+  return file;
+}
 }
    
   const extOf = (name = '') => (name.includes('.') ? name.split('.').pop().toLowerCase() : '');
