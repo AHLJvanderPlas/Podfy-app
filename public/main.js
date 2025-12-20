@@ -788,7 +788,14 @@ function buildIssueOptions() {
     form.append('company_website', ''); // honeypot must remain empty
 
     // File + slug + ref
-    form.append('file', f);
+   const uploadable = await maybeCompressToPdf(f);
+   form.append('file', uploadable);
+
+    // Optional meta (backend can ignore for now; safe to send)
+    if (uploadable && uploadable.__podfy_meta) {
+      form.append('client_meta_json', JSON.stringify(uploadable.__podfy_meta));
+    }
+
     form.append('brand', rawSlug || 'default');
     form.append('slug_original', rawSlug || 'default');
     form.append('slug_known', themes[rawSlug] ? '1' : '0');
