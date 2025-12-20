@@ -110,6 +110,30 @@
   // ----------------------------------------------------------
   // 3) Small utilities
   // ----------------------------------------------------------
+async function maybeCompressToPdf(file) {
+  try {
+    const { compressFileToPdf } = await import("./compress/compress_file_to_pdf.js");
+
+    // Only images are implemented right now. PDFs will throw "not implemented".
+    const { pdfBlob, meta } = await compressFileToPdf(file);
+
+    // Turn Blob into a File so existing upload code keeps working.
+    const baseName = (file.name || "upload").replace(/\.[^/.]+$/, "");
+    const pdfFile = new File([pdfBlob], `${baseName}.pdf`, {
+      type: "application/pdf",
+      lastModified: Date.now(),
+    });
+
+    // Optional: attach meta for later backend storage (safe if backend ignores unknown fields)
+    pdfFile.__podfy_meta = meta;
+
+    return pdfFile;
+  } catch (e) {
+    // Fail-open: silently return original
+    return file;
+  }
+}
+   
   const extOf = (name = '') => (name.includes('.') ? name.split('.').pop().toLowerCase() : '');
 
   function validateClientFile(f) {
