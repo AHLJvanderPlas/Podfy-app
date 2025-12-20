@@ -20,12 +20,12 @@ function mmToPt(mm) {
 // Lazy-load dependencies only when used (low bandwidth friendly).
 async function loadPdfLib() {
   // ESM build from jsdelivr
-  return import("https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm");
+  return import("/vendor/pdf-lib.esm.js");
 }
 
 async function loadExifr() {
   // Exifr ESM for EXIF parsing
-  return import("https://cdn.jsdelivr.net/npm/exifr@7.1.3/+esm");
+  return import("/vendor/exifr.esm.js");
 }
 
 function isPortrait(width, height) {
