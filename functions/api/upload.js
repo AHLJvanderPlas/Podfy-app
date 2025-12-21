@@ -202,17 +202,6 @@ function parseFromNameAddr(str, fallbackDomain = "podfy.app") {
   return { name: "Podfy App", email: `noreply@${fallbackDomain}` };
 }
 
-// Maps a short qualifier to a canonical source string (for DB consistency).
-function mapPresentedSource(qualifier) {
-  switch (String(qualifier || "").toUpperCase()) {
-    case "GPS": return "gps";
-    case "IMG": return "exif";
-    case "IP":  return "ip";
-    case "MANUAL": return "manual";
-    default: return "unknown";
-  }
-}
-
 // Builds a user-friendly map link for given coordinates (Google Maps universal).
 function buildMapUrl(lat, lon) {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "";
@@ -619,7 +608,7 @@ async function processOneFile(fileObj, idx) {
   }
 
   /* --- Optional EXIF extraction (GPS & timestamp) ---------------------------- */
-  let exifLat = null, exifLon = null, exifDateIso = null;
+  let exifLat = null, exifLon = null;
   try {
     const isImage =
       contentType.startsWith("image/") &&
@@ -639,7 +628,7 @@ if (isImage) {
   const userLat = Number.isFinite(parseFloat(fields.lat)) ? parseFloat(fields.lat) : Number.isFinite(parseFloat(lat)) ? parseFloat(lat) : null;
 const userLon = Number.isFinite(parseFloat(fields.lon)) ? parseFloat(fields.lon) : Number.isFinite(parseFloat(lon)) ? parseFloat(lon) : null;
 const userAcc = Number.isFinite(parseFloat(fields.accuracy)) ? parseFloat(fields.accuracy) : Number.isFinite(parseFloat(accuracy)) ? parseFloat(accuracy) : null;
-const userLocTs = fields.locTs || locTs || null;
+const userlocTs = fields.locTs || locTs || null;
    
 const ipLat = Number.isFinite(parseFloat(request.cf?.latitude)) ? parseFloat(request.cf.latitude) : null;
 const ipLon = Number.isFinite(parseFloat(request.cf?.longitude)) ? parseFloat(request.cf.longitude) : null;
@@ -667,7 +656,7 @@ if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
     : { lat: null, lon: null, accuracyM: null, ts: null },
 
   gps_user: (Number.isFinite(userLat) && Number.isFinite(userLon))
-    ? { lat: userLat, lon: userLon, accuracyM: Number.isFinite(userAcc) ? userAcc : null, ts: userLocTs }
+    ? { lat: userLat, lon: userLon, accuracyM: Number.isFinite(userAcc) ? userAcc : null, ts: userlocTs }
     : { lat: null, lon: null, accuracyM: null, ts: null },
 
   gps_ip: (Number.isFinite(ipLat) && Number.isFinite(ipLon))
@@ -715,7 +704,7 @@ if (contentType === "application/pdf" || extFromName === "pdf" || kind === "pdf"
       reference: cleanRef,
       podfyId: podfyIdForFile,
       dateTime,
-      mediaBase: (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, ""),
+      mediaBase,
       enableHeader,
       enableFooter,
     });
