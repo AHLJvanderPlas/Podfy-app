@@ -399,19 +399,26 @@ async function applyPdfHeaderFooter({
   // ---- helpers --------------------------------------------------------------
   const clamp01 = (n) => Math.max(0, Math.min(1, n));
   const hexToRgb = (hex, fallback = "#000000") => {
-    const h = String(hex || "").trim().replace(/^#/, "");
-    const v = /^[0-9a-fA-F]{6}$/.test(h) ? h : String(fallback).trim().replace(/^#/, "");
-    const r = parseInt(v.slice(0, 2), 16) / 255;
-    const g = parseInt(v.slice(2, 4), 16) / 255;
-    const b = parseInt(v.slice(4, 6), 16) / 255;
+  const h = String(hex || "").trim().replace(/^#/, "");
+  const v = /^[0-9a-fA-F]{6}$/.test(h) ? h : String(fallback).trim().replace(/^#/, "");
+  const r = parseInt(v.slice(0, 2), 16) / 255;
+  const g = parseInt(v.slice(2, 4), 16) / 255;
+  const b = parseInt(v.slice(4, 6), 16) / 255;
     return rgb(clamp01(r), clamp01(g), clamp01(b));
   };
-
+  
+  function isLightColor({ r, g, b }) {
+    // relative luminance (WCAG)
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return luminance > 0.85; // treat very light / white as light
+  }
+   
   // Brand color header, fallback black
   const headerBg = hexToRgb(brandColor, "#000000");
   const footerBg = rgb(0.25, 0.25, 0.25);
   const white = rgb(1, 1, 1);
   const black = rgb(0, 0, 0);
+  const headerTextColor = isLightColor(headerBg) ? black : white;
 
   // ---- layout (70% thickness) ----------------------------------------------
   const padX = 36;                  // 0.5 inch
@@ -548,7 +555,7 @@ async function applyPdfHeaderFooter({
           y: centerY - textSize / 2,
           size: textSize + 2,
           font: fontBold,
-          color: white,
+          color: headerTextColor,
         });
       }
 
@@ -560,7 +567,7 @@ async function applyPdfHeaderFooter({
           y: centerY - textSize / 2,
           size: textSize,
           font: fontBold,
-          color: white,
+          color: headerTextColor,
         });
       }
     }
