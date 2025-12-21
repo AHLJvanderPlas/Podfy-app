@@ -400,7 +400,7 @@ async function applyPdfHeaderFooter({
   const clamp01 = (n) => Math.max(0, Math.min(1, n));
   const hexToRgb = (hex, fallback = "#000000") => {
     const h = String(hex || "").trim().replace(/^#/, "");
-    const v = /^[0-9a-fA-F]{6}$/.test(h) ? h : String(fallback).replace(/^#/, "");
+    const v = /^[0-9a-fA-F]{6}$/.test(h) ? h : String(fallback).trim().replace(/^#/, "");
     const r = parseInt(v.slice(0, 2), 16) / 255;
     const g = parseInt(v.slice(2, 4), 16) / 255;
     const b = parseInt(v.slice(4, 6), 16) / 255;
@@ -413,7 +413,7 @@ async function applyPdfHeaderFooter({
   const white = rgb(1, 1, 1);
 
   // ---- layout (70% thickness) ----------------------------------------------
-  const padX = 36; // 0.5 inch
+  const padX = 36;                  // 0.5 inch
   const headerH = Math.round(44 * 0.7); // 31
   const footerH = Math.round(48 * 0.7); // 34
   const textSize = 10;
@@ -428,20 +428,56 @@ async function applyPdfHeaderFooter({
   const podfySvgUrl  = `${lb}/logos/podfy.svg`;
   const podfyPngUrl  = `${lb}/logos/podfy.png`;
 
+  function ensureSvgSize(svgText) {
+    // If SVG already has width+height, keep it.
+    const hasW = /\bwidth\s*=\s*["'][^"']+["']/.test(svgText);
+    const hasH = /\bheight\s*=\s*["'][^"']+["']/.test(svgText);
+    if (hasW && hasH) return svgText;
+
+    // Try to derive from viewBox
+    const m = svgText.match(/\bviewBox\s*=\s*["']\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*["']/i);
+    let w = 256, h = 256; // sensible fallback
+    if (m) {
+      const vbW = parseFloat(m[3]);
+      const vbH = parseFloat(m[4]);
+      if (Number.isFinite(vbW) && vbW > 0) w = vbW;
+      if (Number.isFinite(vbH) && vbH > 0) h = vbH;
+    }
+
+    // Inject width/height into the <svg ...> tag
+    return svgText.replace(
+      /<svg\b([^>]*)>/i,
+      (full, attrs) => {
+        const attrs2 = attrs
+          .replace(/\s+/g, " ")
+          .trim();
+        return `<svg ${attrs2} width="${w}" height="${h}">`;
+      }
+    );
+  }
+
   async function loadWhiteSvg(url) {
     const r = await fetch(url);
     if (!r.ok) throw new Error(`svg fetch failed: ${r.status} ${url}`);
-    const svgText = await r.text();
-    // Force all fills/strokes to white (best-effort)
-    return svgText
+    let svgText = await r.text();
+
+    // Force fills/strokes to white (best-effort)
+    svgText = svgText
       .replace(/fill="[^"]*"/gi, 'fill="#ffffff"')
-      .replace(/stroke="[^"]*"/gi, 'stroke="#ffffff"')
-      .replace("<svg", '<svg fill="#ffffff" stroke="#ffffff"');
+      .replace(/stroke="[^"]*"/gi, 'stroke="#ffffff"');
+
+    // Also set root defaults (helps when paths use fill="currentColor" etc.)
+    svgText = svgText.replace(/<svg\b/i, '<svg fill="#ffffff" stroke="#ffffff"');
+
+    // Critical: ensure width/height exist (otherwise pdf-lib can render nothing)
+    svgText = ensureSvgSize(svgText);
+
+    return svgText;
   }
 
   // ---- fetch + embed logos once (best-effort) -------------------------------
   let brandLogoImg = null; // PNG
-  let podfyLogoImg = null; // SVG preferred; PNG fallback. Both are embedded as drawable images.
+  let podfyLogoImg = null; // SVG preferred; PNG fallback
 
   // Brand logo
   try {
@@ -454,6 +490,9 @@ async function applyPdfHeaderFooter({
   // Podfy logo (SVG -> PNG fallback)
   try {
     const svgText = await loadWhiteSvg(podfySvgUrl);
+    if (typeof pdfDoc.embedSvg !== "function") {
+      throw new Error("pdf-lib embedSvg() not available in this build");
+    }
     podfyLogoImg = await pdfDoc.embedSvg(svgText);
   } catch (e) {
     console.log("Podfy SVG failed, trying PNG fallback:", String(e));
@@ -467,7 +506,7 @@ async function applyPdfHeaderFooter({
 
   // ---- text content ---------------------------------------------------------
   const headerRight = reference ? `REF: ${reference}` : "";
-  const footerLeft = `PODFY ID: ${podfyId}`;
+  const footerLeft  = `PODFY ID: ${podfyId}`;
   const footerRight = dateTime ? `${dateTime}` : "";
 
   // ---- draw on each page ----------------------------------------------------
@@ -510,7 +549,6 @@ async function applyPdfHeaderFooter({
           font: fontBold,
           color: white,
         });
-        leftX += fontBold.widthOfTextAtSize(brandText, textSize + 2) + 10;
       }
 
       // Right header text (REF)
@@ -560,7 +598,7 @@ async function applyPdfHeaderFooter({
       }
 
       // Podfy logo centered (60% of bar height)
-      if (podfyLogoImg) {
+      if (podfyLogoImg && podfyLogoImg.width > 0 && podfyLogoImg.height > 0) {
         const scale = footerLogoH / podfyLogoImg.height;
         const logoW = podfyLogoImg.width * scale;
         const logoH = podfyLogoImg.height * scale;
