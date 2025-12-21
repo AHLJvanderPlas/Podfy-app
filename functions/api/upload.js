@@ -292,35 +292,31 @@ async function isMailNotificationEnabled(DB, brand) {
     return DEFAULT_ON;
   }
 }
-console.log("D1 check", {
-  hasDB: !!env.DB,
-  podfyId: podfyIdForFile,
-  slug: brand
-});
+
 // Upserts a single transactions row; does not delete/recreate the row.
 // Preserves created_at (and any other columns you don't update).
 // Upserts a single transactions row; preserves original created_at if it exists.
 async function upsertTransaction(DB, row) {
-  const sql = `
-    INSERT OR REPLACE INTO transactions (
-      podfy_id, slug, upload_date, upload_time,
-      created_at,
-      reference, presented_loc_url, presented_label,
-      picture_url, original_filename, uploaded_file_type, file_size_bytes,
-      storage_bucket, storage_key, driver_copy_sent, process_status,
-      invoice_group_id, subscription_code, uploader_user_id, user_agent, app_version, meta_json,
-      file_checksum, delivery_issue_code, delivery_issue_notes, location_raw_json
-    ) VALUES (
-      ?, ?, ?, ?,
-      COALESCE((SELECT created_at FROM transactions WHERE podfy_id = ?),
-               strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-      ?, ?, ?, ?,
-      ?, ?, ?, ?,
-      ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?,
-      ?, ?, ?
-    );
-  `;
+const sql = `
+  INSERT OR REPLACE INTO transactions (
+    podfy_id, slug, upload_date, upload_time,
+    created_at,
+    reference, presented_loc_url, presented_label,
+    picture_url, original_filename, uploaded_file_type, file_size_bytes,
+    storage_bucket, storage_key, driver_copy_sent, process_status,
+    invoice_group_id, subscription_code, uploader_user_id, user_agent, app_version, meta_json,
+    file_checksum, delivery_issue_code, delivery_issue_notes, location_raw_json
+  ) VALUES (
+    ?, ?, ?, ?,
+    COALESCE((SELECT created_at FROM transactions WHERE podfy_id = ?),
+             strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    ?, ?, ?, ?,
+    ?, ?, ?, ?,
+    ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?
+  );
+`;
 
   const meta_json_text = row.meta_json != null ? JSON.stringify(row.meta_json) : null;
   const location_raw_json_text = row.location_raw_json != null ? JSON.stringify(row.location_raw_json) : null;
@@ -636,10 +632,13 @@ const makeFilePodfyId = (idx) =>
     /* --- Load file --------------------------------------------------------------- */
    /* --- Process one file (extracted from existing single-file flow) -------------- */
 async function processOneFile(fileObj, idx) {
-  // Treat staff mail as "satisfied" when disabled OR there are no recipients.
-   // This prevents blocking 'delivered' on a deliberate configuration.
    const podfyIdForFile = makeFilePodfyId(idx);
 
+    console.log("D1 check", {
+    hasDB: !!env.DB,
+    podfyId: podfyIdForFile,
+    slug: brand
+  });
   // Optional client meta (align by index with files[])
   let clientMeta = null;
   try {
