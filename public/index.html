@@ -102,7 +102,7 @@
     -->
     <div class="options-row">
       <!-- Share location (optional) -->
-      <div class="option">
+      <div id="gpsToggleRow" class="option">
         <label class="checkbox">
           <input id="locCheck" type="checkbox" />
           <span data-i18n="shareLocation">Share my location (optional)</span>
@@ -117,7 +117,7 @@
       </div>
 
       <!-- Email me a copy (optional) -->
-      <div class="option">
+      <div id="copyToggleRow" class="option">
         <label class="checkbox">
           <input id="copyCheck" type="checkbox" />
           <span data-i18n="emailMeCopy">Email me a copy</span>
@@ -132,10 +132,27 @@
       </div>
 
       <!-- Clean delivery (no issues) — same layout & (i) style as above -->
-      <div class="option">
+      <div id="cleanToggleRow" class="option">
         <label class="checkbox">
           <input type="checkbox" id="chk_clean" checked />
           <span data-i18n="cleanDelivery">Clean delivery (no issues)</span>
+        </label>
+        <button
+          class="info-btn" type="button"
+          aria-expanded="false" aria-controls="help-delivery"
+          data-i18n-title="whatIsThis" data-i18n-aria-label="whatIsThis">i</button>
+        <div id="help-delivery" class="popover" hidden tabindex="-1">
+          <div class="popover-inner" data-i18n="deliveryOutcomeHelp">
+            Tick ‘Clean delivery’ if all went well. Untick to report an issue and add a short code and notes.
+          </div>
+        </div>
+      </div>
+
+            <!-- Clean delivery (no issues) — same layout & (i) style as above -->
+      <div id="refToggleRow" class="option">
+        <label class="checkbox">
+          <input type="checkbox" id="chk_ref" />
+          <span data-i18n="refToggle">Reference confirmation</span>
         </label>
         <button
           class="info-btn" type="button"

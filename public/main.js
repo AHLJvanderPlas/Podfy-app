@@ -607,31 +607,53 @@ function buildIssueOptions() {
   // 6) UI wiring (email toggle, issue toggle, pickers, dropzone)
   // ----------------------------------------------------------
   function wireUI() {
-const gpsPanel = document.getElementById('gpsPanel');
-// Apply feature flags to UI visibility
+  
+   const gpsToggleRow   = document.getElementById('gpsToggleRow');
+   const copyToggleRow  = document.getElementById('copyToggleRow');
+   const cleanToggleRow = document.getElementById('cleanToggleRow');
+   const refToggleRow   = document.getElementById('refToggleRow');
+
+   const gpsPanel   = document.getElementById('gpsPanel');
+   const emailPanel = document.getElementById('emailPanel');// Apply feature flags to UI visibility
+     
 if (!features.check_gps) {
-  // hide GPS toggle + panel
-  locCheck && (locCheck.checked = false);
-  locCheck && (locCheck.disabled = true);
+  if (gpsToggleRow) gpsToggleRow.hidden = true;
   if (gpsPanel) gpsPanel.hidden = true;
+
+  if (locCheck) locCheck.checked = false;
   if (locStatus) {
     locStatus.textContent = '';
     locStatus.classList.add('hidden');
+    ['lat','lon','acc','ts'].forEach(k => delete locStatus.dataset[k]);
   }
 }
-     if (!features.check_copy) {
-  copyCheck && (copyCheck.checked = false);
-  copyCheck && (copyCheck.disabled = true);
-  if (emailWrap) { emailWrap.classList.add('hidden'); emailWrap.hidden = true; }
+     
+if (!features.check_copy) {
+  if (copyToggleRow) copyToggleRow.hidden = true;
   if (emailPanel) emailPanel.hidden = true;
-}
-     if (!features.check_clean) {
-  // Force "clean" and disable changes
-  if (chkClean) {
-    chkClean.checked = true;
-    chkClean.disabled = true;
+
+  if (copyCheck) copyCheck.checked = false;
+  if (emailWrap) { emailWrap.classList.add('hidden'); emailWrap.hidden = true; }
+
+  if (emailField) {
+    emailField.required = false;
+    emailField.removeAttribute('aria-required');
+    emailField.value = '';
   }
+}
+     
+if (!features.check_clean) {
+  if (cleanToggleRow) cleanToggleRow.hidden = true;
   if (issuePanel) issuePanel.hidden = true;
+
+  if (chkClean) chkClean.checked = true; // force clean silently
+}
+
+     if (!features.check_ref) {
+  if (refToggleRow) refToggleRow.hidden = true;
+
+  const chkRef = document.getElementById('chk_ref');
+  if (chkRef) chkRef.checked = false;
 }
      
     // Initial button state
