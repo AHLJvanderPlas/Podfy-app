@@ -627,20 +627,17 @@ if (!features.check_gps) {
     ['lat','lon','acc','ts'].forEach(k => delete locStatus.dataset[k]);
   }
 }
-     if (!features.check_copy) {
-  copyCheck && (copyCheck.checked = false);
-  copyCheck && (copyCheck.disabled = true);
-  if (emailWrap) { emailWrap.classList.add('hidden'); emailWrap.hidden = true; }
-  if (emailPanel) emailPanel.hidden = true;
-}
-
-     if (!features.check_copy) {
+     
+if (!features.check_copy) {
   if (copyToggleRow) copyToggleRow.hidden = true;
   if (emailPanel) emailPanel.hidden = true;
 
   if (copyCheck) copyCheck.checked = false;
+  if (emailWrap) { emailWrap.classList.add('hidden'); emailWrap.hidden = true; }
+
   if (emailField) {
     emailField.required = false;
+    emailField.removeAttribute('aria-required');
     emailField.value = '';
   }
 }
