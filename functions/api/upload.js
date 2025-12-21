@@ -234,7 +234,7 @@ async function upsertTransaction(DB, row) {
     INSERT OR REPLACE INTO transactions (
       podfy_id, slug, upload_date, upload_time,
       created_at,
-      reference, presented_loc_url, presented_label, presented_source,
+      reference, presented_loc_url, presented_label,
       picture_url, original_filename, uploaded_file_type, file_size_bytes,
       storage_bucket, storage_key, driver_copy_sent, process_status,
       invoice_group_id, subscription_code, uploader_user_id, user_agent, app_version, meta_json,
@@ -255,7 +255,7 @@ async function upsertTransaction(DB, row) {
   await DB.prepare(sql).bind(
     row.podfy_id, row.slug, row.upload_date, row.upload_time,
     row.podfy_id,
-    row.reference, row.presented_loc_url, row.presented_label, row.presented_source,
+    row.reference, row.presented_loc_url, row.presented_label,
     row.picture_url, row.original_filename, row.uploaded_file_type, row.file_size_bytes,
     row.storage_bucket, row.storage_key, row.driver_copy_sent, row.process_status,
     row.invoice_group_id, row.subscription_code, row.uploader_user_id, row.user_agent, row.app_version, meta_json_text,
@@ -572,10 +572,12 @@ async function processOneFile(fileObj, idx) {
   let fileName = "upload.bin";
   let contentType = "application/octet-stream";
   let buffer;
+  let originalContentType = null;
 
   if (mode === "form") {
     fileName = fileObj?.name || fileName;
     contentType = fileObj?.type || contentType;
+    originalContentType = contentType; 
     buffer = await fileObj.arrayBuffer();
   } else {
     // JSON mode stays single-file only (for now)
@@ -583,6 +585,7 @@ async function processOneFile(fileObj, idx) {
     if (!fields.base64) throw new Error("No file provided. Use multipart/form-data.");
     fileName = fields.fileName;
     contentType = fields.contentType;
+    originalContentType = contentType;
     buffer = Uint8Array.from(atob(fields.base64), (c) => c.charCodeAt(0)).buffer;
   }
 
@@ -593,41 +596,58 @@ async function processOneFile(fileObj, idx) {
       contentType.startsWith("image/") &&
       (contentType.includes("jpeg") || contentType.includes("png") || contentType.includes("webp") || contentType.includes("heic") || contentType.includes("heif"));
     let exif;
-    if (isImage && (!lat || !lon)) {
-      exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
-      if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") {
-        exifLat = exif.latitude; exifLon = exif.longitude;
-      }
-    }
+if (isImage) {
+  exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
+  if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") {
+    exifLat = exif.latitude; 
+    exifLon = exif.longitude;
+  }
+}
     if (!dateTime && exif?.DateTimeOriginal instanceof Date) exifDateIso = exif.DateTimeOriginal.toISOString();
   } catch { /* ignore EXIF failures */ }
 
   /* --- Location selection (prefer GPS → EXIF IMG → IP) ----------------------- */
-  let locationSource = "NONE";
-  let numLat = (typeof lat === "number") ? lat : parseFloat(lat);
-  let numLon = (typeof lon === "number") ? lon : parseFloat(lon);
-  if (Number.isFinite(numLat) && Number.isFinite(numLon)) {
-    locationSource = "GPS";
-  } else if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
-    numLat = exifLat; numLon = exifLon; locationSource = "IMG";
-  } else {
-    const cfLat = parseFloat(request.cf?.latitude);
-    const cfLon = parseFloat(request.cf?.longitude);
-    if (Number.isFinite(cfLat) && Number.isFinite(cfLon)) { numLat = cfLat; numLon = cfLon; locationSource = "IP"; }
-  }
+  const userLat = Number.isFinite(parseFloat(fields.lat)) ? parseFloat(fields.lat) : Number.isFinite(parseFloat(lat)) ? parseFloat(lat) : null;
+const userLon = Number.isFinite(parseFloat(fields.lon)) ? parseFloat(fields.lon) : Number.isFinite(parseFloat(lon)) ? parseFloat(lon) : null;
+const userAcc = Number.isFinite(parseFloat(fields.accuracy)) ? parseFloat(fields.accuracy) : Number.isFinite(parseFloat(accuracy)) ? parseFloat(accuracy) : null;
+const userLocTs = fields.locTs || locTs || null;
+   
+const ipLat = Number.isFinite(parseFloat(request.cf?.latitude)) ? parseFloat(request.cf.latitude) : null;
+const ipLon = Number.isFinite(parseFloat(request.cf?.longitude)) ? parseFloat(request.cf.longitude) : null;
 
-  let numAcc = (typeof accuracy === "number") ? accuracy : parseFloat(accuracy);
-  if (!Number.isFinite(numAcc)) numAcc = (locationSource === "IP") ? 50000 : null;
-  if (!dateTime && exifDateIso) dateTime = exifDateIso;
-  if (Number.isFinite(numLat) && Number.isFinite(numLon)) { lat = numLat; lon = numLon; }
-  accuracy = Number.isFinite(numAcc) ? numAcc : null;
+let finalLat = null, finalLon = null, finalAcc = null;
+let presented_label = "UNKNOWN";
 
-  const methodTag =
-    locationSource === "IMG" ? "IMG" :
-    locationSource === "GPS" ? "GPS" :
-    locationSource === "IP"  ? "IP"  : "UNKNOWN";
-  const presented_source = mapPresentedSource(locationSource);
-  const mapUrl = (Number.isFinite(lat) && Number.isFinite(lon)) ? buildMapUrl(lat, lon) : "";
+if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
+  finalLat = exifLat; finalLon = exifLon;
+  finalAcc = null; // EXIF usually has no accuracy
+  presented_label = "IMG";
+} else if (Number.isFinite(userLat) && Number.isFinite(userLon)) {
+  finalLat = userLat; finalLon = userLon;
+  finalAcc = Number.isFinite(userAcc) ? userAcc : null;
+  presented_label = "GPS";
+} else if (Number.isFinite(ipLat) && Number.isFinite(ipLon)) {
+  finalLat = ipLat; finalLon = ipLon;
+  finalAcc = 50000;
+  presented_label = "IP";
+}
+
+   const location_raw_json = {
+  gps_exif: (Number.isFinite(exifLat) && Number.isFinite(exifLon))
+    ? { lat: exifLat, lon: exifLon, accuracyM: null, ts: null }
+    : { lat: null, lon: null, accuracyM: null, ts: null },
+
+  gps_user: (Number.isFinite(userLat) && Number.isFinite(userLon))
+    ? { lat: userLat, lon: userLon, accuracyM: Number.isFinite(userAcc) ? userAcc : null, ts: userLocTs }
+    : { lat: null, lon: null, accuracyM: null, ts: null },
+
+  gps_ip: (Number.isFinite(ipLat) && Number.isFinite(ipLon))
+    ? { lat: ipLat, lon: ipLon, accuracyM: 50000, ts: null }
+    : { lat: null, lon: null, accuracyM: null, ts: null },
+
+  presented_label,
+  final: { lat: finalLat, lon: finalLon, accuracyM: finalAcc }
+};
 
   /* --- Build base locationMeta (raw facts) ---------------------------------- */
   const cf = request.cf || {};
@@ -663,7 +683,6 @@ async function processOneFile(fileObj, idx) {
     finalLon: Number.isFinite(lon) ? String(lon) : "",
     finalAccuracyM: Number.isFinite(accuracy) ? String(accuracy) : "",
     methodTag,
-    presentedSource: presented_source,
     ipCountry: locationMeta.ipCountry || (request.cf?.country || ""),
     ipPostal: locationMeta.ipPostal || (request.cf?.postalCode || ""),
   };
@@ -691,6 +710,7 @@ const extOk  = ALLOWED_EXT.has(extFromName);
 if (kind === "unknown" || !(mimeOk || extOk)) throw new Error("Unsupported or suspicious file");
 
 // Optional PDF stamping (header/footer)
+const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, "");
 const enableHeader = true; // TEMP: we’ll wire to slug feature flags next step
 const enableFooter = true; // TEMP: we’ll wire to slug feature flags next step
 
@@ -735,7 +755,7 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
       reference: cleanRef,
       slug: brand,
       orig_name: fileName,
-      orig_type: contentType,
+      orig_type: originalContentType || contentType,
       uploader_email: emailCopy || "",
       ...locationMeta,
     },
@@ -771,7 +791,6 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
       reference: cleanRef || null,
       presented_loc_url: mapUrl,
       presented_label: methodTag,
-      presented_source,
       picture_url: pictureUrl,
       original_filename: fileName || null,
       uploaded_file_type: contentType || null,
