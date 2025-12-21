@@ -409,7 +409,7 @@ async function applyPdfHeaderFooter({
 
   // Brand color header, fallback black
   const headerBg = hexToRgb(brandColor, "#000000");
-  const footerBg = rgb(0, 0, 0);
+  const footerBg = rgb(0.5, 0.5, 0.5);
   const white = rgb(1, 1, 1);
 
   // ---- layout (70% thickness) ----------------------------------------------
