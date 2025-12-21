@@ -615,11 +615,14 @@ function buildIssueOptions() {
 
    const gpsPanel   = document.getElementById('gpsPanel');
    const emailPanel = document.getElementById('emailPanel');// Apply feature flags to UI visibility
+
+     // HTML is hidden by default — only show when enabled
+if (gpsToggleRow)  gpsToggleRow.hidden  = !features.check_gps;
+if (copyToggleRow) copyToggleRow.hidden = !features.check_copy;
+if (cleanToggleRow) cleanToggleRow.hidden = !features.check_clean;
+if (refToggleRow)  refToggleRow.hidden  = !features.check_ref;
      
 if (!features.check_gps) {
-  if (gpsToggleRow) gpsToggleRow.hidden = true;
-  if (gpsPanel) gpsPanel.hidden = true;
-
   if (locCheck) locCheck.checked = false;
   if (locStatus) {
     locStatus.textContent = '';
@@ -629,9 +632,6 @@ if (!features.check_gps) {
 }
      
 if (!features.check_copy) {
-  if (copyToggleRow) copyToggleRow.hidden = true;
-  if (emailPanel) emailPanel.hidden = true;
-
   if (copyCheck) copyCheck.checked = false;
   if (emailWrap) { emailWrap.classList.add('hidden'); emailWrap.hidden = true; }
 
@@ -643,15 +643,10 @@ if (!features.check_copy) {
 }
      
 if (!features.check_clean) {
-  if (cleanToggleRow) cleanToggleRow.hidden = true;
-  if (issuePanel) issuePanel.hidden = true;
-
   if (chkClean) chkClean.checked = true; // force clean silently
 }
 
      if (!features.check_ref) {
-  if (refToggleRow) refToggleRow.hidden = true;
-
   const chkRef = document.getElementById('chk_ref');
   if (chkRef) chkRef.checked = false;
 }
