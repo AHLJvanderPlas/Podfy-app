@@ -228,6 +228,32 @@ function normalizeSubscriptionCode(s) {
   return map[x] || null;
 }
 
+async function isMailNotificationEnabled(DB, brand) {
+  // Default: ON (safer for legacy)
+  const DEFAULT_ON = true;
+
+  try {
+    // Detect key column
+    const cols = await DB.prepare(`PRAGMA table_info(slug_details);`).all();
+    const names = new Set((cols?.results || []).map(r => String(r.name || "").toLowerCase()));
+
+    const keyCol = names.has("slug") ? "slug" : (names.has("brand") ? "brand" : null);
+    if (!keyCol) return DEFAULT_ON; // can't match row safely
+
+    const row = await DB.prepare(
+      `SELECT mail_notification FROM slug_details WHERE ${keyCol} = ? LIMIT 1`
+    ).bind(brand).first();
+
+    if (!row || row.mail_notification == null) return DEFAULT_ON;
+
+    const v = String(row.mail_notification).trim().toLowerCase();
+    return v === "1" || v === "true" || v === "on" || v === "yes";
+  } catch (e) {
+    console.error("mail_notification lookup failed:", e);
+    return DEFAULT_ON;
+  }
+}
+
 // Upserts a single transactions row; preserves original created_at if it exists.
 async function upsertTransaction(DB, row) {
   const sql = `
@@ -527,6 +553,7 @@ const incomingClientMetaList = Array.isArray(clientMetaList) ? clientMetaList : 
     const theme = resolveEmailTheme(brand, themes); // branding only
     // Recipients now come from D1: slug_settings.email_recipients (plus optional env.MAIL_TO)
     const { to: dbTo, cc: dbCc, bcc: dbBcc } = await loadRecipientsFromDB(env.DB, brand);
+    const mailNotificationEnabled = await isMailNotificationEnabled(env.DB, brand); 
     const envExtras = sanitizeEmails(
       Array.isArray(env.MAIL_TO) ? env.MAIL_TO.flatMap(splitComma) : splitComma(env.MAIL_TO)
     );
@@ -648,51 +675,15 @@ if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
   presented_label,
   final: { lat: finalLat, lon: finalLon, accuracyM: finalAcc }
 };
+   const mapUrl = (Number.isFinite(finalLat) && Number.isFinite(finalLon))
+  ? buildMapUrl(finalLat, finalLon)
+  : "";
 
-  /* --- Build base locationMeta (raw facts) ---------------------------------- */
-  const cf = request.cf || {};
-  const ipPostal = (cf.postalCode || "").toString();
-  const ipCountryISO2 = (cf.country || "").toString().toUpperCase();
-  const buildLocationCode = (iso2, postal) => {
-    if (!iso2) return "";
-    const digits = (postal || "").replace(/\D+/g, "");
-    const prefix = digits.slice(0, 2);
-    return prefix ? `${iso2}${prefix}` : iso2;
-  };
-
-  let locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
-  if (Number.isFinite(lat) && Number.isFinite(lon)) {
-    locationMeta = {
-      locationQualifier: locationSource,
-      lat: String(lat), lon: String(lon),
-      ...(accuracy ? { accuracyM: String(accuracy) } : {}),
-      ...(locTs ? { locationTimestamp: String(locTs) } : {}),
-    };
-  } else if (Number.isFinite(parseFloat(cf.latitude)) && Number.isFinite(parseFloat(cf.longitude))) {
-    locationMeta = {
-      locationQualifier: "IP",
-      lat: String(cf.latitude), lon: String(cf.longitude),
-      ipCountry: ipCountryISO2 || "", ipPostal: ipPostal || "",
-      locationCode: buildLocationCode(ipCountryISO2, ipPostal),
-    };
-  }
-
-  locationMeta = {
-    ...locationMeta,
-    finalLat: Number.isFinite(lat) ? String(lat) : "",
-    finalLon: Number.isFinite(lon) ? String(lon) : "",
-    finalAccuracyM: Number.isFinite(accuracy) ? String(accuracy) : "",
-    methodTag,
-    ipCountry: locationMeta.ipCountry || (request.cf?.country || ""),
-    ipPostal: locationMeta.ipPostal || (request.cf?.postalCode || ""),
-  };
-
-  const meta = {
-    locationQualifier: locationMeta.locationQualifier || "",
-    lat: locationMeta.lat || "",
-    lon: locationMeta.lon || "",
-    locationCode: locationMeta.locationCode || "",
-  };
+const meta = {
+  locationQualifier: presented_label, // keep for email template compatibility
+  lat: Number.isFinite(finalLat) ? String(finalLat) : "",
+  lon: Number.isFinite(finalLon) ? String(finalLon) : "",
+};
 
   /* --- File validations ------------------------------------------------------ */
   if (!buffer || buffer.byteLength === 0) throw new Error("Empty file");
@@ -757,7 +748,10 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
       orig_name: fileName,
       orig_type: originalContentType || contentType,
       uploader_email: emailCopy || "",
-      ...locationMeta,
+      presented_label,
+         finalLat: finalLat == null ? "" : String(finalLat),
+         finalLon: finalLon == null ? "" : String(finalLon),
+         finalAccuracyM: finalAcc == null ? "" : String(finalAcc),
     },
   });
 
@@ -790,7 +784,7 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
       upload_time: local_time,
       reference: cleanRef || null,
       presented_loc_url: mapUrl,
-      presented_label: methodTag,
+      presented_label: presented_label,
       picture_url: pictureUrl,
       original_filename: fileName || null,
       uploaded_file_type: contentType || null,
@@ -816,7 +810,7 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
       file_checksum,
       delivery_issue_code: driverIssue ? driverIssueCode : "",
       delivery_issue_notes: driverIssue ? driverIssueNotes : "",
-      location_raw_json: locationMeta,
+      location_raw_json: location_raw_json,
     });
   } catch (e) {
     console.error("D1 upsert failed (non-fatal):", e);
@@ -869,7 +863,7 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
   // Staff mail (per file)
   let okStaff = false;
   try {
-    if (mailToList.length) {
+    if (mailNotificationEnabled && mailToList.length) {
       okStaff = await sendMail(env, {
         fromEmail: fromEnvelope,
         toList: mailToList,
