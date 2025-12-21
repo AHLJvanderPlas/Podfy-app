@@ -407,11 +407,14 @@ async function applyPdfHeaderFooter({
     return rgb(clamp01(r), clamp01(g), clamp01(b));
   };
   
-  function isLightColor({ r, g, b }) {
-    // relative luminance (WCAG)
-    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    return luminance > 0.85; // treat very light / white as light
-  }
+function isLightColor(c) {
+  const r = (c?.r ?? c?.red ?? 0);
+  const g = (c?.g ?? c?.green ?? 0);
+  const b = (c?.b ?? c?.blue ?? 0);
+
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance > 0.85; // very light backgrounds -> black text
+}
    
   // Brand color header, fallback black
   const headerBg = hexToRgb(brandColor, "#000000");
