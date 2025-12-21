@@ -862,7 +862,6 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
   }
 
   /* --- Email content --------------------------------------------------------- */
-  const theme = resolveEmailTheme(brand, themes);
   const html = buildHtml({
     brand,
     brandName: theme.brandName,
