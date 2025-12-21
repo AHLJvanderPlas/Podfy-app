@@ -387,74 +387,169 @@ async function applyPdfHeaderFooter({
   mediaBase,
   enableHeader,
   enableFooter,
+  brandColor, // NEW (already passed in)
 }) {
-  // If nothing enabled, return original.
   if (!enableHeader && !enableFooter) return pdfBuffer;
 
   const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
 
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
   const pages = pdfDoc.getPages();
 
-  // Text content (simple + safe; can be improved later)
-  const headerLeft  = (brand || "").toUpperCase();
+  // ---- helpers --------------------------------------------------------------
+  const clamp01 = (n) => Math.max(0, Math.min(1, n));
+  const hexToRgb = (hex, fallback = "#000000") => {
+    const h = String(hex || "").trim().replace(/^#/, "");
+    const v = /^[0-9a-fA-F]{6}$/.test(h) ? h : fallback.replace(/^#/, "");
+    const r = parseInt(v.slice(0, 2), 16) / 255;
+    const g = parseInt(v.slice(2, 4), 16) / 255;
+    const b = parseInt(v.slice(4, 6), 16) / 255;
+    return rgb(clamp01(r), clamp01(g), clamp01(b));
+  };
+
+  const headerBg = hexToRgb(brandColor, "#000000"); // fallback black
+  const footerBg = rgb(0, 0, 0);
+  const white = rgb(1, 1, 1);
+
+  // Logo URLs (served from your site, same as email)
+  const base = (mediaBase || "").replace(/\/+$/, "");
+  const brandLogoUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
+  const podfyLogoUrl = `${base}/logos/podfy.png`;
+
+  // Fetch + embed logos once (best-effort)
+  let brandLogoImg = null;
+  let podfyLogoImg = null;
+  try {
+    const [brandRes, podfyRes] = await Promise.all([
+      fetch(brandLogoUrl),
+      fetch(podfyLogoUrl),
+    ]);
+
+    if (brandRes.ok) {
+      const ab = await brandRes.arrayBuffer();
+      brandLogoImg = await pdfDoc.embedPng(ab);
+    }
+    if (podfyRes.ok) {
+      const ab = await podfyRes.arrayBuffer();
+      podfyLogoImg = await pdfDoc.embedPng(ab);
+    }
+  } catch (e) {
+    console.log("PDF logo fetch/embed failed (non-fatal):", String(e));
+  }
+
+  // Text content
   const headerRight = reference ? `REF: ${reference}` : "";
   const footerLeft  = `PODFY ID: ${podfyId}`;
   const footerRight = dateTime ? `${dateTime}` : "";
 
-  // Layout constants
-  const padX = 36; // 0.5 inch
-  const headerYPad = 18;
-  const footerYPad = 18;
-  const size = 9;
+  // Layout
+  const padX = 36;                 // 0.5 inch
+  const headerH = 44;              // header bar height
+  const footerH = 48;              // footer bar height
+  const textSize = 10;
+  const logoTargetH = 18;          // desired logo height (points)
 
   pages.forEach((page) => {
     const { width, height } = page.getSize();
 
+    // ---------------- HEADER ----------------
     if (enableHeader) {
-      // left
-      page.drawText(headerLeft, {
-        x: padX,
-        y: height - headerYPad,
-        size,
-        font: fontBold,
-        color: rgb(0, 0, 0),
+      // background bar
+      page.drawRectangle({
+        x: 0,
+        y: height - headerH,
+        width,
+        height: headerH,
+        color: headerBg,
       });
 
-      // right
+      // brand logo left (preferred) else brand text
+      let leftX = padX;
+      const centerY = height - headerH / 2;
+
+      if (brandLogoImg) {
+        const scale = logoTargetH / brandLogoImg.height;
+        const logoW = brandLogoImg.width * scale;
+        const logoH = brandLogoImg.height * scale;
+
+        page.drawImage(brandLogoImg, {
+          x: leftX,
+          y: centerY - logoH / 2,
+          width: logoW,
+          height: logoH,
+        });
+
+        leftX += logoW + 10;
+      } else {
+        const brandText = (brand || "").toUpperCase();
+        page.drawText(brandText, {
+          x: leftX,
+          y: centerY - textSize / 2,
+          size: textSize + 2,
+          font: fontBold,
+          color: white,
+        });
+        leftX += fontBold.widthOfTextAtSize(brandText, textSize + 2) + 10;
+      }
+
+      // right text (REF)
       if (headerRight) {
-        const w = font.widthOfTextAtSize(headerRight, size);
+        const w = fontBold.widthOfTextAtSize(headerRight, textSize);
         page.drawText(headerRight, {
           x: Math.max(padX, width - padX - w),
-          y: height - headerYPad,
-          size,
-          font,
-          color: rgb(0, 0, 0),
+          y: centerY - textSize / 2,
+          size: textSize,
+          font: fontBold,
+          color: white,
         });
       }
     }
 
+    // ---------------- FOOTER ----------------
     if (enableFooter) {
-      // left
-      page.drawText(footerLeft, {
-        x: padX,
-        y: footerYPad,
-        size,
-        font,
-        color: rgb(0, 0, 0),
+      // black background bar
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width,
+        height: footerH,
+        color: footerBg,
       });
 
-      // right
+      const centerY = footerH / 2;
+
+      // left text
+      page.drawText(footerLeft, {
+        x: padX,
+        y: centerY - textSize / 2,
+        size: textSize,
+        font: fontBold,
+        color: white,
+      });
+
+      // right text
       if (footerRight) {
-        const w = font.widthOfTextAtSize(footerRight, size);
+        const w = fontBold.widthOfTextAtSize(footerRight, textSize);
         page.drawText(footerRight, {
           x: Math.max(padX, width - padX - w),
-          y: footerYPad,
-          size,
-          font,
-          color: rgb(0, 0, 0),
+          y: centerY - textSize / 2,
+          size: textSize,
+          font: fontBold,
+          color: white,
+        });
+      }
+
+      // Podfy logo centered
+      if (podfyLogoImg) {
+        const scale = logoTargetH / podfyLogoImg.height;
+        const logoW = podfyLogoImg.width * scale;
+        const logoH = podfyLogoImg.height * scale;
+
+        page.drawImage(podfyLogoImg, {
+          x: (width - logoW) / 2,
+          y: centerY - logoH / 2,
+          width: logoW,
+          height: logoH,
         });
       }
     }
@@ -765,16 +860,17 @@ const enableFooterForPdf = enableFooter;
 
 if (contentType === "application/pdf" || extFromName === "pdf" || kind === "pdf") {
   try {
-    buffer = await applyPdfHeaderFooter({
-      pdfBuffer: buffer,
-      brand,
-      reference: cleanRef,
-      podfyId: podfyIdForFile,
-      dateTime,
-      mediaBase,
-      enableHeader: enableHeaderForPdf,
-      enableFooter: enableFooterForPdf,
-    });
+buffer = await applyPdfHeaderFooter({
+  pdfBuffer: buffer,
+  brand,
+  reference: cleanRef,
+  podfyId: podfyIdForFile,
+  dateTime,
+  mediaBase,
+  enableHeader: enableHeaderForPdf,
+  enableFooter: enableFooterForPdf,
+  brandColor: theme.brandColor || "#000000",
+});
     contentType = "application/pdf";
   } catch (e) {
     console.error("PDF header/footer failed (non-fatal):", e);
