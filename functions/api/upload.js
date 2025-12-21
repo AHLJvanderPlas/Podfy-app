@@ -267,8 +267,6 @@ async function loadPdfStampFlags(DB, brand) {
   }
 }
 
-
-
 async function isMailNotificationEnabled(DB, brand) {
   // Default: ON (safer for legacy)
   const DEFAULT_ON = true;
@@ -294,7 +292,13 @@ async function isMailNotificationEnabled(DB, brand) {
     return DEFAULT_ON;
   }
 }
-
+console.log("D1 check", {
+  hasDB: !!env.DB,
+  podfyId: podfyIdForFile,
+  slug: brand
+});
+// Upserts a single transactions row; does not delete/recreate the row.
+// Preserves created_at (and any other columns you don't update).
 // Upserts a single transactions row; preserves original created_at if it exists.
 async function upsertTransaction(DB, row) {
   const sql = `
@@ -314,11 +318,13 @@ async function upsertTransaction(DB, row) {
       ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?
+      ?, ?, ?
     );
   `;
+
   const meta_json_text = row.meta_json != null ? JSON.stringify(row.meta_json) : null;
   const location_raw_json_text = row.location_raw_json != null ? JSON.stringify(row.location_raw_json) : null;
+
   await DB.prepare(sql).bind(
     row.podfy_id, row.slug, row.upload_date, row.upload_time,
     row.podfy_id,
@@ -328,6 +334,7 @@ async function upsertTransaction(DB, row) {
     row.invoice_group_id, row.subscription_code, row.uploader_user_id, row.user_agent, row.app_version, meta_json_text,
     row.file_checksum, row.delivery_issue_code, row.delivery_issue_notes, location_raw_json_text
   ).run();
+
   return true;
 }
 
