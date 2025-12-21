@@ -395,91 +395,124 @@ async function applyPdfHeaderFooter({
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const pages = pdfDoc.getPages();
 
-  // ---------- helpers ----------
+  // ---- helpers --------------------------------------------------------------
   const clamp01 = (n) => Math.max(0, Math.min(1, n));
   const hexToRgb = (hex, fallback = "#000000") => {
     const h = String(hex || "").trim().replace(/^#/, "");
-    const v = /^[0-9a-fA-F]{6}$/.test(h) ? h : fallback.replace(/^#/, "");
+    const v = /^[0-9a-fA-F]{6}$/.test(h) ? h : String(fallback).replace(/^#/, "");
     const r = parseInt(v.slice(0, 2), 16) / 255;
     const g = parseInt(v.slice(2, 4), 16) / 255;
     const b = parseInt(v.slice(4, 6), 16) / 255;
     return rgb(clamp01(r), clamp01(g), clamp01(b));
   };
 
+  // Brand color header, fallback black
+  const headerBg = hexToRgb(brandColor, "#000000");
+  const footerBg = rgb(0, 0, 0);
+  const white = rgb(1, 1, 1);
+
+  // ---- layout (70% thickness) ----------------------------------------------
+  const padX = 36; // 0.5 inch
+  const headerH = Math.round(44 * 0.7); // 31
+  const footerH = Math.round(48 * 0.7); // 34
+  const textSize = 10;
+
+  // Logo sizing
+  const headerLogoH = Math.min(18, headerH * 0.7); // keep sane in smaller header
+  const footerLogoH = footerH * 0.6;               // 60% of footer bar height
+
+  // ---- logo sources ---------------------------------------------------------
+  const base = (mediaBase || "").replace(/\/+$/, "");
+  const brandLogoUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
+  const podfySvgUrl = `${base}/logos/podfy.svg`;
+  const podfyPngUrl = `${base}/logos/podfy.png`;
+
   async function loadWhiteSvg(url) {
     const r = await fetch(url);
     if (!r.ok) throw new Error(`svg fetch failed: ${r.status} ${url}`);
     const svgText = await r.text();
-
-    // Force single-color white (fill + stroke)
+    // Force all fills/strokes to white (best-effort)
     return svgText
       .replace(/fill="[^"]*"/gi, 'fill="#ffffff"')
       .replace(/stroke="[^"]*"/gi, 'stroke="#ffffff"')
       .replace("<svg", '<svg fill="#ffffff" stroke="#ffffff"');
   }
 
-  const headerBg = hexToRgb(brandColor, "#000000"); // fallback black
-  const footerBg = rgb(0, 0, 0);
-  const white = rgb(1, 1, 1);
+  // ---- fetch + embed logos once (best-effort) -------------------------------
+  let brandLogoImg = null; // PNG
+  let podfyLogoImg = null; // SVG preferred; PNG fallback. Both are embedded as drawable images.
 
-  const base = (mediaBase || "").replace(/\/+$/, "");
-  const brandLogoUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
-  const podfySvgUrl  = `${base}/logos/podfy.svg`;
-
-  // Fetch + embed logos once (best-effort)
-  let brandLogoImg = null;
-  let podfyLogoImg = null; // embedded SVG is drawn as an image in pdf-lib
-
+  // Brand logo
   try {
-    const [brandRes, podfySvg] = await Promise.all([
-      fetch(brandLogoUrl),
-      loadWhiteSvg(podfySvgUrl),
-    ]);
-
-    if (brandRes.ok) {
-      const ab = await brandRes.arrayBuffer();
-      brandLogoImg = await pdfDoc.embedPng(ab);
-    }
-
-    // embed SVG (white)
-    podfyLogoImg = await pdfDoc.embedSvg(podfySvg);
+    const r = await fetch(brandLogoUrl);
+    if (r.ok) brandLogoImg = await pdfDoc.embedPng(await r.arrayBuffer());
   } catch (e) {
-    console.log("PDF logo fetch/embed failed (non-fatal):", String(e));
+    console.log("Brand logo fetch/embed failed (non-fatal):", String(e));
   }
 
-  // Text content (bold white)
+  // Podfy logo (SVG -> PNG fallback)
+  try {
+    const svgText = await loadWhiteSvg(podfySvgUrl);
+    podfyLogoImg = await pdfDoc.embedSvg(svgText);
+  } catch (e) {
+    console.log("Podfy SVG failed, trying PNG fallback:", String(e));
+    try {
+      const r = await fetch(podfyPngUrl);
+      if (r.ok) podfyLogoImg = await pdfDoc.embedPng(await r.arrayBuffer());
+    } catch (e2) {
+      console.log("Podfy PNG fallback failed too:", String(e2));
+    }
+  }
+
+  // ---- text content ---------------------------------------------------------
   const headerRight = reference ? `REF: ${reference}` : "";
-  const footerLeft  = `PODFY ID: ${podfyId}`;
+  const footerLeft = `PODFY ID: ${podfyId}`;
   const footerRight = dateTime ? `${dateTime}` : "";
 
-  // Layout
-  const padX = 36;
-  const headerH = 44;
-  const footerH = 48;
-  const textSize = 10;
-  const logoTargetH = 18;
-
+  // ---- draw on each page ----------------------------------------------------
   pages.forEach((page) => {
     const { width, height } = page.getSize();
 
-    // HEADER
+    // ---------------- HEADER ----------------
     if (enableHeader) {
-      page.drawRectangle({ x: 0, y: height - headerH, width, height: headerH, color: headerBg });
-      const centerY = height - headerH / 2;
+      page.drawRectangle({
+        x: 0,
+        y: height - headerH,
+        width,
+        height: headerH,
+        color: headerBg,
+      });
 
+      const centerY = height - headerH / 2;
       let leftX = padX;
 
+      // Brand logo left (preferred), else brand text
       if (brandLogoImg) {
-        const scale = logoTargetH / brandLogoImg.height;
+        const scale = headerLogoH / brandLogoImg.height;
         const logoW = brandLogoImg.width * scale;
         const logoH = brandLogoImg.height * scale;
-        page.drawImage(brandLogoImg, { x: leftX, y: centerY - logoH / 2, width: logoW, height: logoH });
+
+        page.drawImage(brandLogoImg, {
+          x: leftX,
+          y: centerY - logoH / 2,
+          width: logoW,
+          height: logoH,
+        });
+
         leftX += logoW + 10;
       } else {
         const brandText = (brand || "").toUpperCase();
-        page.drawText(brandText, { x: leftX, y: centerY - textSize / 2, size: textSize + 2, font: fontBold, color: white });
+        page.drawText(brandText, {
+          x: leftX,
+          y: centerY - textSize / 2,
+          size: textSize + 2,
+          font: fontBold,
+          color: white,
+        });
+        leftX += fontBold.widthOfTextAtSize(brandText, textSize + 2) + 10;
       }
 
+      // Right header text (REF)
       if (headerRight) {
         const w = fontBold.widthOfTextAtSize(headerRight, textSize);
         page.drawText(headerRight, {
@@ -492,13 +525,28 @@ async function applyPdfHeaderFooter({
       }
     }
 
-    // FOOTER
+    // ---------------- FOOTER ----------------
     if (enableFooter) {
-      page.drawRectangle({ x: 0, y: 0, width, height: footerH, color: footerBg });
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width,
+        height: footerH,
+        color: footerBg,
+      });
+
       const centerY = footerH / 2;
 
-      page.drawText(footerLeft, { x: padX, y: centerY - textSize / 2, size: textSize, font: fontBold, color: white });
+      // Left footer text
+      page.drawText(footerLeft, {
+        x: padX,
+        y: centerY - textSize / 2,
+        size: textSize,
+        font: fontBold,
+        color: white,
+      });
 
+      // Right footer text (date/time)
       if (footerRight) {
         const w = fontBold.widthOfTextAtSize(footerRight, textSize);
         page.drawText(footerRight, {
@@ -510,11 +558,12 @@ async function applyPdfHeaderFooter({
         });
       }
 
-      // Podfy logo centered (WHITE SVG)
+      // Podfy logo centered (60% of bar height)
       if (podfyLogoImg) {
-        const logoH = logoTargetH;
-        const scale = logoH / podfyLogoImg.height;
+        const scale = footerLogoH / podfyLogoImg.height;
         const logoW = podfyLogoImg.width * scale;
+        const logoH = podfyLogoImg.height * scale;
+
         page.drawImage(podfyLogoImg, {
           x: (width - logoW) / 2,
           y: centerY - logoH / 2,
