@@ -586,7 +586,9 @@ const makeFilePodfyId = (idx) =>
     /* --- Load file --------------------------------------------------------------- */
    /* --- Process one file (extracted from existing single-file flow) -------------- */
 async function processOneFile(fileObj, idx) {
-  const podfyIdForFile = makeFilePodfyId(idx);
+  // Treat staff mail as "satisfied" when disabled OR there are no recipients.
+   // This prevents blocking 'delivered' on a deliberate configuration.
+   const podfyIdForFile = makeFilePodfyId(idx);
 
   // Optional client meta (align by index with files[])
   let clientMeta = null;
@@ -756,7 +758,6 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
   });
 
   /* --- Preview URL ----------------------------------------------------------- */
-  const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, "");
   let imagePreviewUrl = "";
   if (contentType.startsWith("image/") && env.SIGNED_MEDIA_SECRET) {
     const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7;
@@ -880,6 +881,9 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
     await setProcessStatus(env.DB, podfyIdForFile, "error_staff_mail");
   }
 
+   // Treat staff mail as "satisfied" when disabled OR there are no recipients.
+const staffSatisfied = (!mailNotificationEnabled || !mailToList.length) ? true : okStaff;
+   
   // Driver mail (per file)
   let okUser = false;
   try {
@@ -927,12 +931,12 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
 
   // Finalize status per file
   try {
-    const shouldBeDelivered = !driverIssue && okStaff && (emailCopy ? okUser : true);
-    await env.DB.prepare(`
-      UPDATE transactions
-         SET process_status = CASE WHEN ?1 THEN 'delivered' ELSE process_status END
-       WHERE podfy_id = ?2
-    `).bind(shouldBeDelivered ? 1 : 0, podfyIdForFile).run();
+const shouldBeDelivered = !driverIssue && staffSatisfied && (emailCopy ? okUser : true);
+await env.DB.prepare(`
+  UPDATE transactions
+     SET process_status = CASE WHEN ?1 THEN 'delivered' ELSE process_status END
+   WHERE podfy_id = ?2
+`).bind(shouldBeDelivered ? 1 : 0, podfyIdForFile).run();
   } catch (e) {
     console.error("final status update failed:", e);
     await setProcessStatus(env.DB, podfyIdForFile, "error");
@@ -945,7 +949,7 @@ const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
     podfyId: podfyIdForFile,
     groupPodfyId,
     dateTime,
-    mail: { staff: okStaff, user: okUser }
+    mail: { staff: okStaff, staffAttempted: (mailNotificationEnabled && mailToList.length > 0), user: okUser }
   };
 }
 
