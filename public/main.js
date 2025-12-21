@@ -206,9 +206,6 @@ if (!features.multi_file) {
   qs('.dz-sub')?.classList.add('hidden');
   qs('.dz-constraints')?.classList.add('hidden');
   qs('.dz-actions')?.setAttribute('hidden', '');
-
-  dropzone?.classList.add('ready');
-  submitBtn && (submitBtn.disabled = false);
 }
   function hidePreview() {
     filePreview?.setAttribute('hidden', '');
@@ -669,8 +666,6 @@ if (!features.check_gps) {
 })();
 
   // === GPS panel toggle (new) ===
-const gpsPanel = document.getElementById('gpsPanel');
-
   function updateGpsPanel() {
     gpsPanel.hidden = !locCheck.checked;
   }
