@@ -315,33 +315,46 @@ const ALLOWED_EXT  = new Set(["pdf","jpg","jpeg","png","heic","heif","webp"]);
 async function parseRequest(request) {
   const ct = request.headers.get("content-type") || "";
   if (ct.includes("multipart/form-data")) {
-    const form = await request.formData();
-    const file = form.get("file") || form.get("upload");
-    if (!file) throw new Error("Missing file");
-    return {
-      mode: "form",
-      file,
-      fields: {
-        brand: (form.get("brand") || form.get("slug") || "default").toString(),
-        reference: (form.get("reference") || "").toString(),
-        emailCopy: (form.get("email") || form.get("uploaderEmail") || "").toString(),
-        lat: (form.get("lat") || "").toString(),
-        lon: (form.get("lon") || "").toString(),
-        accuracy: (form.get("accuracy") || form.get("acc") || "").toString(),
-        locTs: (form.get("loc_ts") || "").toString(),
-        podfyId: (form.get("podfyId") || "").toString(),
-        dateTime: (form.get("dateTime") || "").toString(),
-        previewUrl: (form.get("previewUrl") || "").toString(),
-        honeypot: (form.get("company_website") || "").toString(),          // bot trap
-        issuedAt: (form.get("form_issued_at") || "").toString(),           // anti-rapid submit
-        tz: (form.get("tz") || "").toString(),                             // optional uploader tz
-        issue: (form.get("issue") || "").toString(),                       // driver issue checkbox
-        issue_code: (form.get("issue_code") || "").toString(),             // optional code
-        issue_notes: (form.get("issue_notes") || "").toString(),           // optional notes
-        subscription_code: (form.get("subscription_code") || form.get("subscription") || "").toString(),
-      },
-    };
-  }
+  const form = await request.formData();
+
+  // Multi-file support (preferred): <input name="files[]">
+  const files = form.getAll("files[]").filter(Boolean);
+
+  // Backwards compatibility (single-file): "file" or "upload"
+  const single = form.get("file") || form.get("upload");
+  if (files.length === 0 && single) files.push(single);
+
+  if (files.length === 0) throw new Error("Missing file");
+
+  // Optional per-file meta array from frontend (same index as files[])
+  const clientMetaList = form.getAll("client_meta_json[]").map(v => (v || "").toString());
+
+  return {
+    mode: "form",
+    files,                 // <-- NEW
+    file: files[0],         // <-- keep old shape so the rest compiles until Step 2
+    clientMetaList,         // <-- NEW
+    fields: {
+      brand: (form.get("brand") || form.get("slug") || "default").toString(),
+      reference: (form.get("reference") || "").toString(),
+      emailCopy: (form.get("email") || form.get("uploaderEmail") || "").toString(),
+      lat: (form.get("lat") || "").toString(),
+      lon: (form.get("lon") || "").toString(),
+      accuracy: (form.get("accuracy") || form.get("acc") || "").toString(),
+      locTs: (form.get("loc_ts") || "").toString(),
+      podfyId: (form.get("podfyId") || "").toString(),
+      dateTime: (form.get("dateTime") || "").toString(),
+      previewUrl: (form.get("previewUrl") || "").toString(),
+      honeypot: (form.get("company_website") || "").toString(),
+      issuedAt: (form.get("form_issued_at") || "").toString(),
+      tz: (form.get("tz") || "").toString(),
+      issue: (form.get("issue") || "").toString(),
+      issue_code: (form.get("issue_code") || "").toString(),
+      issue_notes: (form.get("issue_notes") || "").toString(),
+      subscription_code: (form.get("subscription_code") || form.get("subscription") || "").toString(),
+    },
+  };
+}
   // JSON test mode (no file stream; base64 content is accepted)
   const json = await request.json();
   return {
@@ -380,9 +393,12 @@ export const onRequestPost = async ({ request, env }) => {
 
   try {
     // Parse request
-    const { mode, file, fields } = await parseRequest(request);
-    let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
+const { mode, files, clientMetaList, file, fields } = await parseRequest(request);
+let { brand, reference, emailCopy, lat, lon, accuracy, locTs, podfyId, dateTime, previewUrl } = fields;
 
+// For now: keep existing single-file behavior (we'll use these in Step 2)
+const incomingFiles = (mode === "form" && Array.isArray(files) && files.length) ? files : [file].filter(Boolean);
+const incomingClientMetaList = Array.isArray(clientMetaList) ? clientMetaList : [];
     /* --- Bot & origin protection ------------------------------------------------ */
     {
       // 1) Honeypot: if bots filled this hidden field, reject early.
@@ -434,11 +450,17 @@ export const onRequestPost = async ({ request, env }) => {
       bcc: dbBcc
     });
 
-    /* --- Time & IDs -------------------------------------------------------------- */
-    const tzForNames = request.cf?.timezone || "UTC";
-    const { ymd, hhmm, display } = formatLocalDateTime(new Date(), tzForNames);
-    if (!podfyId) podfyId = randomId(8);
-    if (!dateTime) dateTime = display;
+/* --- Time & IDs -------------------------------------------------------------- */
+const tzForNames = request.cf?.timezone || "UTC";
+const { ymd, hhmm, display } = formatLocalDateTime(new Date(), tzForNames);
+
+// Treat any provided podfyId as the GROUP id for multi-file uploads.
+const groupPodfyId = (podfyId || randomId(8));
+if (!dateTime) dateTime = display;
+
+// Per-file podfy_id must be unique (transactions is idempotent on podfy_id)
+const makeFilePodfyId = (idx) =>
+  (incomingFiles.length <= 1) ? groupPodfyId : `${groupPodfyId}-${idx + 1}`;
 
     /* --- Driver issue flags from form (UI may come later) ------------------------ */
     const driverIssue =
@@ -449,354 +471,381 @@ export const onRequestPost = async ({ request, env }) => {
     const driverIssueNotes = driverIssue ? (fields.issue_notes ? String(fields.issue_notes).trim() : "") : "";
 
     /* --- Load file --------------------------------------------------------------- */
-    let fileName = "upload.bin";
-    let contentType = "application/octet-stream";
-    let buffer;
-    if (mode === "form") {
-      fileName = file.name || fileName;
-      contentType = file.type || contentType;
-      buffer = await file.arrayBuffer();
-    } else {
-      if (!fields.base64) throw new Error("No file provided. Use multipart/form-data.");
-      fileName = fields.fileName;
-      contentType = fields.contentType;
-      buffer = Uint8Array.from(atob(fields.base64), (c) => c.charCodeAt(0)).buffer;
-    }
+   /* --- Process one file (extracted from existing single-file flow) -------------- */
+async function processOneFile(fileObj, idx) {
+  const podfyIdForFile = makeFilePodfyId(idx);
 
-    /* --- Optional EXIF extraction (GPS & timestamp) ------------------------------ */
-    let exifLat = null, exifLon = null, exifDateIso = null;
-    try {
-      const isImage =
-        contentType.startsWith("image/") &&
-        (contentType.includes("jpeg") || contentType.includes("png") || contentType.includes("webp") || contentType.includes("heic") || contentType.includes("heif"));
-      let exif;
-      if (isImage && (!lat || !lon)) {
-        exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
-        if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") { exifLat = exif.latitude; exifLon = exif.longitude; }
+  // Optional client meta (align by index with files[])
+  let clientMeta = null;
+  try {
+    const raw = incomingClientMetaList[idx];
+    if (raw) clientMeta = JSON.parse(String(raw));
+  } catch { clientMeta = null; }
+
+  /* --- Load file ------------------------------------------------------------- */
+  let fileName = "upload.bin";
+  let contentType = "application/octet-stream";
+  let buffer;
+
+  if (mode === "form") {
+    fileName = fileObj?.name || fileName;
+    contentType = fileObj?.type || contentType;
+    buffer = await fileObj.arrayBuffer();
+  } else {
+    // JSON mode stays single-file only (for now)
+    if (idx > 0) throw new Error("JSON mode supports only one file");
+    if (!fields.base64) throw new Error("No file provided. Use multipart/form-data.");
+    fileName = fields.fileName;
+    contentType = fields.contentType;
+    buffer = Uint8Array.from(atob(fields.base64), (c) => c.charCodeAt(0)).buffer;
+  }
+
+  /* --- Optional EXIF extraction (GPS & timestamp) ---------------------------- */
+  let exifLat = null, exifLon = null, exifDateIso = null;
+  try {
+    const isImage =
+      contentType.startsWith("image/") &&
+      (contentType.includes("jpeg") || contentType.includes("png") || contentType.includes("webp") || contentType.includes("heic") || contentType.includes("heif"));
+    let exif;
+    if (isImage && (!lat || !lon)) {
+      exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
+      if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") {
+        exifLat = exif.latitude; exifLon = exif.longitude;
       }
-      if (!dateTime && exif?.DateTimeOriginal instanceof Date) exifDateIso = exif.DateTimeOriginal.toISOString();
-    } catch { /* ignore EXIF failures */ }
-
-    /* --- Location selection (prefer GPS → EXIF IMG → IP) ------------------------- */
-    let locationSource = "NONE";
-    let numLat = (typeof lat === "number") ? lat : parseFloat(lat);
-    let numLon = (typeof lon === "number") ? lon : parseFloat(lon);
-    if (Number.isFinite(numLat) && Number.isFinite(numLon)) {
-      locationSource = "GPS";
-    } else if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
-      numLat = exifLat; numLon = exifLon; locationSource = "IMG";
-    } else {
-      const cfLat = parseFloat(request.cf?.latitude);
-      const cfLon = parseFloat(request.cf?.longitude);
-      if (Number.isFinite(cfLat) && Number.isFinite(cfLon)) { numLat = cfLat; numLon = cfLon; locationSource = "IP"; }
     }
-    let numAcc = (typeof accuracy === "number") ? accuracy : parseFloat(accuracy);
-    if (!Number.isFinite(numAcc)) numAcc = (locationSource === "IP") ? 50000 : null;
-    if (!dateTime && exifDateIso) dateTime = exifDateIso;
-    if (Number.isFinite(numLat) && Number.isFinite(numLon)) { lat = numLat; lon = numLon; }
-    accuracy = Number.isFinite(numAcc) ? numAcc : null;
+    if (!dateTime && exif?.DateTimeOriginal instanceof Date) exifDateIso = exif.DateTimeOriginal.toISOString();
+  } catch { /* ignore EXIF failures */ }
 
-    // Map-friendly label/source/url for the chosen coordinates (user facing + DB)
-    const methodTag =
-      locationSource === "IMG" ? "IMG" :
-      locationSource === "GPS" ? "GPS" :
-      locationSource === "IP"  ? "IP"  : "UNKNOWN";
-    const presented_source = mapPresentedSource(locationSource);
-    const mapUrl = (Number.isFinite(lat) && Number.isFinite(lon)) ? buildMapUrl(lat, lon) : "";
+  /* --- Location selection (prefer GPS → EXIF IMG → IP) ----------------------- */
+  let locationSource = "NONE";
+  let numLat = (typeof lat === "number") ? lat : parseFloat(lat);
+  let numLon = (typeof lon === "number") ? lon : parseFloat(lon);
+  if (Number.isFinite(numLat) && Number.isFinite(numLon)) {
+    locationSource = "GPS";
+  } else if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
+    numLat = exifLat; numLon = exifLon; locationSource = "IMG";
+  } else {
+    const cfLat = parseFloat(request.cf?.latitude);
+    const cfLon = parseFloat(request.cf?.longitude);
+    if (Number.isFinite(cfLat) && Number.isFinite(cfLon)) { numLat = cfLat; numLon = cfLon; locationSource = "IP"; }
+  }
 
-    /* --- Build base locationMeta (raw facts) ------------------------------------ */
-    const cf = request.cf || {};
-    const ipPostal = (cf.postalCode || "").toString();
-    const ipCountryISO2 = (cf.country || "").toString().toUpperCase();
-    const buildLocationCode = (iso2, postal) => {
-      if (!iso2) return "";
-      const digits = (postal || "").replace(/\D+/g, "");
-      const prefix = digits.slice(0, 2);
-      return prefix ? `${iso2}${prefix}` : iso2;
-    };
+  let numAcc = (typeof accuracy === "number") ? accuracy : parseFloat(accuracy);
+  if (!Number.isFinite(numAcc)) numAcc = (locationSource === "IP") ? 50000 : null;
+  if (!dateTime && exifDateIso) dateTime = exifDateIso;
+  if (Number.isFinite(numLat) && Number.isFinite(numLon)) { lat = numLat; lon = numLon; }
+  accuracy = Number.isFinite(numAcc) ? numAcc : null;
 
-    let locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      locationMeta = {
-        locationQualifier: locationSource,
-        lat: String(lat), lon: String(lon),
-        ...(accuracy ? { accuracyM: String(accuracy) } : {}),
-        ...(locTs ? { locationTimestamp: String(locTs) } : {}),
-      };
-    } else if (Number.isFinite(parseFloat(cf.latitude)) && Number.isFinite(parseFloat(cf.longitude))) {
-      locationMeta = {
-        locationQualifier: "IP",
-        lat: String(cf.latitude), lon: String(cf.longitude),
-        ipCountry: ipCountryISO2 || "", ipPostal: ipPostal || "",
-        locationCode: buildLocationCode(ipCountryISO2, ipPostal),
-      };
-    }
+  const methodTag =
+    locationSource === "IMG" ? "IMG" :
+    locationSource === "GPS" ? "GPS" :
+    locationSource === "IP"  ? "IP"  : "UNKNOWN";
+  const presented_source = mapPresentedSource(locationSource);
+  const mapUrl = (Number.isFinite(lat) && Number.isFinite(lon)) ? buildMapUrl(lat, lon) : "";
 
-    // Enrich raw JSON with final decisions (used by admin views/debugging)
+  /* --- Build base locationMeta (raw facts) ---------------------------------- */
+  const cf = request.cf || {};
+  const ipPostal = (cf.postalCode || "").toString();
+  const ipCountryISO2 = (cf.country || "").toString().toUpperCase();
+  const buildLocationCode = (iso2, postal) => {
+    if (!iso2) return "";
+    const digits = (postal || "").replace(/\D+/g, "");
+    const prefix = digits.slice(0, 2);
+    return prefix ? `${iso2}${prefix}` : iso2;
+  };
+
+  let locationMeta = { locationQualifier: "", lat: "", lon: "", locationCode: "" };
+  if (Number.isFinite(lat) && Number.isFinite(lon)) {
     locationMeta = {
+      locationQualifier: locationSource,
+      lat: String(lat), lon: String(lon),
+      ...(accuracy ? { accuracyM: String(accuracy) } : {}),
+      ...(locTs ? { locationTimestamp: String(locTs) } : {}),
+    };
+  } else if (Number.isFinite(parseFloat(cf.latitude)) && Number.isFinite(parseFloat(cf.longitude))) {
+    locationMeta = {
+      locationQualifier: "IP",
+      lat: String(cf.latitude), lon: String(cf.longitude),
+      ipCountry: ipCountryISO2 || "", ipPostal: ipPostal || "",
+      locationCode: buildLocationCode(ipCountryISO2, ipPostal),
+    };
+  }
+
+  locationMeta = {
+    ...locationMeta,
+    finalLat: Number.isFinite(lat) ? String(lat) : "",
+    finalLon: Number.isFinite(lon) ? String(lon) : "",
+    finalAccuracyM: Number.isFinite(accuracy) ? String(accuracy) : "",
+    methodTag,
+    presentedSource: presented_source,
+    ipCountry: locationMeta.ipCountry || (request.cf?.country || ""),
+    ipPostal: locationMeta.ipPostal || (request.cf?.postalCode || ""),
+  };
+
+  const meta = {
+    locationQualifier: locationMeta.locationQualifier || "",
+    lat: locationMeta.lat || "",
+    lon: locationMeta.lon || "",
+    locationCode: locationMeta.locationCode || "",
+  };
+
+  /* --- File validations ------------------------------------------------------ */
+  if (!buffer || buffer.byteLength === 0) throw new Error("Empty file");
+  if (buffer.byteLength > MAX_BYTES) throw new Error("File too large (max 25 MB)");
+  const head = buffer.slice(0, 32);
+  const kind = sniffKind(head);
+  const safeName = (fileName || "upload").toLowerCase();
+  const extFromName = safeName.includes(".") ? safeName.split(".").pop() : "";
+  const mimeOk = ALLOWED_MIME.has(contentType);
+  const extOk  = ALLOWED_EXT.has(extFromName);
+  if (kind === "unknown" || !(mimeOk || extOk)) throw new Error("Unsupported or suspicious file");
+
+  /* --- Key & metadata -------------------------------------------------------- */
+  const safeBase = (fileName.replace(/[^A-Za-z0-9_.-]/g, "_") || "upload");
+  const dot = safeBase.lastIndexOf(".");
+  const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
+
+  const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
+  const { ymd: y, hhmm: hm } = formatLocalDateTime(new Date(), tzForNames);
+
+  // include file index in the base when multi-file
+  const idxTag = incomingFiles.length <= 1 ? "" : `_${idx + 1}of${incomingFiles.length}`;
+  const finalBase = [y, hm, podfyIdForFile, brand, ...(cleanRef ? [cleanRef] : [])].join("_") + idxTag;
+
+  const key = `${brand}/${finalBase}.${ext}`;
+
+  /* --- Store in R2 ----------------------------------------------------------- */
+  await PODFY_BUCKET.put(key, buffer, {
+    httpMetadata: { contentType, contentDisposition: `attachment; filename="${finalBase}.${ext}"` },
+    customMetadata: {
+      podfy_id: podfyIdForFile,
+      group_podfy_id: groupPodfyId,
+      file_index: String(idx + 1),
+      file_count: String(incomingFiles.length),
+      reference: cleanRef,
+      slug: brand,
+      orig_name: fileName,
+      orig_type: contentType,
+      uploader_email: emailCopy || "",
       ...locationMeta,
-      finalLat: Number.isFinite(lat) ? String(lat) : "",
-      finalLon: Number.isFinite(lon) ? String(lon) : "",
-      finalAccuracyM: Number.isFinite(accuracy) ? String(accuracy) : "",
-      methodTag,
-      presentedSource: presented_source,
-      ipCountry: locationMeta.ipCountry || (request.cf?.country || ""),
-      ipPostal: locationMeta.ipPostal || (request.cf?.postalCode || ""),
-    };
+    },
+  });
 
-    // Meta subset used in the email template (kept small and human-friendly)
-    const meta = {
-      locationQualifier: locationMeta.locationQualifier || "",
-      lat: locationMeta.lat || "",
-      lon: locationMeta.lon || "",
-      locationCode: locationMeta.locationCode || "",
-    };
+  /* --- Preview URL ----------------------------------------------------------- */
+  const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, "");
+  let imagePreviewUrl = "";
+  if (contentType.startsWith("image/") && env.SIGNED_MEDIA_SECRET) {
+    const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7;
+    const sig = await hmacSHA256(env.SIGNED_MEDIA_SECRET, `${key}:${exp}`);
+    imagePreviewUrl = `${mediaBase}/media/${encodePath(key)}?e=${exp}&sig=${sig}`;
+  } else if (contentType.startsWith("image/") && previewUrl) {
+    imagePreviewUrl = previewUrl;
+  }
 
-    /* --- File validations -------------------------------------------------------- */
-    if (!buffer || buffer.byteLength === 0) return new Response(JSON.stringify({ ok:false, error:"Empty file" }), { status: 400 });
-    if (buffer.byteLength > MAX_BYTES) return new Response(JSON.stringify({ ok:false, error:"File too large (max 25 MB)" }), { status: 413 });
-    const head = buffer.slice(0, 32);
-    const kind = sniffKind(head);
-    const safeName = (fileName || "upload").toLowerCase();
-    const extFromName = safeName.includes(".") ? safeName.split(".").pop() : "";
-    const mimeOk = ALLOWED_MIME.has(contentType);
-    const extOk  = ALLOWED_EXT.has(extFromName);
-    if (kind === "unknown" || !(mimeOk || extOk)) return new Response(JSON.stringify({ ok:false, error:"Unsupported or suspicious file" }), { status: 415 });
+  /* --- D1 upsert ------------------------------------------------------------- */
+  try {
+    let tzUpload = (fields.tz || request.cf?.timezone || "UTC");
+    try { new Intl.DateTimeFormat("en-CA", { timeZone: tzUpload }).format(new Date()); } catch { tzUpload = "UTC"; }
+    const { local_date, local_time } = localParts(new Date(), tzUpload);
 
-    /* --- Key & metadata ---------------------------------------------------------- */
-    const safeBase = (fileName.replace(/[^A-Za-z0-9_.-]/g, "_") || "upload");
-    const dot = safeBase.lastIndexOf(".");
-    const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
-    const nameNoExt = dot > -1 ? safeBase.slice(0, dot) : safeBase;
+    const fallbackUrl = `${mediaBase}/media/${encodePath(key)}`;
+    const pictureUrl = imagePreviewUrl || fallbackUrl;
+    const file_checksum = await sha256Hex(buffer);
+    const subscription_code = normalizeSubscriptionCode(fields.subscription_code || fields.subscription || themes[brand]?.subscriptionCode || null);
 
-    const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
-    const { ymd: y, hhmm: hm } = formatLocalDateTime(new Date(), tzForNames);
-    const finalBase = [y, hm, podfyId, brand, ...(cleanRef ? [cleanRef] : [])].join("_");
-    const key = `${brand}/${finalBase}.${ext}`;
-
-    /* --- Store in R2 ------------------------------------------------------------- */
-    await PODFY_BUCKET.put(key, buffer, {
-      httpMetadata: { contentType, contentDisposition: `attachment; filename="${finalBase}.${ext}"` },
-      customMetadata: {
-        podfy_id: podfyId, reference: cleanRef, slug: brand,
-        orig_name: fileName, orig_type: contentType,
-        uploader_email: emailCopy || "",
-        ...locationMeta,
+    await upsertTransaction(env.DB, {
+      podfy_id: podfyIdForFile,
+      slug: brand,
+      upload_date: local_date,
+      upload_time: local_time,
+      reference: cleanRef || null,
+      presented_loc_url: mapUrl,
+      presented_label: methodTag,
+      presented_source,
+      picture_url: pictureUrl,
+      original_filename: fileName || null,
+      uploaded_file_type: contentType || null,
+      file_size_bytes: buffer.byteLength,
+      storage_bucket: env.PODFY_BUCKET_NAME || "podfy",
+      storage_key: key,
+      driver_copy_sent: 0,
+      process_status: driverIssue ? "issue_reported" : "received",
+      invoice_group_id: local_date.slice(0, 7),
+      subscription_code,
+      uploader_user_id: null,
+      user_agent: request.headers.get("user-agent") || null,
+      app_version: env.APP_VERSION || null,
+      meta_json: {
+        via: "upload",
+        tz: tzUpload,
+        dateTime,
+        group_podfy_id: groupPodfyId,
+        file_index: idx + 1,
+        file_count: incomingFiles.length,
+        client_meta: clientMeta,
       },
+      file_checksum,
+      delivery_issue_code: driverIssue ? driverIssueCode : "",
+      delivery_issue_notes: driverIssue ? driverIssueNotes : "",
+      location_raw_json: locationMeta,
     });
+  } catch (e) {
+    console.error("D1 upsert failed (non-fatal):", e);
+    await setProcessStatus(env.DB, podfyIdForFile, "error_d1");
+  }
 
-    /* --- Preview URL (signed if configured) -------------------------------------- */
-    const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, "");
-    let imagePreviewUrl = "";
-    if (contentType.startsWith("image/") && env.SIGNED_MEDIA_SECRET) {
-      const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7;
-      const sig = await hmacSHA256(env.SIGNED_MEDIA_SECRET, `${key}:${exp}`);
-      imagePreviewUrl = `${mediaBase}/media/${encodePath(key)}?e=${exp}&sig=${sig}`;
-    } else if (contentType.startsWith("image/") && previewUrl) {
-      imagePreviewUrl = previewUrl;
+  /* --- Email content --------------------------------------------------------- */
+  const theme = resolveEmailTheme(brand, themes);
+  const html = buildHtml({
+    brand,
+    brandName: theme.brandName,
+    theme: { brandColor: theme.brandColor, logo: theme.logo },
+    fileName: `${finalBase}.${ext}`,
+    podfyId: podfyIdForFile,
+    dateTime,
+    meta,
+    reference: cleanRef || "",
+    imageUrlBase: mediaBase,
+    imagePreviewUrl,
+  });
+
+  const brandForSubject = theme.brandName || brand;
+  const yyyyMmDd = (dateTime || "").split(" at ")[0] || `${y.slice(0,4)}-${y.slice(4,6)}-${y.slice(6,8)}`;
+  const subjectStaff = `POD | ${brandForSubject}${cleanRef ? ` | ${cleanRef}` : ""} | ${yyyyMmDd} by Podfy`;
+
+  // Optional attachment per file
+  let attachment = null;
+  try {
+    const maxMb = Number(env.MAX_ATTACH_MB || 8);
+    if (buffer.byteLength <= maxMb * 1024 * 1024) {
+      attachment = { filename: `${finalBase}.${ext}`, type: contentType, contentBase64: abToBase64(buffer) };
     }
+  } catch {}
 
-    /* --- Insert/Upsert transaction in D1 ----------------------------------------- */
-    try {
-      let tzUpload = (fields.tz || request.cf?.timezone || "UTC");
-      try { new Intl.DateTimeFormat("en-CA", { timeZone: tzUpload }).format(new Date()); } catch { tzUpload = "UTC"; }
-      const { local_date, local_time } = localParts(new Date(), tzUpload);
+  const fromEnvelope = pickFromAddress(env, brand);
 
-      const fallbackUrl = `${mediaBase}/media/${encodePath(key)}`;
-      const pictureUrl = imagePreviewUrl || fallbackUrl;
-      const file_checksum = await sha256Hex(buffer);
-      const subscription_code = normalizeSubscriptionCode(fields.subscription_code || fields.subscription || themes[brand]?.subscriptionCode || null);
+  const common = {
+    brand,
+    brandName: theme.brandName,
+    theme: { brandColor: theme.brandColor, logo: theme.logo },
+    fileName: `${finalBase}.${ext}`,
+    podfyId: podfyIdForFile,
+    dateTime,
+    meta,
+    reference: cleanRef || "",
+    imageUrlBase: mediaBase,
+    attachment,
+  };
 
-      try {
-        const row = await env.DB.prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='transactions';"
-        ).first();
-        if (!row) {
-          console.error("D1 preflight: 'transactions' table NOT found in this DB binding");
-        }
-      } catch (e) {
-        console.error("D1 preflight check failed:", e?.message || e);
-      }
-       
-      await upsertTransaction(env.DB, {
-        podfy_id: podfyId,
-        slug: brand,
-        upload_date: local_date,
-        upload_time: local_time,
-        reference: cleanRef || null,
-        presented_loc_url: mapUrl,        // map link of final coordinates
-        presented_label: methodTag,       // IMG | GPS | IP | UNKNOWN
-        presented_source,                 // exif | gps | ip | unknown
-        picture_url: pictureUrl,
-        original_filename: fileName || null,
-        uploaded_file_type: contentType || null,
-        file_size_bytes: buffer.byteLength,
-        storage_bucket: env.PODFY_BUCKET_NAME || "podfy",
-        storage_key: key,
-        driver_copy_sent: 0,
-        process_status: driverIssue ? "issue_reported" : "received",
-        invoice_group_id: local_date.slice(0, 7),
-        subscription_code,
-        uploader_user_id: null,
-        user_agent: request.headers.get("user-agent") || null,
-        app_version: env.APP_VERSION || null,
-        meta_json: { via: "upload", tz: tzUpload, dateTime },
-        file_checksum,
-        delivery_issue_code: driverIssue ? driverIssueCode : "",
-        delivery_issue_notes: driverIssue ? driverIssueNotes : "",
-        location_raw_json: locationMeta,
+  // Staff mail (per file)
+  let okStaff = false;
+  try {
+    if (mailToList.length) {
+      okStaff = await sendMail(env, {
+        fromEmail: fromEnvelope,
+        toList: mailToList,
+        ccList: mailCcList,
+        bccList: mailBccList,
+        subject: subjectStaff,
+        html,
+        ...common
       });
-      console.log("D1 upsert OK:", podfyId);
-    } catch (e) {
-      console.error("D1 upsert failed (non-fatal):", e);
-      await setProcessStatus(env.DB, podfyId, "error_d1");
+      if (!okStaff) await setProcessStatus(env.DB, podfyIdForFile, "error_staff_mail");
     }
+  } catch (e) {
+    console.error("email send (staff) failed:", e);
+    await setProcessStatus(env.DB, podfyIdForFile, "error_staff_mail");
+  }
 
-    /* --- Build email content ----------------------------------------------------- */
-    const html = buildHtml({
-      brand,
-      brandName: theme.brandName,
-      theme: { brandColor: theme.brandColor, logo: theme.logo },
-      fileName: `${finalBase}.${ext}`,
-      podfyId,
-      dateTime,
-      meta,
-      reference: cleanRef || "",
-      imageUrlBase: mediaBase,
-      imagePreviewUrl,
-    });
-
-    const brandForSubject = theme.brandName || brand;
-    const yyyyMmDd = (dateTime || "").split(" at ")[0] || `${y.slice(0,4)}-${y.slice(4,6)}-${y.slice(6,8)}`;
-    const subjectStaff = `POD | ${brandForSubject}${cleanRef ? ` | ${cleanRef}` : ""} | ${yyyyMmDd} by Podfy`;
-
-    // Prepare a small attachment if the file size is below limit.
-    let attachment = null;
-    try {
-      const maxMb = Number(env.MAX_ATTACH_MB || 8);
-      if (buffer.byteLength <= maxMb * 1024 * 1024) {
-        attachment = { filename: `${finalBase}.${ext}`, type: contentType, contentBase64: abToBase64(buffer) };
-      } else {
-        console.log("Attachment skipped (over MAX_ATTACH_MB)", { sizeBytes: buffer.byteLength, maxBytes: maxMb * 1024 * 1024 });
-      }
-    } catch (e) {
-      console.error("Attachment prepare error:", e);
-      // Not fatal; do not change status for attachment decision.
+  // Driver mail (per file)
+  let okUser = false;
+  try {
+    if (emailCopy) {
+      okUser = await sendMail(env, {
+        fromEmail: fromEnvelope,
+        toList: [emailCopy],
+        subject: `We received your file: ${finalBase}.${ext}`,
+        html,
+        ...common
+      });
+      if (!okUser) await setProcessStatus(env.DB, podfyIdForFile, "error_user_mail");
     }
+  } catch (e) {
+    console.error("email send (user) failed:", e);
+    await setProcessStatus(env.DB, podfyIdForFile, "error_user_mail");
+  }
 
-    const fromEnvelope = pickFromAddress(env, brand);
-    const { name: fromName, email: fromEmail } = parseFromNameAddr(env.MAIL_FROM, env.MAIL_DOMAIN || "podfy.net");
-    console.log("email from envelope:", fromEnvelope, "| display name:", fromName, "| display email:", fromEmail);
+  // Persist driver-copy identity per transaction row
+  try {
+    if (emailCopy) {
+      const normalizedEmail = emailCopy.trim().toLowerCase();
+      const domain = emailDomain(normalizedEmail);
+      const hash = await sha256HexText(normalizedEmail);
 
-    const common = {
-      brand,
-      brandName: theme.brandName,
-      theme: { brandColor: theme.brandColor, logo: theme.logo },
-      fileName: `${finalBase}.${ext}`,
-      podfyId,
-      dateTime,
-      meta,
-      reference: cleanRef || "",
-      imageUrlBase: mediaBase,
-      attachment,
-    };
-
-    /* --- Send staff email -------------------------------------------------------- */
-    let okStaff = false;
-    try {
-      if (mailToList.length) {
-        okStaff = await sendMail(env, {
-          fromEmail: fromEnvelope,
-          toList: mailToList,
-          ccList: mailCcList,
-          bccList: mailBccList,
-          subject: subjectStaff,
-          html,
-          ...common
-        });
-        console.log("staff mail sent?", okStaff, { to: mailToList, from: fromEnvelope });
-        if (!okStaff) await setProcessStatus(env.DB, podfyId, "error_staff_mail");
-      } else {
-        console.log("no staff recipients resolved");
-      }
-    } catch (e) {
-      console.error("email send (staff) failed:", e);
-      await setProcessStatus(env.DB, podfyId, "error_staff_mail");
-    }
-
-    /* --- Send user (driver) email ------------------------------------------------ */
-    let okUser = false;
-    try {
-      if (emailCopy) {
-        okUser = await sendMail(env, { fromEmail: fromEnvelope, toList: [emailCopy], subject: `We received your file: ${finalBase}.${ext}`, html, ...common });
-        console.log("user mail sent?", okUser, { to: emailCopy, from: fromEnvelope });
-        if (!okUser) await setProcessStatus(env.DB, podfyId, "error_user_mail");
-      }
-    } catch (e) {
-      console.error("email send (user) failed:", e);
-      await setProcessStatus(env.DB, podfyId, "error_user_mail");
-    }
-
-    /* --- Persist driver-copy identity & attempt result (no auto-issue) ----------- */
-    try {
-      if (emailCopy) {
-        // normalise once so domain + hash + stored email are consistent
-        const normalizedEmail = emailCopy.trim().toLowerCase();
-        const domain = emailDomain(normalizedEmail);
-        const hash = await sha256HexText(normalizedEmail);
-
-        await env.DB.prepare(`
-          UPDATE transactions
-             SET copy_email       = COALESCE(copy_email, ?),
-                 copy_email_domain = ?,
-                 copy_email_hash   = ?,
-                 driver_copy_at    = COALESCE(driver_copy_at, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-           WHERE podfy_id = ?
-        `).bind(normalizedEmail, domain, hash, podfyId).run();
-
-        if (okUser) {
-          await env.DB.prepare(
-            `UPDATE transactions SET driver_copy_sent = 1 WHERE podfy_id = ?`
-          ).bind(podfyId).run();
-        }
-
-        console.log("D1 driver_copy identity persisted:", {
-          podfyId,
-          sent: okUser,
-          domain,
-          email: normalizedEmail,
-        });
-      }
-    } catch (e) {
-      console.error("D1 driver_copy persistence failed:", e);
-      await setProcessStatus(env.DB, podfyId, "error_user_mail"); // best-fit category
-    }
-    /* --- Finalize process_status ------------------------------------------------- */
-    try {
-      const shouldBeDelivered = !driverIssue && okStaff && (emailCopy ? okUser : true);
       await env.DB.prepare(`
         UPDATE transactions
-           SET process_status = CASE WHEN ?1 THEN 'delivered' ELSE process_status END
-         WHERE podfy_id = ?2
-      `).bind(shouldBeDelivered ? 1 : 0, podfyId).run();
-      if (shouldBeDelivered) console.log("process_status → delivered:", podfyId);
-      else console.log("process_status unchanged:", { podfyId, driverIssue, okStaff, okUser, hasDriver: !!emailCopy });
-    } catch (e) {
-      console.error("final status update failed:", e);
-      await setProcessStatus(env.DB, podfyId, "error");
+           SET copy_email        = COALESCE(copy_email, ?),
+               copy_email_domain = ?,
+               copy_email_hash   = ?,
+               driver_copy_at    = COALESCE(driver_copy_at, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+         WHERE podfy_id = ?
+      `).bind(normalizedEmail, domain, hash, podfyIdForFile).run();
+
+      if (okUser) {
+        await env.DB.prepare(
+          `UPDATE transactions SET driver_copy_sent = 1 WHERE podfy_id = ?`
+        ).bind(podfyIdForFile).run();
+      }
     }
-
-    /* --- Response ---------------------------------------------------------------- */
-    return new Response(
-      JSON.stringify({ ok: true, key, filename: `${finalBase}.${ext}`, podfyId, dateTime, mail: { staff: okStaff, user: okUser } }),
-      { headers: { "content-type": "application/json" } }
-    );
-
-  } catch (err) {
-    console.error("Upload error:", err);
-    // If we crash before D1 insert, we cannot mark status; return 500.
-    return new Response(JSON.stringify({ ok: false, error: "Upload failed" }), {
-      status: 500, headers: { "content-type": "application/json" },
-    });
+  } catch (e) {
+    console.error("D1 driver_copy persistence failed:", e);
+    await setProcessStatus(env.DB, podfyIdForFile, "error_user_mail");
   }
+
+  // Finalize status per file
+  try {
+    const shouldBeDelivered = !driverIssue && okStaff && (emailCopy ? okUser : true);
+    await env.DB.prepare(`
+      UPDATE transactions
+         SET process_status = CASE WHEN ?1 THEN 'delivered' ELSE process_status END
+       WHERE podfy_id = ?2
+    `).bind(shouldBeDelivered ? 1 : 0, podfyIdForFile).run();
+  } catch (e) {
+    console.error("final status update failed:", e);
+    await setProcessStatus(env.DB, podfyIdForFile, "error");
+  }
+
+  return {
+    ok: true,
+    key,
+    filename: `${finalBase}.${ext}`,
+    podfyId: podfyIdForFile,
+    groupPodfyId,
+    dateTime,
+    mail: { staff: okStaff, user: okUser }
+  };
+}
+
+/* --- Run per-file ------------------------------------------------------------ */
+const results = [];
+for (let i = 0; i < incomingFiles.length; i++) {
+  results.push(await processOneFile(incomingFiles[i], i));
+}
+
+/* --- Response ---------------------------------------------------------------- */
+return new Response(
+  JSON.stringify({
+    ok: true,
+    groupPodfyId,
+    files: results
+  }),
+  { headers: { "content-type": "application/json" } }
+);
+
+} catch (err) {
+  console.error("Upload error:", err);
+  return new Response(JSON.stringify({ ok: false, error: "Upload failed" }), {
+    status: 500, headers: { "content-type": "application/json" },
+  });
+}
 };
