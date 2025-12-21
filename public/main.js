@@ -607,11 +607,10 @@ function buildIssueOptions() {
   // 6) UI wiring (email toggle, issue toggle, pickers, dropzone)
   // ----------------------------------------------------------
   function wireUI() {
-
+const gpsPanel = document.getElementById('gpsPanel');
 // Apply feature flags to UI visibility
 if (!features.check_gps) {
   // hide GPS toggle + panel
-  const gpsPanel = document.getElementById('gpsPanel');
   locCheck && (locCheck.checked = false);
   locCheck && (locCheck.disabled = true);
   if (gpsPanel) gpsPanel.hidden = true;
