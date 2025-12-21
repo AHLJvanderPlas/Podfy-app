@@ -621,14 +621,12 @@ if (isImage) {
     exifLon = exif.longitude;
   }
 }
-    if (!dateTime && exif?.DateTimeOriginal instanceof Date) exifDateIso = exif.DateTimeOriginal.toISOString();
-  } catch { /* ignore EXIF failures */ }
 
-  /* --- Location selection (prefer GPS → EXIF IMG → IP) ----------------------- */
+  /* --- Location selection (prefer EXIF → GPS → IP) ----------------------- */
   const userLat = Number.isFinite(parseFloat(fields.lat)) ? parseFloat(fields.lat) : Number.isFinite(parseFloat(lat)) ? parseFloat(lat) : null;
 const userLon = Number.isFinite(parseFloat(fields.lon)) ? parseFloat(fields.lon) : Number.isFinite(parseFloat(lon)) ? parseFloat(lon) : null;
 const userAcc = Number.isFinite(parseFloat(fields.accuracy)) ? parseFloat(fields.accuracy) : Number.isFinite(parseFloat(accuracy)) ? parseFloat(accuracy) : null;
-const userlocTs = fields.locTs || locTs || null;
+const userLocTs = fields.locTs || locTs || null;
    
 const ipLat = Number.isFinite(parseFloat(request.cf?.latitude)) ? parseFloat(request.cf.latitude) : null;
 const ipLon = Number.isFinite(parseFloat(request.cf?.longitude)) ? parseFloat(request.cf.longitude) : null;
@@ -656,7 +654,7 @@ if (Number.isFinite(exifLat) && Number.isFinite(exifLon)) {
     : { lat: null, lon: null, accuracyM: null, ts: null },
 
   gps_user: (Number.isFinite(userLat) && Number.isFinite(userLon))
-    ? { lat: userLat, lon: userLon, accuracyM: Number.isFinite(userAcc) ? userAcc : null, ts: userlocTs }
+    ? { lat: userLat, lon: userLon, accuracyM: Number.isFinite(userAcc) ? userAcc : null, ts: userLocTs }
     : { lat: null, lon: null, accuracyM: null, ts: null },
 
   gps_ip: (Number.isFinite(ipLat) && Number.isFinite(ipLon))
