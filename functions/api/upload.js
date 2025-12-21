@@ -385,6 +385,7 @@ async function applyPdfHeaderFooter({
   podfyId,
   dateTime,
   mediaBase,
+  logoBase,
   enableHeader,
   enableFooter,
   brandColor,
@@ -422,10 +423,10 @@ async function applyPdfHeaderFooter({
   const footerLogoH = footerH * 0.6;               // 60% of footer bar height
 
   // ---- logo sources ---------------------------------------------------------
-  const base = (mediaBase || "").replace(/\/+$/, "");
-  const brandLogoUrl = `${base}/logos/${encodeURIComponent(brand || "default")}.png`;
-  const podfySvgUrl = `${base}/logos/podfy.svg`;
-  const podfyPngUrl = `${base}/logos/podfy.png`;
+  const lb = (logoBase || mediaBase || "").replace(/\/+$/, "");
+  const brandLogoUrl = `${lb}/logos/${encodeURIComponent(brand || "default")}.png`;
+  const podfySvgUrl  = `${lb}/logos/podfy.svg`;
+  const podfyPngUrl  = `${lb}/logos/podfy.png`;
 
   async function loadWhiteSvg(url) {
     const r = await fetch(url);
@@ -871,8 +872,8 @@ const extOk  = ALLOWED_EXT.has(extFromName);
 if (kind === "unknown" || !(mimeOk || extOk)) throw new Error("Unsupported or suspicious file");
 
 // Optional PDF stamping (header/footer)
-const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, "");
-
+const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://podfy.net").replace(/\/+$/, "");
+const logoBase  = (env.LOGO_BASE_URL  || env.PUBLIC_BASE_URL || "https://podfy.net").replace(/\/+$/, "");
 // From DB (loaded once per request)
 const enableHeaderForPdf = enableHeader;
 const enableFooterForPdf = enableFooter;
@@ -886,6 +887,7 @@ buffer = await applyPdfHeaderFooter({
   podfyId: podfyIdForFile,
   dateTime,
   mediaBase,
+  logoBase,
   enableHeader: enableHeaderForPdf,
   enableFooter: enableFooterForPdf,
   brandColor: theme.brandColor || "#000000",
