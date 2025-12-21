@@ -662,18 +662,22 @@ async function processOneFile(fileObj, idx) {
   }
 
   /* --- Optional EXIF extraction (GPS & timestamp) ---------------------------- */
-  let exifLat = null, exifLon = null;
-  try {
-    const isImage =
-      contentType.startsWith("image/") &&
-      (contentType.includes("jpeg") || contentType.includes("png") || contentType.includes("webp") || contentType.includes("heic") || contentType.includes("heif"));
-    let exif;
-if (isImage) {
-  exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
-  if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") {
-    exifLat = exif.latitude; 
-    exifLon = exif.longitude;
+let exifLat = null, exifLon = null;
+try {
+  const isImage =
+    contentType.startsWith("image/") &&
+    (contentType.includes("jpeg") || contentType.includes("png") || contentType.includes("webp") || contentType.includes("heic") || contentType.includes("heif"));
+
+  let exif;
+  if (isImage) {
+    exif = await exifr.parse(new Uint8Array(buffer), { gps: true, tiff: true });
+    if (exif && typeof exif.latitude === "number" && typeof exif.longitude === "number") {
+      exifLat = exif.latitude;
+      exifLon = exif.longitude;
+    }
   }
+} catch {
+  /* ignore EXIF failures */
 }
 
   /* --- Location selection (prefer EXIF → GPS → IP) ----------------------- */
