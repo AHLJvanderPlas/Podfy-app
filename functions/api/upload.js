@@ -13,6 +13,7 @@
 import themes from "../../public/themes.json" assert { type: "json" };
 import { resolveEmailTheme, buildHtml, pickFromAddress, sendMail } from "../_mail.js";
 import * as exifr from "exifr";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 /* =============================================================================
    Recipient loading/parsing from slug_settings.email_recipients
@@ -302,6 +303,91 @@ async function setProcessStatus(DB, podfyId, status) {
     // Last-resort: log only; never throw from status update
     console.error("process_status update failed:", status, podfyId, e);
   }
+}
+
+async function applyPdfHeaderFooter({
+  pdfBuffer,
+  brand,
+  reference,
+  podfyId,
+  dateTime,
+  mediaBase,
+  enableHeader,
+  enableFooter,
+}) {
+  // If nothing enabled, return original.
+  if (!enableHeader && !enableFooter) return pdfBuffer;
+
+  const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const pages = pdfDoc.getPages();
+
+  // Text content (simple + safe; can be improved later)
+  const headerLeft  = (brand || "").toUpperCase();
+  const headerRight = reference ? `REF: ${reference}` : "";
+  const footerLeft  = `PODFY ID: ${podfyId}`;
+  const footerRight = dateTime ? `${dateTime}` : "";
+
+  // Layout constants
+  const padX = 36; // 0.5 inch
+  const headerYPad = 18;
+  const footerYPad = 18;
+  const size = 9;
+
+  pages.forEach((page) => {
+    const { width, height } = page.getSize();
+
+    if (enableHeader) {
+      // left
+      page.drawText(headerLeft, {
+        x: padX,
+        y: height - headerYPad,
+        size,
+        font: fontBold,
+        color: rgb(0, 0, 0),
+      });
+
+      // right
+      if (headerRight) {
+        const w = font.widthOfTextAtSize(headerRight, size);
+        page.drawText(headerRight, {
+          x: Math.max(padX, width - padX - w),
+          y: height - headerYPad,
+          size,
+          font,
+          color: rgb(0, 0, 0),
+        });
+      }
+    }
+
+    if (enableFooter) {
+      // left
+      page.drawText(footerLeft, {
+        x: padX,
+        y: footerYPad,
+        size,
+        font,
+        color: rgb(0, 0, 0),
+      });
+
+      // right
+      if (footerRight) {
+        const w = font.widthOfTextAtSize(footerRight, size);
+        page.drawText(footerRight, {
+          x: Math.max(padX, width - padX - w),
+          y: footerYPad,
+          size,
+          font,
+          color: rgb(0, 0, 0),
+        });
+      }
+    }
+  });
+
+  return await pdfDoc.save();
 }
 
 /* =============================================================================
@@ -594,18 +680,42 @@ async function processOneFile(fileObj, idx) {
   if (buffer.byteLength > MAX_BYTES) throw new Error("File too large (max 25 MB)");
   const head = buffer.slice(0, 32);
   const kind = sniffKind(head);
-  const safeName = (fileName || "upload").toLowerCase();
-  const extFromName = safeName.includes(".") ? safeName.split(".").pop() : "";
-  const mimeOk = ALLOWED_MIME.has(contentType);
-  const extOk  = ALLOWED_EXT.has(extFromName);
-  if (kind === "unknown" || !(mimeOk || extOk)) throw new Error("Unsupported or suspicious file");
+ const safeName = (fileName || "upload").toLowerCase();
+const extFromName = safeName.includes(".") ? safeName.split(".").pop() : "";
 
-  /* --- Key & metadata -------------------------------------------------------- */
-  const safeBase = (fileName.replace(/[^A-Za-z0-9_.-]/g, "_") || "upload");
-  const dot = safeBase.lastIndexOf(".");
-  const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
+// sanitize reference BEFORE we might use it
+const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
 
-  const cleanRef = (reference || "").replace(/[^A-Za-z0-9._-]/g, "");
+const mimeOk = ALLOWED_MIME.has(contentType);
+const extOk  = ALLOWED_EXT.has(extFromName);
+if (kind === "unknown" || !(mimeOk || extOk)) throw new Error("Unsupported or suspicious file");
+
+// Optional PDF stamping (header/footer)
+const enableHeader = true; // TEMP: we’ll wire to slug feature flags next step
+const enableFooter = true; // TEMP: we’ll wire to slug feature flags next step
+
+if (contentType === "application/pdf" || extFromName === "pdf" || kind === "pdf") {
+  try {
+    buffer = await applyPdfHeaderFooter({
+      pdfBuffer: buffer,
+      brand,
+      reference: cleanRef,
+      podfyId: podfyIdForFile,
+      dateTime,
+      mediaBase: (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, ""),
+      enableHeader,
+      enableFooter,
+    });
+    contentType = "application/pdf";
+  } catch (e) {
+    console.error("PDF header/footer failed (non-fatal):", e);
+  }
+}
+
+/* --- Key & metadata -------------------------------------------------------- */
+const safeBase = (fileName.replace(/[^A-Za-z0-9_.-]/g, "_") || "upload");
+const dot = safeBase.lastIndexOf(".");
+const ext = dot > -1 ? safeBase.slice(dot + 1).toLowerCase() : "bin";
   const { ymd: y, hhmm: hm } = formatLocalDateTime(new Date(), tzForNames);
 
   // include file index in the base when multi-file
