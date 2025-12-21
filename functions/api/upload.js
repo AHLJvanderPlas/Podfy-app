@@ -217,6 +217,58 @@ function normalizeSubscriptionCode(s) {
   return map[x] || null;
 }
 
+async function loadPdfStampFlags(DB, brand) {
+  // Sensible defaults (change if you want default OFF)
+  const DEFAULT = { enableHeader: true, enableFooter: true };
+
+  try {
+    // Detect key column + stamp columns (supports a few likely names)
+    const cols = await DB.prepare(`PRAGMA table_info(slug_details);`).all();
+    const names = new Set((cols?.results || []).map(r => String(r.name || "").toLowerCase()));
+
+    const keyCol = names.has("slug") ? "slug" : (names.has("brand") ? "brand" : null);
+    if (!keyCol) return DEFAULT;
+
+    const headerCol =
+      names.has("pdf_header") ? "pdf_header" :
+      names.has("enable_pdf_header") ? "enable_pdf_header" :
+      names.has("pdf_stamp_header") ? "pdf_stamp_header" :
+      null;
+
+    const footerCol =
+      names.has("pdf_footer") ? "pdf_footer" :
+      names.has("enable_pdf_footer") ? "enable_pdf_footer" :
+      names.has("pdf_stamp_footer") ? "pdf_stamp_footer" :
+      null;
+
+    // If neither column exists, keep defaults
+    if (!headerCol && !footerCol) return DEFAULT;
+
+    const selectCols = [headerCol, footerCol].filter(Boolean).join(", ");
+    const row = await DB.prepare(
+      `SELECT ${selectCols} FROM slug_details WHERE ${keyCol} = ? LIMIT 1`
+    ).bind(brand).first();
+
+    if (!row) return DEFAULT;
+
+    const toBool = (v, fallback) => {
+      if (v == null) return fallback;
+      const s = String(v).trim().toLowerCase();
+      return s === "1" || s === "true" || s === "on" || s === "yes";
+    };
+
+    return {
+      enableHeader: headerCol ? toBool(row[headerCol], DEFAULT.enableHeader) : DEFAULT.enableHeader,
+      enableFooter: footerCol ? toBool(row[footerCol], DEFAULT.enableFooter) : DEFAULT.enableFooter,
+    };
+  } catch (e) {
+    console.error("pdf stamp flags lookup failed:", e);
+    return DEFAULT;
+  }
+}
+
+
+
 async function isMailNotificationEnabled(DB, brand) {
   // Default: ON (safer for legacy)
   const DEFAULT_ON = true;
@@ -540,6 +592,8 @@ const incomingClientMetaList = Array.isArray(clientMetaList) ? clientMetaList : 
     console.log("resolved brand:", brand, { posted: fields.brand || fields.slug || "", referer: request.headers.get("referer") || "", url: request.url });
 
     const theme = resolveEmailTheme(brand, themes); // branding only
+    const { enableHeader, enableFooter } = await loadPdfStampFlags(env.DB, brand);
+     
     // Recipients now come from D1: slug_settings.email_recipients (plus optional env.MAIL_TO)
     const { to: dbTo, cc: dbCc, bcc: dbBcc } = await loadRecipientsFromDB(env.DB, brand);
     const mailNotificationEnabled = await isMailNotificationEnabled(env.DB, brand); 
@@ -691,8 +745,10 @@ if (kind === "unknown" || !(mimeOk || extOk)) throw new Error("Unsupported or su
 
 // Optional PDF stamping (header/footer)
 const mediaBase = (env.MEDIA_BASE_URL || env.PUBLIC_BASE_URL || "https://portal.podfy.net").replace(/\/+$/, "");
-const enableHeader = true; // TEMP: we’ll wire to slug feature flags next step
-const enableFooter = true; // TEMP: we’ll wire to slug feature flags next step
+
+// From DB (loaded once per request)
+const enableHeaderForPdf = enableHeader;
+const enableFooterForPdf = enableFooter;
 
 if (contentType === "application/pdf" || extFromName === "pdf" || kind === "pdf") {
   try {
@@ -703,8 +759,8 @@ if (contentType === "application/pdf" || extFromName === "pdf" || kind === "pdf"
       podfyId: podfyIdForFile,
       dateTime,
       mediaBase,
-      enableHeader,
-      enableFooter,
+      enableHeader: enableHeaderForPdf,
+      enableFooter: enableFooterForPdf,
     });
     contentType = "application/pdf";
   } catch (e) {
