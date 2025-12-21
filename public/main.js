@@ -94,8 +94,27 @@
   let theme       = null;
   let langStrings = {};
   let currentLang = 'en';
-  let selectedFile = null;
 
+   // Feature flags loaded per slug
+   let features = {
+     check_gps: true,
+     check_copy: true,
+     check_clean: true,
+     check_ref: true,
+     check_funct_5: true,
+     check_funct_6: true,
+     mail_notification: true,
+     multi_file: false,
+     pdf_header: true,
+     pdf_footer: true,
+     funct_11: true,
+     funct_12: true,
+   };
+
+   // Single vs multi file state
+   let selectedFile = null;
+   let selectedFiles = [];
+   
   // (3D) Browser timezone
   let browserTz = 'UTC';
   try {
@@ -161,7 +180,36 @@ async function maybeCompressToPdf(file) {
     qs('.dz-constraints')?.classList.add('hidden');
     qs('.dz-actions')?.setAttribute('hidden', '');
   }
+  
+   // Add file to selection (single-file OR multi-file "add more")
+  function addSelectedFile(f) {
+    if (!f) return;
 
+if (!features.multi_file) {
+  selectedFiles = []; // ensure no leftovers
+  selectedFile = f;
+  showPreview(f);
+  return;
+}
+
+    // multi-file mode
+    selectedFiles.push(f);
+
+    // Show count + total size
+    if (fileNameEl) {
+      const totalBytes = selectedFiles.reduce((s, x) => s + (x?.size || 0), 0);
+      const mb = totalBytes / 1048576;
+      fileNameEl.textContent = `${selectedFiles.length} files selected (${mb.toFixed(1)} MB)`;
+    }
+
+  filePreview?.removeAttribute('hidden');
+  qs('.dz-sub')?.classList.add('hidden');
+  qs('.dz-constraints')?.classList.add('hidden');
+  qs('.dz-actions')?.setAttribute('hidden', '');
+
+  dropzone?.classList.add('ready');
+  submitBtn && (submitBtn.disabled = false);
+}
   function hidePreview() {
     filePreview?.setAttribute('hidden', '');
     qs('.dz-sub')?.classList.remove('hidden');
@@ -344,6 +392,16 @@ function buildIssueOptions() {
   reflectLangSelection();
 }
 
+   async function loadFeatures() {
+  try {
+    const res = await fetch(`/api/slug/features?slug=${encodeURIComponent(slug)}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.features) features = { ...features, ...data.features };
+  } catch {}
+}
   async function loadTheme() {
     const res = await fetch('/themes.json?v=' + Date.now(), { cache: 'no-store' });
     themes = await res.json();
@@ -552,6 +610,34 @@ function buildIssueOptions() {
   // 6) UI wiring (email toggle, issue toggle, pickers, dropzone)
   // ----------------------------------------------------------
   function wireUI() {
+
+// Apply feature flags to UI visibility
+if (!features.check_gps) {
+  // hide GPS toggle + panel
+  const gpsPanel = document.getElementById('gpsPanel');
+  locCheck && (locCheck.checked = false);
+  locCheck && (locCheck.disabled = true);
+  if (gpsPanel) gpsPanel.hidden = true;
+  if (locStatus) {
+    locStatus.textContent = '';
+    locStatus.classList.add('hidden');
+  }
+}
+     if (!features.check_copy) {
+  copyCheck && (copyCheck.checked = false);
+  copyCheck && (copyCheck.disabled = true);
+  if (emailWrap) { emailWrap.classList.add('hidden'); emailWrap.hidden = true; }
+  if (emailPanel) emailPanel.hidden = true;
+}
+     if (!features.check_clean) {
+  // Force "clean" and disable changes
+  if (chkClean) {
+    chkClean.checked = true;
+    chkClean.disabled = true;
+  }
+  if (issuePanel) issuePanel.hidden = true;
+}
+     
     // Initial button state
     if (submitBtn) submitBtn.disabled = true;
 
@@ -583,8 +669,7 @@ function buildIssueOptions() {
 })();
 
   // === GPS panel toggle (new) ===
-  const locCheck = document.getElementById('locCheck');
-  const gpsPanel = document.getElementById('gpsPanel');
+const gpsPanel = document.getElementById('gpsPanel');
 
   function updateGpsPanel() {
     gpsPanel.hidden = !locCheck.checked;
@@ -683,14 +768,13 @@ function buildIssueOptions() {
           return;
         }
 
-        selectedFile = f;
+        addSelectedFile(f);
         dropzone.classList.add('ready');
         submitBtn && (submitBtn.disabled = false);
         statusEl && (statusEl.textContent = '');
-        showPreview(f);
         resetProgress();
       });
-
+       
       // Prevent activating chooser by clicking dropzone area
       dropzone.addEventListener('click', (e) => e.preventDefault());
       dropzone.addEventListener('keydown', (e) => {
@@ -712,8 +796,7 @@ function buildIssueOptions() {
         fileInput.value = '';
         return;
       }
-      selectedFile = f;
-      showPreview(f);
+      addSelectedFile(f);
       resetProgress();
       dropzone?.classList.add('ready');
       submitBtn && (submitBtn.disabled = false);
@@ -733,8 +816,7 @@ function buildIssueOptions() {
         cameraInput.value = '';
         return;
       }
-      selectedFile = f;
-      showPreview(f);
+      addSelectedFile(f);
       resetProgress();
       dropzone?.classList.add('ready');
       submitBtn && (submitBtn.disabled = false);
@@ -742,16 +824,17 @@ function buildIssueOptions() {
     });
 
     // Remove selected file
-    removeFileBtn?.addEventListener('click', () => {
-      selectedFile = null;
-      dropzone?.classList.remove('ready');
-      hidePreview();
-      resetProgress();
-      if (fileInput) fileInput.value = '';
-      if (cameraInput) cameraInput.value = '';
-      if (submitBtn) submitBtn.disabled = true;
-      statusEl && (statusEl.textContent = '');
-    });
+removeFileBtn?.addEventListener('click', () => {
+  selectedFile = null;
+  selectedFiles = [];
+  dropzone?.classList.remove('ready');
+  hidePreview();
+  resetProgress();
+  if (fileInput) fileInput.value = '';
+  if (cameraInput) cameraInput.value = '';
+  if (submitBtn) submitBtn.disabled = true;
+  statusEl && (statusEl.textContent = '');
+});
 
     // Submit → validate email (if requested) and upload
     submitBtn?.addEventListener('click', async (e) => {
@@ -763,8 +846,11 @@ function buildIssueOptions() {
           return;
         }
       }
-      if (selectedFile) await submitFile(selectedFile);
-    });
+if (features.multi_file) {
+  if (selectedFiles.length) await submitFiles(selectedFiles);
+} else {
+  if (selectedFile) await submitFile(selectedFile);
+}    });
 
     // Initial visual state
     hidePreview();
@@ -774,6 +860,121 @@ function buildIssueOptions() {
     statusEl && (statusEl.textContent = '');
   }
 
+   async function submitFiles(files) {
+  if (!files || !files.length) return;
+
+  // Refresh GPS right before submit if checkbox is on
+  if (locCheck?.checked) {
+    await requestLocationFix();
+  }
+
+  if (submitBtn) submitBtn.disabled = true;
+
+  const form = new FormData();
+
+  // Anti-bot + honeypot
+  form.append('form_issued_at', issuedAtInput?.value || String(Date.now()));
+  form.append('company_website', '');
+
+  // Brand + ref
+  form.append('brand', rawSlug || 'default');
+  form.append('slug_original', rawSlug || 'default');
+  form.append('slug_known', themes[rawSlug] ? '1' : '0');
+  if (refSafe) form.append('reference', refSafe);
+
+  // Email copy (optional)
+  if (copyCheck?.checked && emailField?.value && emailField.checkValidity && emailField.checkValidity()) {
+    form.append('email', emailField.value.trim());
+  }
+
+  // Delivery outcome flags
+  const isClean = !!(chkClean && chkClean.checked);
+  form.append('issue', isClean ? '0' : '1');
+  if (!isClean) {
+    if (issueCode && issueCode.value.trim())  form.append('issue_code',  issueCode.value.trim());
+    if (issueNotes && issueNotes.value.trim()) form.append('issue_notes', issueNotes.value.trim());
+  }
+
+  // Browser GPS
+  if (locStatus?.dataset?.lat && locStatus?.dataset?.lon) {
+    form.append('lat',  locStatus.dataset.lat);
+    form.append('lon',  locStatus.dataset.lon);
+    if (locStatus.dataset.acc) form.append('accuracy', locStatus.dataset.acc);
+    if (locStatus.dataset.ts)  form.append('loc_ts',  locStatus.dataset.ts);
+  }
+
+  // Browser timezone
+  form.append('tz', browserTz);
+
+  // Append files (sequential conversion = mobile-safe)
+  for (const f of files) {
+    const uploadable = await maybeCompressToPdf(f);
+    form.append('files[]', uploadable);
+
+    if (uploadable && uploadable.__podfy_meta) {
+      form.append('client_meta_json[]', JSON.stringify(uploadable.__podfy_meta));
+    }
+  }
+
+  // Upload via XHR with progress
+  try {
+    await new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
+
+      updateProgress(0);
+      uploadProgress?.removeAttribute('hidden');
+      progressLabel && (progressLabel.textContent = 'Starting… 0%');
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (!e.lengthComputable) return;
+        const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
+        updateProgress(pct);
+        progressLabel && (progressLabel.textContent = `Uploading… ${pct}%`);
+      });
+
+      xhr.addEventListener('load', () => {
+        const ok = xhr.status >= 200 && xhr.status < 300;
+        if (ok) {
+          updateProgress(100);
+          progressLabel && (progressLabel.textContent = 'Thanks. File received.');
+          uploadProgress?.classList.remove('error');
+          uploadProgress?.classList.add('success');
+
+          // Reset UI
+          hidePreview();
+          selectedFile = null;
+          selectedFiles = [];
+          dropzone?.classList.remove('ready');
+          if (fileInput) fileInput.value = '';
+          if (cameraInput) cameraInput.value = '';
+          submitBtn && (submitBtn.disabled = true);
+          statusEl && (statusEl.textContent = '');
+        } else {
+          progressLabel && (progressLabel.textContent = 'Upload failed. Please try again.');
+          uploadProgress?.classList.remove('success');
+          uploadProgress?.classList.add('error');
+          submitBtn && (submitBtn.disabled = false);
+        }
+        resolve();
+      });
+
+      xhr.addEventListener('error', () => {
+        progressLabel && (progressLabel.textContent = 'Network error. Please try again.');
+        uploadProgress?.classList.remove('success');
+        uploadProgress?.classList.add('error');
+        submitBtn && (submitBtn.disabled = false);
+        resolve();
+      });
+
+      xhr.send(form);
+    });
+  } catch (err) {
+    console.error(err);
+    statusEl && (statusEl.textContent = 'Upload failed. Please try again.');
+    submitBtn && (submitBtn.disabled = false);
+  }
+}
   // ----------------------------------------------------------
   // 7) Upload logic (with progress) — includes Steps 3D + 3E
   // ----------------------------------------------------------
@@ -900,14 +1101,15 @@ function buildIssueOptions() {
   // ----------------------------------------------------------
   // 8) Init
   // ----------------------------------------------------------
-  (async function init() {
-    await loadI18n();
-    buildIssueOptions();
-    await loadTheme();
-    buildLangMenu();
-    wireLanguageMenu();
-    wireInfoPopovers();
-    wireUI();
-  })();
+(async function init() {
+  await loadI18n();
+  buildIssueOptions();
+  await loadTheme();
+  await loadFeatures();
+  buildLangMenu();
+  wireLanguageMenu();
+  wireInfoPopovers();
+  wireUI();
+})();
 
 })();
