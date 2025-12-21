@@ -409,18 +409,19 @@ async function applyPdfHeaderFooter({
 
   // Brand color header, fallback black
   const headerBg = hexToRgb(brandColor, "#000000");
-  const footerBg = rgb(0.5, 0.5, 0.5);
+  const footerBg = rgb(0.25, 0.25, 0.25);
   const white = rgb(1, 1, 1);
+  const black = rgb(0, 0, 0);
 
   // ---- layout (70% thickness) ----------------------------------------------
   const padX = 36;                  // 0.5 inch
-  const headerH = Math.round(44 * 0.7); // 31
-  const footerH = Math.round(48 * 0.7); // 34
+  const headerH = 30; // 31
+  const footerH = 30; // 34
   const textSize = 10;
 
   // Logo sizing
-  const headerLogoH = Math.min(18, headerH * 0.7); // keep sane in smaller header
-  const footerLogoH = footerH * 0.6;               // 60% of footer bar height
+  const headerLogoH = headerH * 0.6;
+  const footerLogoH = footerH * 0.6;
 
   // ---- logo sources ---------------------------------------------------------
   const lb = (logoBase || mediaBase || "").replace(/\/+$/, "");
@@ -582,7 +583,7 @@ async function applyPdfHeaderFooter({
         y: centerY - textSize / 2,
         size: textSize,
         font: fontBold,
-        color: white,
+        color: black,
       });
 
       // Right footer text (date/time)
@@ -593,7 +594,7 @@ async function applyPdfHeaderFooter({
           y: centerY - textSize / 2,
           size: textSize,
           font: fontBold,
-          color: white,
+          color: black,
         });
       }
 
